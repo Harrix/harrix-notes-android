@@ -851,7 +851,8 @@ fun NotesViewerScreen(
     ModalNavigationDrawer(
         drawerState = drawerState,
         modifier = modifier,
-        gesturesEnabled = !notesTreeUri.isNullOrBlank(),
+        // Allow dismiss by swipe/scrim when open; only block edge-swipe open on welcome.
+        gesturesEnabled = drawerState.isOpen || !notesTreeUri.isNullOrBlank(),
         drawerContent = {
             NotesTreeDrawerContent(
                 rootLabel = drawerTitle,
