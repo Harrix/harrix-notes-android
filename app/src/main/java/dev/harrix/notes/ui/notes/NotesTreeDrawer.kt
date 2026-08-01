@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.harrix.notes.NotesEntry
+import dev.harrix.notes.NotesListDensity
 import dev.harrix.notes.NotesPathSegment
 import dev.harrix.notes.R
 
@@ -50,6 +51,7 @@ fun NotesTreeDrawerContent(
     expandedFolderIds: Set<String>,
     selectedNoteDocumentId: String?,
     isLoadingRoot: Boolean,
+    density: NotesListDensity,
     onToggleFolder: (NotesEntry.Folder) -> Unit,
     onOpenFolder: (NotesEntry.Folder, List<NotesPathSegment>) -> Unit,
     onOpenNote: (NotesEntry.Note, List<NotesPathSegment>) -> Unit,
@@ -99,6 +101,7 @@ fun NotesTreeDrawerContent(
                                     NotesTreeFolderRow(
                                         folder = entry,
                                         depth = row.depth,
+                                        density = density,
                                         expanded = entry.documentId in expandedFolderIds,
                                         onToggle = { onToggleFolder(entry) },
                                         onOpen = { onOpenFolder(entry, row.parentPath) },
@@ -109,6 +112,7 @@ fun NotesTreeDrawerContent(
                                     NotesTreeNoteRow(
                                         note = entry,
                                         depth = row.depth,
+                                        density = density,
                                         selected = entry.documentId == selectedNoteDocumentId,
                                         onOpen = { onOpenNote(entry, row.parentPath) },
                                     )
@@ -126,22 +130,25 @@ fun NotesTreeDrawerContent(
 private fun NotesTreeFolderRow(
     folder: NotesEntry.Folder,
     depth: Int,
+    density: NotesListDensity,
     expanded: Boolean,
     onToggle: () -> Unit,
     onOpen: () -> Unit,
 ) {
+    val iconSize = density.iconSizeDp.dp
+    val expandButtonSize = density.mergedButtonHeightDp.dp
     Row(
         modifier =
         Modifier
             .fillMaxWidth()
-            .height(40.dp)
+            .height(density.listRowHeightDp.dp)
             .clickable(onClick = onOpen)
             .padding(start = (8 + depth * 12).dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(
             onClick = onToggle,
-            modifier = Modifier.size(32.dp),
+            modifier = Modifier.size(expandButtonSize),
         ) {
             Icon(
                 imageVector =
@@ -151,14 +158,14 @@ private fun NotesTreeFolderRow(
                     Icons.AutoMirrored.Filled.KeyboardArrowRight
                 },
                 contentDescription = null,
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(iconSize),
             )
         }
         Icon(
             imageVector = Icons.Filled.Folder,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier.size(iconSize),
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
@@ -175,9 +182,13 @@ private fun NotesTreeFolderRow(
 private fun NotesTreeNoteRow(
     note: NotesEntry.Note,
     depth: Int,
+    density: NotesListDensity,
     selected: Boolean,
     onOpen: () -> Unit,
 ) {
+    val iconSize = density.iconSizeDp.dp
+    // Align note content with folder label (start padding + expand button).
+    val contentStart = 8 + density.mergedButtonHeightDp + depth * 12
     Surface(
         selected = selected,
         onClick = onOpen,
@@ -193,11 +204,11 @@ private fun NotesTreeNoteRow(
             modifier =
             Modifier
                 .fillMaxWidth()
-                .height(40.dp)
-                .padding(start = (40 + depth * 12).dp, end = 12.dp),
+                .height(density.listRowHeightDp.dp)
+                .padding(start = contentStart.dp, end = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            NotesNoteGlyph(icon = note.displayIcon, size = 18.dp)
+            NotesNoteGlyph(icon = note.displayIcon, size = iconSize)
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = note.displayLabel,

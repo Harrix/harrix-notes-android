@@ -1091,6 +1091,7 @@ fun NotesViewerScreen(
                 expandedFolderIds = treeExpandedFolderIds,
                 selectedNoteDocumentId = selectedTabDocumentId,
                 isLoadingRoot = treeLoadingRoot,
+                density = listDensity,
                 onToggleFolder = { toggleTreeFolder(it) },
                 onOpenFolder = { folder, parentPath ->
                     scope.launch { drawerState.close() }
