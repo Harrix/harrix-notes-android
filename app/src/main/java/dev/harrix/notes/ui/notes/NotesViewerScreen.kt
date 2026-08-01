@@ -5,6 +5,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -1293,7 +1294,6 @@ fun NotesViewerScreen(
 
 private const val AutosaveDelayMs = 800L
 private const val SaveFeedbackVisibleMs = 1500L
-private val NotesTabMinWidth = 56.dp
 private val NotesTabMaxWidth = 128.dp
 private val NotesOpenTabsMenuMaxHeight = 360.dp
 private val NotesTabSwipeCloseThreshold = 40.dp
@@ -1410,7 +1410,7 @@ private fun NotesTabChip(
         if (selected) {
             MaterialTheme.colorScheme.secondaryContainer
         } else {
-            MaterialTheme.colorScheme.surfaceContainerHigh
+            MaterialTheme.colorScheme.surfaceContainerHighest
         },
         tonalElevation = if (selected) 1.dp else 0.dp,
         modifier =
@@ -1450,7 +1450,7 @@ private fun NotesTabChip(
             modifier =
             Modifier
                 .padding(horizontal = 12.dp, vertical = 6.dp)
-                .widthIn(min = NotesTabMinWidth, max = NotesTabMaxWidth),
+                .widthIn(max = NotesTabMaxWidth),
         )
     }
 }
@@ -1601,6 +1601,39 @@ private fun NotesOpenTabMenuRow(
 }
 
 @Composable
+private fun NotesHorizontalScrollbar(
+    state: ScrollState,
+    modifier: Modifier = Modifier,
+) {
+    val maxValue = state.maxValue
+    if (maxValue <= 0) {
+        return
+    }
+    val density = LocalDensity.current
+    val scrollFraction = (state.value.toFloat() / maxValue.toFloat()).coerceIn(0f, 1f)
+
+    BoxWithConstraints(modifier = modifier.height(3.dp)) {
+        val trackWidthPx = with(density) { maxWidth.toPx() }
+        val contentWidthPx = trackWidthPx + maxValue
+        val thumbWidthPx =
+            (trackWidthPx * trackWidthPx / contentWidthPx)
+                .coerceIn(trackWidthPx * 0.12f, trackWidthPx)
+        val thumbOffsetPx = scrollFraction * (trackWidthPx - thumbWidthPx)
+        Box(
+            modifier =
+            Modifier
+                .fillMaxHeight()
+                .width(with(density) { thumbWidthPx.toDp() })
+                .offset(x = with(density) { thumbOffsetPx.toDp() })
+                .background(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                    shape = RoundedCornerShape(2.dp),
+                ),
+        )
+    }
+}
+
+@Composable
 private fun NotesLazyListScrollbar(
     state: LazyListState,
     modifier: Modifier = Modifier,
@@ -1691,24 +1724,33 @@ private fun NotesNavigationRow(
                         tabsScrollState.animateScrollTo(tabsScrollState.maxValue)
                     }
                 }
-                Row(
-                    modifier =
-                    Modifier
-                        .weight(1f)
-                        .horizontalScroll(tabsScrollState)
-                        .padding(vertical = 2.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    openTabs.forEach { tab ->
-                        NotesTabChip(
-                            title = tab.title,
-                            selected = tab.documentId == selectedTabDocumentId,
-                            onSelect = { onSelectTab(tab.documentId) },
-                            onClose = { onCloseTab(tab.documentId) },
-                            onLongPress = { tabsMenuExpanded = true },
-                        )
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(tabsScrollState)
+                            .padding(vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        openTabs.forEach { tab ->
+                            NotesTabChip(
+                                title = tab.title,
+                                selected = tab.documentId == selectedTabDocumentId,
+                                onSelect = { onSelectTab(tab.documentId) },
+                                onClose = { onCloseTab(tab.documentId) },
+                                onLongPress = { tabsMenuExpanded = true },
+                            )
+                        }
                     }
+                    NotesHorizontalScrollbar(
+                        state = tabsScrollState,
+                        modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 2.dp),
+                    )
                 }
             } else {
                 Spacer(modifier = Modifier.weight(1f))
