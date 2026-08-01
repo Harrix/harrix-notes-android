@@ -1,5 +1,6 @@
 ﻿package dev.harrix.notes.ui.notes
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,15 +21,15 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -146,21 +147,23 @@ private fun NotesTreeFolderRow(
             .padding(start = (8 + depth * 12).dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconButton(
-            onClick = onToggle,
-            modifier = Modifier.size(expandButtonSize),
-        ) {
-            Icon(
-                imageVector =
-                if (expanded) {
-                    Icons.Filled.ExpandMore
-                } else {
-                    Icons.AutoMirrored.Filled.KeyboardArrowRight
-                },
-                contentDescription = null,
-                modifier = Modifier.size(iconSize),
-            )
-        }
+        Icon(
+            imageVector =
+            if (expanded) {
+                Icons.Filled.ExpandMore
+            } else {
+                Icons.AutoMirrored.Filled.KeyboardArrowRight
+            },
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier =
+            Modifier
+                .size(expandButtonSize)
+                .clickable(
+                    role = Role.Button,
+                    onClick = onToggle,
+                ).padding((expandButtonSize - iconSize) / 2),
+        )
         Icon(
             imageVector = Icons.Filled.Folder,
             contentDescription = null,
@@ -187,38 +190,33 @@ private fun NotesTreeNoteRow(
     onOpen: () -> Unit,
 ) {
     val iconSize = density.iconSizeDp.dp
-    // Align note content with folder label (start padding + expand button).
+    // Align note content with folder label (start padding + expand control).
     val contentStart = 8 + density.mergedButtonHeightDp + depth * 12
-    Surface(
-        selected = selected,
-        onClick = onOpen,
-        color =
-        if (selected) {
-            MaterialTheme.colorScheme.secondaryContainer
-        } else {
-            MaterialTheme.colorScheme.surface
-        },
-        modifier = Modifier.fillMaxWidth(),
+    Row(
+        modifier =
+        Modifier
+            .fillMaxWidth()
+            .height(density.listRowHeightDp.dp)
+            .background(
+                if (selected) {
+                    MaterialTheme.colorScheme.secondaryContainer
+                } else {
+                    Color.Transparent
+                },
+            ).clickable(onClick = onOpen)
+            .padding(start = contentStart.dp, end = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier =
-            Modifier
-                .fillMaxWidth()
-                .height(density.listRowHeightDp.dp)
-                .padding(start = contentStart.dp, end = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            NotesNoteGlyph(icon = note.displayIcon, size = iconSize)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = note.displayLabel,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
-            )
-        }
+        NotesNoteGlyph(icon = note.displayIcon, size = iconSize)
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = note.displayLabel,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
     }
 }
 

@@ -13,6 +13,9 @@
     <string name="settings_section_expand">Expand section</string>
     <string name="settings_section_collapse">Collapse section</string>
     <string name="settings_notes_title">Notes</string>
+    <string name="settings_reset">Reset settings</string>
+    <string name="settings_reset_hint">Restore appearance and notes options to defaults. The notes folder is kept.</string>
+    <string name="settings_reset_done">Settings restored to defaults</string>
     <string name="settings_markdown_notes_title">Notes</string>
     <string name="settings_markdown_notes_path">Notes folder</string>
     <string name="settings_markdown_notes_path_none">Not set</string>

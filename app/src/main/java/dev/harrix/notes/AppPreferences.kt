@@ -16,6 +16,10 @@ class AppPreferences(
         prefs.edit().putString(KEY_THEME_MODE, mode.name).apply()
     }
 
+    fun resetThemeToDefault() {
+        prefs.edit().remove(KEY_THEME_MODE).apply()
+    }
+
     companion object {
         private const val PREFS_NAME = "app_preferences"
         private const val KEY_THEME_MODE = "theme_mode"

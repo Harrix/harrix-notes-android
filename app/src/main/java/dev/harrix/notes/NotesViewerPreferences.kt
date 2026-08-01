@@ -129,6 +129,24 @@ class NotesViewerPreferences(
         prefs.edit().remove(KEY_OPEN_TABS_SESSION).apply()
     }
 
+    /**
+     * Restores viewer preferences to defaults.
+     * Keeps the chosen notes folder URI ([KEY_NOTES_TREE_URI]).
+     */
+    fun resetSettingsToDefaults() {
+        prefs
+            .edit()
+            .remove(KEY_LIST_DENSITY)
+            .remove(KEY_BROWSE_LAYOUT)
+            .remove(KEY_TITLE_SOURCE)
+            .remove(KEY_MAX_OPEN_TABS)
+            .remove(KEY_OPEN_TABS_SESSION)
+            .remove(KEY_PINNED_BAR_ENABLED)
+            .remove(KEY_MAX_PINNED_ITEMS)
+            .remove(KEY_PINNED_ITEMS)
+            .apply()
+    }
+
     companion object {
         private const val PREFS_NAME = "notes_viewer"
         private const val KEY_NOTES_TREE_URI = "notes_tree_uri"

@@ -30,6 +30,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -40,7 +41,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -55,6 +58,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import dev.harrix.notes.AppPreferences
 import dev.harrix.notes.NotesBrowseLayout
 import dev.harrix.notes.NotesListDensity
 import dev.harrix.notes.NotesPinnedItem
@@ -77,6 +81,12 @@ fun SettingsScreen(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+    val appPreferences = remember { AppPreferences(context.applicationContext) }
+    val notesPreferences = remember { NotesViewerPreferences(context.applicationContext) }
+    var settingsEpoch by remember { mutableIntStateOf(0) }
+    var resetMessage by remember { mutableStateOf<String?>(null) }
+
     BackHandler(onBack = onClose)
 
     Scaffold(
@@ -104,12 +114,38 @@ fun SettingsScreen(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            AppearanceSettingsSection(
-                themeMode = themeMode,
-                onThemeModeChange = onThemeModeChange,
-            )
+            key(settingsEpoch) {
+                AppearanceSettingsSection(
+                    themeMode = themeMode,
+                    onThemeModeChange = onThemeModeChange,
+                )
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                NotesSettingsSection(showSectionTitle = true)
+            }
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            NotesSettingsSection(showSectionTitle = true)
+            Text(
+                text = stringResource(R.string.settings_reset_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            OutlinedButton(
+                onClick = {
+                    appPreferences.resetThemeToDefault()
+                    notesPreferences.resetSettingsToDefaults()
+                    onThemeModeChange(ThemeMode.System)
+                    settingsEpoch += 1
+                    resetMessage = context.getString(R.string.settings_reset_done)
+                },
+            ) {
+                Text(stringResource(R.string.settings_reset))
+            }
+            resetMessage?.let { message ->
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }
