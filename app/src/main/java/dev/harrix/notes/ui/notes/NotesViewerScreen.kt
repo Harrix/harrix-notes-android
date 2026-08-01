@@ -44,6 +44,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
@@ -53,6 +54,8 @@ import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
@@ -1373,6 +1376,12 @@ private fun NotesTopChrome(
                         onMenuExpandedChange(false)
                         onOpenSettings()
                     },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Settings,
+                            contentDescription = null,
+                        )
+                    },
                 )
             }
         }
@@ -2213,6 +2222,12 @@ private fun NotesEntryContextMenu(
                     onDismiss()
                     onShowMergedNote()
                 },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.Description,
+                        contentDescription = null,
+                    )
+                },
             )
         }
         DropdownMenuItem(
@@ -2234,6 +2249,17 @@ private fun NotesEntryContextMenu(
                 } else {
                     onPin()
                 }
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector =
+                    if (pinned) {
+                        Icons.Outlined.PushPin
+                    } else {
+                        Icons.Filled.PushPin
+                    },
+                    contentDescription = null,
+                )
             },
         )
     }
