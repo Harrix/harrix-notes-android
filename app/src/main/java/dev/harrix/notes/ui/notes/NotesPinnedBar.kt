@@ -17,13 +17,13 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
@@ -44,6 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -58,8 +59,10 @@ import dev.harrix.notes.NotesListDensity
 import dev.harrix.notes.NotesPinnedItem
 import dev.harrix.notes.NotesPinnedKind
 import dev.harrix.notes.R
+import dev.harrix.notes.ui.isCompactHeight
 
 private const val PinnedLabelMaxLines = 2
+private const val PinnedLabelCompactMaxLines = 1
 private const val PinnedLabelFontStepSp = 0.5f
 private val PinnedBarHorizontalPadding = 8.dp
 
@@ -80,14 +83,18 @@ fun NotesPinnedBar(
     val labelMinFont = density.pinnedLabelMinSp.sp
     val labelMaxFont = density.pinnedLabelMaxSp.sp
     val labelHeight = density.pinnedLabelHeightDp.dp
-    val barPadding = density.pinnedBarVerticalPaddingDp.dp
+    val barPadding =
+        if (isCompactHeight()) {
+            (density.pinnedBarVerticalPaddingDp * 0.65f).dp
+        } else {
+            density.pinnedBarVerticalPaddingDp.dp
+        }
 
     Column(
         modifier =
         modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-            .navigationBarsPadding(),
+            .background(MaterialTheme.colorScheme.surface),
     ) {
         HorizontalDivider()
         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
@@ -153,10 +160,19 @@ fun NotesPinnedBar(
     }
 
     if (showHowToPin) {
+        val dialogMaxHeight = (LocalConfiguration.current.screenHeightDp * 0.45f).dp
         AlertDialog(
             onDismissRequest = { showHowToPin = false },
             title = { Text(stringResource(R.string.markdown_notes_pin_how_title)) },
-            text = { Text(stringResource(R.string.markdown_notes_pin_how_message)) },
+            text = {
+                Text(
+                    text = stringResource(R.string.markdown_notes_pin_how_message),
+                    modifier =
+                    Modifier
+                        .heightIn(max = dialogMaxHeight)
+                        .verticalScroll(rememberScrollState()),
+                )
+            },
             confirmButton = {
                 TextButton(onClick = { showHowToPin = false }) {
                     Text(stringResource(R.string.markdown_notes_pin_how_ok))
@@ -182,23 +198,23 @@ private fun RowScope.NotesPinnedBarSlots(
     items.forEach { item ->
         NotesPinnedBarItem(
             item = item,
-            modifier = slotModifier(),
             iconSize = iconSize,
             labelMinFont = labelMinFont,
             labelMaxFont = labelMaxFont,
             labelHeight = labelHeight,
             onOpen = { onOpen(item) },
             onUnpin = { onUnpin(item) },
+            modifier = slotModifier(),
         )
     }
     repeat(emptyCount) {
         NotesPinnedEmptySlot(
-            modifier = slotModifier(),
             iconSize = iconSize,
             labelMinFont = labelMinFont,
             labelMaxFont = labelMaxFont,
             labelHeight = labelHeight,
             onClick = onEmptyClick,
+            modifier = slotModifier(),
         )
     }
 }
@@ -207,13 +223,13 @@ private fun RowScope.NotesPinnedBarSlots(
 @Composable
 private fun NotesPinnedBarItem(
     item: NotesPinnedItem,
-    modifier: Modifier,
     iconSize: Dp,
     labelMinFont: TextUnit,
     labelMaxFont: TextUnit,
     labelHeight: Dp,
     onOpen: () -> Unit,
     onUnpin: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     val label =
@@ -221,6 +237,7 @@ private fun NotesPinnedBarItem(
             item.kind == NotesPinnedKind.Home || item.id == NotesPinnedItem.HOME_ID -> {
                 stringResource(R.string.nav_drawer_home)
             }
+
             else -> item.title.ifBlank { item.documentId }
         }
 
@@ -271,12 +288,12 @@ private fun NotesPinnedBarItem(
 
 @Composable
 private fun NotesPinnedEmptySlot(
-    modifier: Modifier,
     iconSize: Dp,
     labelMinFont: TextUnit,
     labelMaxFont: TextUnit,
     labelHeight: Dp,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier =
@@ -319,6 +336,7 @@ private fun NotesPinnedGlyph(
                 modifier = Modifier.size(iconSize),
             )
         }
+
         NotesPinnedKind.Folder -> {
             Icon(
                 imageVector = Icons.Filled.Folder,
@@ -327,6 +345,7 @@ private fun NotesPinnedGlyph(
                 modifier = Modifier.size(iconSize),
             )
         }
+
         NotesPinnedKind.Note -> {
             NotesNoteGlyph(icon = item.icon, size = iconSize)
         }
@@ -376,6 +395,12 @@ private fun NotesPinnedAutoSizeLabel(
 ) {
     val baseStyle = MaterialTheme.typography.labelSmall
     val textMeasurer = rememberTextMeasurer()
+    val maxLines =
+        if (isCompactHeight()) {
+            PinnedLabelCompactMaxLines
+        } else {
+            PinnedLabelMaxLines
+        }
     var fontSize by remember(text, maxFont) { mutableStateOf(maxFont) }
     val color =
         if (muted) {
@@ -387,7 +412,7 @@ private fun NotesPinnedAutoSizeLabel(
     BoxWithConstraints(modifier = modifier) {
         val maxWidthPx = constraints.maxWidth
         val maxHeightPx = constraints.maxHeight
-        LaunchedEffect(text, maxWidthPx, maxHeightPx, baseStyle, minFont, maxFont) {
+        LaunchedEffect(text, maxWidthPx, maxHeightPx, baseStyle, minFont, maxFont, maxLines) {
             if (maxWidthPx <= 0) {
                 return@LaunchedEffect
             }
@@ -399,7 +424,7 @@ private fun NotesPinnedAutoSizeLabel(
                         style = baseStyle.copy(fontSize = candidate, lineHeight = candidate * 1.15f),
                         overflow = TextOverflow.Clip,
                         softWrap = true,
-                        maxLines = PinnedLabelMaxLines,
+                        maxLines = maxLines,
                         constraints =
                         Constraints(
                             maxWidth = maxWidthPx,
@@ -421,7 +446,7 @@ private fun NotesPinnedAutoSizeLabel(
             style = baseStyle.copy(fontSize = fontSize, lineHeight = fontSize * 1.15f),
             color = color,
             textAlign = TextAlign.Center,
-            maxLines = PinnedLabelMaxLines,
+            maxLines = maxLines,
             overflow = TextOverflow.Ellipsis,
             softWrap = true,
             modifier = Modifier.fillMaxWidth(),

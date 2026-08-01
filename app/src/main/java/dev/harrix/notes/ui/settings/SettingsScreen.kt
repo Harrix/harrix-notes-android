@@ -6,13 +6,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -55,6 +58,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -67,6 +71,7 @@ import dev.harrix.notes.NotesTitleSource
 import dev.harrix.notes.NotesTreeRepository
 import dev.harrix.notes.NotesViewerPreferences
 import dev.harrix.notes.R
+import dev.harrix.notes.ui.adaptiveContentWidth
 import dev.harrix.notes.ui.notes.NotesFolderPathControls
 import dev.harrix.notes.ui.notes.NotesNoteGlyph
 import dev.harrix.notes.ui.theme.ThemeMode
@@ -91,9 +96,16 @@ fun SettingsScreen(
 
     Scaffold(
         modifier = modifier,
+        contentWindowInsets = WindowInsets.safeDrawing,
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.settings_title)) },
+                title = {
+                    Text(
+                        text = stringResource(R.string.settings_title),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onClose) {
                         Icon(
@@ -111,7 +123,8 @@ fun SettingsScreen(
                 .padding(innerPadding)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .adaptiveContentWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             key(settingsEpoch) {
@@ -128,7 +141,7 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            OutlinedButton(
+            SettingsFullWidthOutlinedButton(
                 onClick = {
                     appPreferences.resetThemeToDefault()
                     notesPreferences.resetSettingsToDefaults()
@@ -136,9 +149,8 @@ fun SettingsScreen(
                     settingsEpoch += 1
                     resetMessage = context.getString(R.string.settings_reset_done)
                 },
-            ) {
-                Text(stringResource(R.string.settings_reset))
-            }
+                label = stringResource(R.string.settings_reset),
+            )
             resetMessage?.let { message ->
                 Text(
                     text = message,
@@ -147,6 +159,28 @@ fun SettingsScreen(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun SettingsFullWidthOutlinedButton(
+    onClick: () -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    OutlinedButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
+    ) {
+        Text(
+            text = label,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 
@@ -176,6 +210,8 @@ private fun CollapsibleSettingsSection(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
             Icon(
@@ -276,7 +312,11 @@ private fun NotesSettingsSection(
                         count = layoutOptions.size,
                     ),
                 ) {
-                    Text(stringResource(labelRes))
+                    Text(
+                        text = stringResource(labelRes),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
             }
         }
@@ -300,7 +340,11 @@ private fun NotesSettingsSection(
                         count = titleSourceOptions.size,
                     ),
                 ) {
-                    Text(stringResource(labelRes))
+                    Text(
+                        text = stringResource(labelRes),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
             }
         }
@@ -353,7 +397,11 @@ private fun NotesSettingsSection(
                         count = densityOptions.size,
                     ),
                 ) {
-                    Text(stringResource(labelRes))
+                    Text(
+                        text = stringResource(labelRes),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
             }
         }
@@ -370,6 +418,8 @@ private fun NotesSettingsSection(
             Text(
                 text = stringResource(R.string.settings_markdown_notes_pinned_bar_enabled),
                 style = MaterialTheme.typography.bodyLarge,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
             Switch(
@@ -609,7 +659,11 @@ private fun AppearanceSettingsSection(
                         count = options.size,
                     ),
                 ) {
-                    Text(stringResource(labelRes))
+                    Text(
+                        text = stringResource(labelRes),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
             }
         }

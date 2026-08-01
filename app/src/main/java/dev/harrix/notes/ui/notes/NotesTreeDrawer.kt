@@ -37,6 +37,7 @@ import dev.harrix.notes.NotesEntry
 import dev.harrix.notes.NotesListDensity
 import dev.harrix.notes.NotesPathSegment
 import dev.harrix.notes.R
+import dev.harrix.notes.ui.adaptiveDrawerWidth
 
 data class NotesTreeRow(
     val entry: NotesEntry,
@@ -58,7 +59,7 @@ fun NotesTreeDrawerContent(
     onOpenNote: (NotesEntry.Note, List<NotesPathSegment>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    ModalDrawerSheet(modifier = modifier) {
+    ModalDrawerSheet(modifier = modifier.adaptiveDrawerWidth()) {
         Column(modifier = Modifier.fillMaxHeight()) {
             Text(
                 text = rootLabel,
@@ -66,7 +67,10 @@ fun NotesTreeDrawerContent(
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+                modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
             )
             HorizontalDivider()
             when {

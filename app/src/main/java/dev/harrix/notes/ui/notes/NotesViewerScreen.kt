@@ -28,8 +28,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -115,6 +115,9 @@ import dev.harrix.notes.OpenNoteTab
 import dev.harrix.notes.R
 import dev.harrix.notes.notesFolderDisplayName
 import dev.harrix.notes.takeNotesFolderPermission
+import dev.harrix.notes.ui.adaptiveContentWidth
+import dev.harrix.notes.ui.isCompactHeight
+import dev.harrix.notes.ui.notesIconsGridColumnCount
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -123,10 +126,10 @@ import kotlinx.coroutines.withContext
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-private val NotesIconsGridMinCellWidth = 96.dp
 private val NotesIconsLabelMinFontSize = 9.sp
 private val NotesIconsLabelMaxFontSize = 13.sp
 private const val NotesIconsLabelMaxLines = 3
+private const val NotesIconsLabelCompactMaxLines = 2
 private const val NotesIconsLabelFontStepSp = 0.5f
 
 @Composable
@@ -766,6 +769,7 @@ fun NotesViewerScreen(
                     currentTab.folderPath.ifEmpty { ensureRootPath() ?: return }
 
                 folderPath.isNotEmpty() -> folderPath
+
                 else -> ensureRootPath() ?: return
             }
         val dir = path.lastOrNull() ?: return
@@ -1172,7 +1176,7 @@ fun NotesViewerScreen(
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = MaterialTheme.colorScheme.background,
-            contentWindowInsets = WindowInsets.statusBars,
+            contentWindowInsets = WindowInsets.safeDrawing,
         ) { innerPadding ->
             Column(
                 modifier =
@@ -1221,7 +1225,10 @@ fun NotesViewerScreen(
                     ) {
                         NotesPathWelcomeContent(
                             onChooseFolder = { folderPicker.launch(null) },
-                            modifier = Modifier.padding(24.dp),
+                            modifier =
+                            Modifier
+                                .adaptiveContentWidth()
+                                .padding(24.dp),
                         )
                     }
                 } else {
@@ -1994,7 +2001,7 @@ private fun NotesFolderList(
 
         layout == NotesBrowseLayout.Icons -> {
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = NotesIconsGridMinCellWidth),
+                columns = GridCells.Fixed(notesIconsGridColumnCount()),
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -2411,11 +2418,17 @@ private fun NotesAutoSizeLabel(
 ) {
     val baseStyle = MaterialTheme.typography.labelMedium
     val textMeasurer = rememberTextMeasurer()
+    val maxLines =
+        if (isCompactHeight()) {
+            NotesIconsLabelCompactMaxLines
+        } else {
+            NotesIconsLabelMaxLines
+        }
     var fontSize by remember(text) { mutableStateOf(NotesIconsLabelMaxFontSize) }
 
     BoxWithConstraints(modifier = modifier) {
         val maxWidthPx = constraints.maxWidth
-        LaunchedEffect(text, maxWidthPx, baseStyle) {
+        LaunchedEffect(text, maxWidthPx, baseStyle, maxLines) {
             if (maxWidthPx <= 0) {
                 return@LaunchedEffect
             }
@@ -2427,7 +2440,7 @@ private fun NotesAutoSizeLabel(
                         style = baseStyle.copy(fontSize = candidate, lineHeight = candidate * 1.2f),
                         overflow = TextOverflow.Clip,
                         softWrap = true,
-                        maxLines = NotesIconsLabelMaxLines,
+                        maxLines = maxLines,
                         constraints = Constraints(maxWidth = maxWidthPx),
                     )
                 if (!layout.hasVisualOverflow) {
@@ -2443,7 +2456,7 @@ private fun NotesAutoSizeLabel(
             text = text,
             style = baseStyle.copy(fontSize = fontSize, lineHeight = fontSize * 1.2f),
             textAlign = TextAlign.Center,
-            maxLines = NotesIconsLabelMaxLines,
+            maxLines = maxLines,
             overflow = TextOverflow.Ellipsis,
             softWrap = true,
             modifier = Modifier.fillMaxWidth(),
@@ -2616,6 +2629,8 @@ private fun NotesPathWelcomeContent(
             text = stringResource(R.string.markdown_notes_welcome_title),
             style = MaterialTheme.typography.titleLarge,
             textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
         )
         Text(
             text = stringResource(R.string.markdown_notes_welcome_message),
@@ -2624,8 +2639,16 @@ private fun NotesPathWelcomeContent(
             textAlign = TextAlign.Center,
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = onChooseFolder) {
-            Text(stringResource(R.string.markdown_notes_choose_folder))
+        Button(
+            onClick = onChooseFolder,
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.markdown_notes_choose_folder),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }
@@ -2651,6 +2674,7 @@ fun NotesFolderPathControls(
             preferences.saveNotesTreeUri(value)
             onTreeUriChange(value)
         }
+    val buttonPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -2669,12 +2693,19 @@ fun NotesFolderPathControls(
                 notesFolderDisplayName(context, treeUri)
             },
             style = MaterialTheme.typography.bodyMedium,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
         )
         Button(
             onClick = { folderPicker.launch(null) },
             modifier = Modifier.fillMaxWidth(),
+            contentPadding = buttonPadding,
         ) {
-            Text(stringResource(R.string.markdown_notes_choose_folder))
+            Text(
+                text = stringResource(R.string.markdown_notes_choose_folder),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
         OutlinedButton(
             onClick = {
@@ -2683,8 +2714,13 @@ fun NotesFolderPathControls(
             },
             enabled = !treeUri.isNullOrBlank(),
             modifier = Modifier.fillMaxWidth(),
+            contentPadding = buttonPadding,
         ) {
-            Text(stringResource(R.string.settings_markdown_notes_path_clear))
+            Text(
+                text = stringResource(R.string.settings_markdown_notes_path_clear),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }

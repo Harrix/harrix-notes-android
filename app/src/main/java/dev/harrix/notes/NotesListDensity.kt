@@ -60,7 +60,6 @@ enum class NotesListDensity(
     companion object {
         val Default: NotesListDensity = Comfortable
 
-        fun fromStorageKey(key: String?): NotesListDensity =
-            entries.firstOrNull { it.name.equals(key, ignoreCase = true) } ?: Default
+        fun fromStorageKey(key: String?): NotesListDensity = entries.firstOrNull { it.name.equals(key, ignoreCase = true) } ?: Default
     }
 }
