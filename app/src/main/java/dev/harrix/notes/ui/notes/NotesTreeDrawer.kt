@@ -157,7 +157,7 @@ private fun NotesTreeFolderRow(
         Icon(
             imageVector = Icons.Filled.Folder,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(18.dp),
         )
         Spacer(modifier = Modifier.width(8.dp))

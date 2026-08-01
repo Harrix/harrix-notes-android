@@ -53,6 +53,51 @@ class NotesViewerPreferences(
         prefs.edit().putInt(KEY_MAX_OPEN_TABS, value.coerceIn(MIN_OPEN_TABS, MAX_OPEN_TABS)).apply()
     }
 
+    fun loadPinnedBarEnabled(): Boolean = prefs.getBoolean(KEY_PINNED_BAR_ENABLED, DEFAULT_PINNED_BAR_ENABLED)
+
+    fun savePinnedBarEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_PINNED_BAR_ENABLED, enabled).apply()
+    }
+
+    fun loadMaxPinnedItems(): Int =
+        prefs.getInt(KEY_MAX_PINNED_ITEMS, DEFAULT_MAX_PINNED_ITEMS).coerceIn(MIN_PINNED_ITEMS, MAX_PINNED_ITEMS)
+
+    fun saveMaxPinnedItems(value: Int) {
+        prefs.edit().putInt(KEY_MAX_PINNED_ITEMS, value.coerceIn(MIN_PINNED_ITEMS, MAX_PINNED_ITEMS)).apply()
+    }
+
+    fun loadPinnedItemsStore(): NotesPinnedItemsStore {
+        val raw = prefs.getString(KEY_PINNED_ITEMS, null) ?: return NotesPinnedItemsStore.empty()
+        return NotesPinnedItemsStore.fromJson(raw) ?: NotesPinnedItemsStore.empty()
+    }
+
+    fun savePinnedItemsStore(store: NotesPinnedItemsStore) {
+        prefs.edit().putString(KEY_PINNED_ITEMS, store.toJson()).apply()
+    }
+
+    fun loadPinnedItems(
+        treeUri: String?,
+        root: NotesPathSegment?,
+    ): List<NotesPinnedItem> {
+        if (treeUri.isNullOrBlank() || root == null) {
+            return emptyList()
+        }
+        val stored = loadPinnedItemsStore().itemsFor(treeUri)
+        if (stored != null) {
+            return stored.take(loadMaxPinnedItems())
+        }
+        return listOf(NotesPinnedItemsStore.defaultHome(root))
+    }
+
+    fun savePinnedItems(
+        treeUri: String,
+        items: List<NotesPinnedItem>,
+    ) {
+        val limited = items.take(loadMaxPinnedItems())
+        val store = loadPinnedItemsStore().withItems(treeUri, limited)
+        savePinnedItemsStore(store)
+    }
+
     fun loadOpenTabsSession(treeUri: String?): NotesOpenTabsSession {
         if (treeUri.isNullOrBlank()) {
             return NotesOpenTabsSession(treeUri = "", selectedDocumentId = null, tabs = emptyList())
@@ -91,10 +136,18 @@ class NotesViewerPreferences(
         private const val KEY_TITLE_SOURCE = "title_source"
         private const val KEY_MAX_OPEN_TABS = "max_open_tabs"
         private const val KEY_OPEN_TABS_SESSION = "open_tabs_session"
+        private const val KEY_PINNED_BAR_ENABLED = "pinned_bar_enabled"
+        private const val KEY_MAX_PINNED_ITEMS = "max_pinned_items"
+        private const val KEY_PINNED_ITEMS = "pinned_items"
 
         const val DEFAULT_MAX_OPEN_TABS = 10
         const val MIN_OPEN_TABS = 1
         const val MAX_OPEN_TABS = 50
+
+        const val DEFAULT_PINNED_BAR_ENABLED = true
+        const val DEFAULT_MAX_PINNED_ITEMS = 5
+        const val MIN_PINNED_ITEMS = 1
+        const val MAX_PINNED_ITEMS = 20
 
         private fun emptySession(treeUri: String) = NotesOpenTabsSession(
             treeUri = treeUri,

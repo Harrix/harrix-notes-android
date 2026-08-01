@@ -51,6 +51,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -99,6 +100,8 @@ import dev.harrix.notes.NotesBrowseLayout
 import dev.harrix.notes.NotesEntry
 import dev.harrix.notes.NotesListDensity
 import dev.harrix.notes.NotesPathSegment
+import dev.harrix.notes.NotesPinnedItem
+import dev.harrix.notes.NotesPinnedKind
 import dev.harrix.notes.NotesTitleSource
 import dev.harrix.notes.NotesTreeRepository
 import dev.harrix.notes.NotesViewerPreferences
@@ -154,6 +157,10 @@ fun NotesViewerScreen(
     var browseLayout by remember { mutableStateOf(preferences.loadBrowseLayout()) }
     var titleSource by remember { mutableStateOf(preferences.loadTitleSource()) }
     var maxOpenTabs by remember { mutableIntStateOf(preferences.loadMaxOpenTabs()) }
+    var pinnedBarEnabled by remember { mutableStateOf(preferences.loadPinnedBarEnabled()) }
+    var maxPinnedItems by remember { mutableIntStateOf(preferences.loadMaxPinnedItems()) }
+    var pinnedItems by remember { mutableStateOf<List<NotesPinnedItem>>(emptyList()) }
+    var pinnedRestoredForTree by remember { mutableStateOf<String?>(null) }
     var treeRoot by remember { mutableStateOf<NotesPathSegment?>(null) }
     var treeChildrenByFolderId by remember {
         mutableStateOf<Map<String, List<NotesEntry>>>(emptyMap())
@@ -167,6 +174,8 @@ fun NotesViewerScreen(
         browseLayout = preferences.loadBrowseLayout()
         titleSource = preferences.loadTitleSource()
         maxOpenTabs = preferences.loadMaxOpenTabs()
+        pinnedBarEnabled = preferences.loadPinnedBarEnabled()
+        maxPinnedItems = preferences.loadMaxPinnedItems()
     }
 
     fun clearTreeState() {
@@ -174,6 +183,87 @@ fun NotesViewerScreen(
         treeChildrenByFolderId = emptyMap()
         treeExpandedFolderIds = emptySet()
         treeLoadingRoot = false
+    }
+
+    fun persistPinnedItems(items: List<NotesPinnedItem>) {
+        val tree = notesTreeUri ?: return
+        val limited = items.take(maxPinnedItems.coerceAtLeast(NotesViewerPreferences.MIN_PINNED_ITEMS))
+        pinnedItems = limited
+        preferences.savePinnedItems(tree, limited)
+    }
+
+    fun ensureMaxPinnedItems() {
+        if (pinnedItems.size <= maxPinnedItems) {
+            return
+        }
+        persistPinnedItems(pinnedItems.take(maxPinnedItems))
+    }
+
+    fun isPinned(documentId: String): Boolean =
+        pinnedItems.any {
+            it.id == documentId ||
+                (it.kind != NotesPinnedKind.Home && it.documentId == documentId)
+        }
+
+    fun pinFolder(
+        folder: NotesEntry.Folder,
+        pathForFolder: List<NotesPathSegment>,
+    ) {
+        if (isPinned(folder.documentId)) {
+            return
+        }
+        if (pinnedItems.size >= maxPinnedItems) {
+            return
+        }
+        persistPinnedItems(
+            pinnedItems +
+                NotesPinnedItem(
+                    id = folder.documentId,
+                    kind = NotesPinnedKind.Folder,
+                    documentId = folder.documentId,
+                    uri = folder.uri,
+                    title = folder.name,
+                    folderPath = pathForFolder,
+                ),
+        )
+    }
+
+    fun pinNote(
+        note: NotesEntry.Note,
+        pathForNote: List<NotesPathSegment>,
+    ) {
+        if (isPinned(note.documentId)) {
+            return
+        }
+        if (pinnedItems.size >= maxPinnedItems) {
+            return
+        }
+        persistPinnedItems(
+            pinnedItems +
+                NotesPinnedItem(
+                    id = note.documentId,
+                    kind = NotesPinnedKind.Note,
+                    documentId = note.documentId,
+                    uri = note.uri,
+                    title = note.displayLabel,
+                    icon = note.displayIcon,
+                    fileName = note.name,
+                    folderPath = pathForNote,
+                ),
+        )
+    }
+
+    fun unpinItem(itemId: String) {
+        persistPinnedItems(pinnedItems.filterNot { it.id == itemId })
+    }
+
+    fun unpinByDocumentId(documentId: String) {
+        persistPinnedItems(
+            pinnedItems.filterNot {
+                it.id == documentId ||
+                    (it.kind != NotesPinnedKind.Home && it.documentId == documentId)
+            },
+        )
     }
 
     fun putTreeChildren(
@@ -485,6 +575,27 @@ fun NotesViewerScreen(
                         }
                     }
             }
+            if (updates.titles.isNotEmpty() || updates.icons.isNotEmpty()) {
+                val updatedPins =
+                    pinnedItems.map { item ->
+                        if (item.kind != NotesPinnedKind.Note) {
+                            return@map item
+                        }
+                        val title = updates.titles[item.documentId]
+                        val icon = updates.icons[item.documentId]
+                        if (title == null && icon == null) {
+                            item
+                        } else {
+                            item.copy(
+                                title = title ?: item.title,
+                                icon = icon ?: item.icon,
+                            )
+                        }
+                    }
+                if (updatedPins != pinnedItems) {
+                    persistPinnedItems(updatedPins)
+                }
+            }
         }
     }
 
@@ -627,6 +738,31 @@ fun NotesViewerScreen(
         selectedTabDocumentId = note.documentId
     }
 
+    fun openPinnedItem(item: NotesPinnedItem) {
+        val root = ensureRootPath()?.firstOrNull() ?: return
+        when (item.kind) {
+            NotesPinnedKind.Home -> {
+                openFolderList(listOf(root))
+            }
+            NotesPinnedKind.Folder -> {
+                val path = item.folderPath.ifEmpty { listOf(root) }
+                openFolderList(path)
+            }
+            NotesPinnedKind.Note -> {
+                openNote(
+                    NotesEntry.Note(
+                        documentId = item.documentId,
+                        name = item.fileName.ifBlank { item.title },
+                        uri = item.uri,
+                        displayLabel = item.title,
+                        displayIcon = item.icon,
+                    ),
+                    item.folderPath,
+                )
+            }
+        }
+    }
+
     fun openMergedNote(
         folder: NotesEntry.Folder,
         pathForFolder: List<NotesPathSegment>,
@@ -739,6 +875,7 @@ fun NotesViewerScreen(
     LaunchedEffect(settingsRevision) {
         val previousTitleSource = titleSource
         val previousMaxOpenTabs = maxOpenTabs
+        val previousMaxPinned = maxPinnedItems
         reloadPath()
         if (previousTitleSource != titleSource) {
             applyTitleSourceToVisibleLists()
@@ -746,15 +883,28 @@ fun NotesViewerScreen(
         if (previousMaxOpenTabs != maxOpenTabs) {
             ensureMaxOpenTabs()
         }
+        val tree = notesTreeUri
+        val root = ensureRootPath()?.firstOrNull()
+        if (tree != null && root != null) {
+            pinnedItems = preferences.loadPinnedItems(tree, root)
+            pinnedRestoredForTree = tree
+            if (previousMaxPinned != maxPinnedItems) {
+                ensureMaxPinnedItems()
+            }
+        } else {
+            pinnedItems = emptyList()
+            pinnedRestoredForTree = null
+        }
     }
 
     LaunchedEffect(notesTreeUri) {
         clearTreeState()
         repository.prepareForTree(notesTreeUri)
+        val treeUriValue = notesTreeUri
         val root = ensureRootPath()
-        if (root != null && notesTreeUri != null) {
-            if (sessionRestoredForTree != notesTreeUri) {
-                val session = preferences.loadOpenTabsSession(notesTreeUri)
+        if (root != null && treeUriValue != null) {
+            if (sessionRestoredForTree != treeUriValue) {
+                val session = preferences.loadOpenTabsSession(treeUriValue)
                 openTabs =
                     session.tabs.map { tab ->
                         tab.copy(title = repository.displayTitleFor(tab, titleSource))
@@ -769,15 +919,40 @@ fun NotesViewerScreen(
                     noteLoading = false
                     resetEditorState()
                 }
-                sessionRestoredForTree = notesTreeUri
+                sessionRestoredForTree = treeUriValue
+            }
+            if (pinnedRestoredForTree != treeUriValue) {
+                val loaded = preferences.loadPinnedItems(treeUriValue, root.first())
+                // Persist default home on first use so empty vs missing can be distinguished later.
+                if (preferences.loadPinnedItemsStore().itemsFor(treeUriValue) == null) {
+                    preferences.savePinnedItems(treeUriValue, loaded)
+                }
+                pinnedItems = loaded
+                pinnedRestoredForTree = treeUriValue
+                scope.launch {
+                    val missingIds =
+                        withContext(Dispatchers.IO) {
+                            loaded
+                                .filter { item ->
+                                    item.kind != NotesPinnedKind.Home &&
+                                        !repository.documentExists(item.uri)
+                                }.map { it.id }
+                                .toSet()
+                        }
+                    if (missingIds.isNotEmpty() && pinnedRestoredForTree == treeUriValue) {
+                        persistPinnedItems(pinnedItems.filterNot { it.id in missingIds })
+                    }
+                }
             }
             openFolderList(root)
             ensureTreeRootLoaded()
         } else {
             sessionRestoredForTree = null
+            pinnedRestoredForTree = null
             folderPath = emptyList()
             entries = emptyList()
             openTabs = emptyList()
+            pinnedItems = emptyList()
             selectedTabDocumentId = null
             noteContent = null
             noteLoading = false
@@ -1037,6 +1212,11 @@ fun NotesViewerScreen(
                                     statusMessage = statusMessage,
                                     density = listDensity,
                                     layout = browseLayout,
+                                    pinnedDocumentIds =
+                                    pinnedItems
+                                        .filter { it.kind != NotesPinnedKind.Home }
+                                        .map { it.documentId }
+                                        .toSet(),
                                     onOpenFolder = { folder ->
                                         openFolderList(
                                             folderPath +
@@ -1053,9 +1233,36 @@ fun NotesViewerScreen(
                                     onShowMergedNote = { folder ->
                                         openMergedNote(folder, folderPath)
                                     },
+                                    onPinFolder = { folder ->
+                                        pinFolder(
+                                            folder,
+                                            folderPath +
+                                                NotesPathSegment(
+                                                    documentId = folder.documentId,
+                                                    name = folder.name,
+                                                    uri = folder.uri,
+                                                ),
+                                        )
+                                    },
+                                    onUnpinFolder = { folder ->
+                                        unpinByDocumentId(folder.documentId)
+                                    },
+                                    onPinNote = { note ->
+                                        pinNote(note, folderPath)
+                                    },
+                                    onUnpinNote = { note ->
+                                        unpinByDocumentId(note.documentId)
+                                    },
                                 )
                             }
                         }
+                    }
+                    if (pinnedBarEnabled) {
+                        NotesPinnedBar(
+                            items = pinnedItems,
+                            onOpen = { openPinnedItem(it) },
+                            onUnpin = { unpinItem(it.id) },
+                        )
                     }
                 }
             }
@@ -1585,7 +1792,7 @@ private fun NotesBreadcrumbs(
             val clickable = !(isLast && lastIsNote)
             val color =
                 if (clickable) {
-                    MaterialTheme.colorScheme.primary
+                    MaterialTheme.colorScheme.onSurfaceVariant
                 } else {
                     MaterialTheme.colorScheme.onSurface
                 }
@@ -1630,9 +1837,14 @@ private fun NotesFolderList(
     statusMessage: String?,
     density: NotesListDensity,
     layout: NotesBrowseLayout,
+    pinnedDocumentIds: Set<String>,
     onOpenFolder: (NotesEntry.Folder) -> Unit,
     onOpenNote: (NotesEntry.Note) -> Unit,
     onShowMergedNote: (NotesEntry.Folder) -> Unit,
+    onPinFolder: (NotesEntry.Folder) -> Unit,
+    onUnpinFolder: (NotesEntry.Folder) -> Unit,
+    onPinNote: (NotesEntry.Note) -> Unit,
+    onUnpinNote: (NotesEntry.Note) -> Unit,
 ) {
     when {
         statusMessage != null && entries.isEmpty() -> {
@@ -1666,8 +1878,11 @@ private fun NotesFolderList(
                             NotesFolderIconCell(
                                 folder = entry,
                                 density = density,
+                                pinned = entry.documentId in pinnedDocumentIds,
                                 onOpen = { onOpenFolder(entry) },
                                 onShowMergedNote = { onShowMergedNote(entry) },
+                                onPin = { onPinFolder(entry) },
+                                onUnpin = { onUnpinFolder(entry) },
                             )
                         }
 
@@ -1675,7 +1890,10 @@ private fun NotesFolderList(
                             NotesNoteIconCell(
                                 note = entry,
                                 density = density,
+                                pinned = entry.documentId in pinnedDocumentIds,
                                 onOpen = { onOpenNote(entry) },
+                                onPin = { onPinNote(entry) },
+                                onUnpin = { onUnpinNote(entry) },
                             )
                         }
                     }
@@ -1694,8 +1912,11 @@ private fun NotesFolderList(
                             NotesFolderRow(
                                 folder = entry,
                                 density = density,
+                                pinned = entry.documentId in pinnedDocumentIds,
                                 onOpen = { onOpenFolder(entry) },
                                 onShowMergedNote = { onShowMergedNote(entry) },
+                                onPin = { onPinFolder(entry) },
+                                onUnpin = { onUnpinFolder(entry) },
                             )
                         }
 
@@ -1703,7 +1924,10 @@ private fun NotesFolderList(
                             NotesNoteRow(
                                 note = entry,
                                 density = density,
+                                pinned = entry.documentId in pinnedDocumentIds,
                                 onOpen = { onOpenNote(entry) },
+                                onPin = { onPinNote(entry) },
+                                onUnpin = { onUnpinNote(entry) },
                             )
                         }
                     }
@@ -1718,8 +1942,11 @@ private fun NotesFolderList(
 private fun NotesFolderRow(
     folder: NotesEntry.Folder,
     density: NotesListDensity,
+    pinned: Boolean,
     onOpen: () -> Unit,
     onShowMergedNote: () -> Unit,
+    onPin: () -> Unit,
+    onUnpin: () -> Unit,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     val iconSize = density.iconSizeDp.dp
@@ -1736,7 +1963,7 @@ private fun NotesFolderRow(
         Icon(
             imageVector = Icons.Filled.Folder,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(iconSize),
         )
         Spacer(modifier = Modifier.width(10.dp))
@@ -1747,23 +1974,36 @@ private fun NotesFolderRow(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        if (folder.hasMergedNote) {
-            Box(modifier = Modifier.size(menuButtonSize)) {
-                IconButton(
-                    onClick = { menuExpanded = true },
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.MoreHoriz,
-                        contentDescription = stringResource(R.string.markdown_notes_folder_menu),
-                    )
-                }
-                NotesFolderMergedMenu(
-                    expanded = menuExpanded,
-                    onDismiss = { menuExpanded = false },
-                    onShowMergedNote = onShowMergedNote,
+        if (pinned) {
+            Icon(
+                imageVector = Icons.Filled.PushPin,
+                contentDescription = stringResource(R.string.markdown_notes_pinned),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier =
+                Modifier
+                    .padding(end = 2.dp)
+                    .size((density.iconSizeDp * 0.85f).dp),
+            )
+        }
+        Box(modifier = Modifier.size(menuButtonSize)) {
+            IconButton(
+                onClick = { menuExpanded = true },
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.MoreHoriz,
+                    contentDescription = stringResource(R.string.markdown_notes_folder_menu),
                 )
             }
+            NotesEntryContextMenu(
+                expanded = menuExpanded,
+                onDismiss = { menuExpanded = false },
+                pinned = pinned,
+                showMergedNote = folder.hasMergedNote,
+                onShowMergedNote = onShowMergedNote,
+                onPin = onPin,
+                onUnpin = onUnpin,
+            )
         }
     }
 }
@@ -1772,9 +2012,14 @@ private fun NotesFolderRow(
 private fun NotesNoteRow(
     note: NotesEntry.Note,
     density: NotesListDensity,
+    pinned: Boolean,
     onOpen: () -> Unit,
+    onPin: () -> Unit,
+    onUnpin: () -> Unit,
 ) {
+    var menuExpanded by remember { mutableStateOf(false) }
     val iconSize = density.iconSizeDp.dp
+    val menuButtonSize = density.mergedButtonHeightDp.dp
     Row(
         modifier =
         Modifier
@@ -1793,6 +2038,37 @@ private fun NotesNoteRow(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
+        if (pinned) {
+            Icon(
+                imageVector = Icons.Filled.PushPin,
+                contentDescription = stringResource(R.string.markdown_notes_pinned),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier =
+                Modifier
+                    .padding(end = 2.dp)
+                    .size((density.iconSizeDp * 0.85f).dp),
+            )
+        }
+        Box(modifier = Modifier.size(menuButtonSize)) {
+            IconButton(
+                onClick = { menuExpanded = true },
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.MoreHoriz,
+                    contentDescription = stringResource(R.string.markdown_notes_note_menu),
+                )
+            }
+            NotesEntryContextMenu(
+                expanded = menuExpanded,
+                onDismiss = { menuExpanded = false },
+                pinned = pinned,
+                showMergedNote = false,
+                onShowMergedNote = {},
+                onPin = onPin,
+                onUnpin = onUnpin,
+            )
+        }
     }
 }
 
@@ -1801,8 +2077,11 @@ private fun NotesNoteRow(
 private fun NotesFolderIconCell(
     folder: NotesEntry.Folder,
     density: NotesListDensity,
+    pinned: Boolean,
     onOpen: () -> Unit,
     onShowMergedNote: () -> Unit,
+    onPin: () -> Unit,
+    onUnpin: () -> Unit,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     Box(modifier = Modifier.fillMaxWidth()) {
@@ -1810,25 +2089,38 @@ private fun NotesFolderIconCell(
             label = folder.name,
             density = density,
             icon = {
-                Icon(
-                    imageVector = Icons.Filled.Folder,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(notesGridIconSize(density)),
-                )
+                Box {
+                    Icon(
+                        imageVector = Icons.Filled.Folder,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(notesGridIconSize(density)),
+                    )
+                    if (pinned) {
+                        Icon(
+                            imageVector = Icons.Filled.PushPin,
+                            contentDescription = stringResource(R.string.markdown_notes_pinned),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier =
+                            Modifier
+                                .align(Alignment.TopEnd)
+                                .size(12.dp)
+                                .offset(x = 4.dp, y = (-2).dp),
+                        )
+                    }
+                }
             },
             onOpen = onOpen,
-            onLongClick =
-            if (folder.hasMergedNote) {
-                { menuExpanded = true }
-            } else {
-                null
-            },
+            onLongClick = { menuExpanded = true },
         )
-        NotesFolderMergedMenu(
+        NotesEntryContextMenu(
             expanded = menuExpanded,
             onDismiss = { menuExpanded = false },
+            pinned = pinned,
+            showMergedNote = folder.hasMergedNote,
             onShowMergedNote = onShowMergedNote,
+            onPin = onPin,
+            onUnpin = onUnpin,
         )
     }
 }
@@ -1837,36 +2129,93 @@ private fun NotesFolderIconCell(
 private fun NotesNoteIconCell(
     note: NotesEntry.Note,
     density: NotesListDensity,
+    pinned: Boolean,
     onOpen: () -> Unit,
+    onPin: () -> Unit,
+    onUnpin: () -> Unit,
 ) {
-    NotesIconCell(
-        label = note.displayLabel,
-        density = density,
-        icon = {
-            NotesNoteGlyph(
-                icon = note.displayIcon,
-                size = notesGridIconSize(density),
-            )
-        },
-        onOpen = onOpen,
-    )
+    var menuExpanded by remember { mutableStateOf(false) }
+    Box(modifier = Modifier.fillMaxWidth()) {
+        NotesIconCell(
+            label = note.displayLabel,
+            density = density,
+            icon = {
+                Box {
+                    NotesNoteGlyph(
+                        icon = note.displayIcon,
+                        size = notesGridIconSize(density),
+                    )
+                    if (pinned) {
+                        Icon(
+                            imageVector = Icons.Filled.PushPin,
+                            contentDescription = stringResource(R.string.markdown_notes_pinned),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier =
+                            Modifier
+                                .align(Alignment.TopEnd)
+                                .size(12.dp)
+                                .offset(x = 4.dp, y = (-2).dp),
+                        )
+                    }
+                }
+            },
+            onOpen = onOpen,
+            onLongClick = { menuExpanded = true },
+        )
+        NotesEntryContextMenu(
+            expanded = menuExpanded,
+            onDismiss = { menuExpanded = false },
+            pinned = pinned,
+            showMergedNote = false,
+            onShowMergedNote = {},
+            onPin = onPin,
+            onUnpin = onUnpin,
+        )
+    }
 }
 
 @Composable
-private fun NotesFolderMergedMenu(
+private fun NotesEntryContextMenu(
     expanded: Boolean,
     onDismiss: () -> Unit,
+    pinned: Boolean,
+    showMergedNote: Boolean,
     onShowMergedNote: () -> Unit,
+    onPin: () -> Unit,
+    onUnpin: () -> Unit,
 ) {
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismiss,
     ) {
+        if (showMergedNote) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.markdown_notes_show_merged)) },
+                onClick = {
+                    onDismiss()
+                    onShowMergedNote()
+                },
+            )
+        }
         DropdownMenuItem(
-            text = { Text(stringResource(R.string.markdown_notes_show_merged)) },
+            text = {
+                Text(
+                    stringResource(
+                        if (pinned) {
+                            R.string.markdown_notes_unpin
+                        } else {
+                            R.string.markdown_notes_pin
+                        },
+                    ),
+                )
+            },
             onClick = {
                 onDismiss()
-                onShowMergedNote()
+                if (pinned) {
+                    onUnpin()
+                } else {
+                    onPin()
+                }
             },
         )
     }

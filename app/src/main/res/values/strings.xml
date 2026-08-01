@@ -29,6 +29,15 @@
     <string name="settings_markdown_notes_title_source_file_name">File name</string>
     <string name="settings_markdown_notes_max_open_tabs">Max open tabs</string>
     <string name="settings_markdown_notes_max_open_tabs_hint">Oldest tab closes when the limit is exceeded</string>
+    <string name="settings_markdown_notes_pinned_bar">Pinned bar</string>
+    <string name="settings_markdown_notes_pinned_bar_enabled">Show pinned bar</string>
+    <string name="settings_markdown_notes_max_pinned">Max pinned items</string>
+    <string name="settings_markdown_notes_max_pinned_hint">From 1 to 20; default is 5</string>
+    <string name="settings_markdown_notes_pinned_items">Pinned items</string>
+    <string name="settings_markdown_notes_pinned_items_empty">No pinned items</string>
+    <string name="settings_markdown_notes_pinned_items_need_folder">Choose a notes folder to edit pinned items</string>
+    <string name="settings_markdown_notes_pinned_remove">Remove pin</string>
+    <string name="settings_markdown_notes_pinned_reorder">Reorder pin</string>
     <string name="markdown_notes_title">Harrix Notes</string>
     <string name="markdown_notes_menu">More options</string>
     <string name="markdown_notes_settings">Settings</string>
@@ -42,6 +51,10 @@
     <string name="markdown_notes_reorder_tab">Reorder tab</string>
     <string name="markdown_notes_show_merged">Show merged note</string>
     <string name="markdown_notes_folder_menu">Folder options</string>
+    <string name="markdown_notes_note_menu">Note options</string>
+    <string name="markdown_notes_pin">Pin</string>
+    <string name="markdown_notes_unpin">Unpin</string>
+    <string name="markdown_notes_pinned">Pinned</string>
     <string name="markdown_notes_folder_empty">No notes or folders here</string>
     <string name="markdown_notes_load_failed">Could not load notes</string>
     <string name="markdown_notes_save_failed">Could not save note</string>
