@@ -1,6 +1,7 @@
 package dev.harrix.notes.ui.notes
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -10,15 +11,19 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
@@ -39,6 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
@@ -55,6 +61,7 @@ import dev.harrix.notes.R
 
 private const val PinnedLabelMaxLines = 2
 private const val PinnedLabelFontStepSp = 0.5f
+private val PinnedBarHorizontalPadding = 8.dp
 
 @Composable
 fun NotesPinnedBar(
@@ -68,7 +75,7 @@ fun NotesPinnedBar(
     val slots = maxSlots.coerceAtLeast(1)
     val emptyCount = (slots - items.size).coerceAtLeast(0)
     var showHowToPin by remember { mutableStateOf(false) }
-    val itemWidth = density.pinnedItemWidthDp.dp
+    val minItemWidth = density.pinnedItemWidthDp.dp
     val iconSize = density.pinnedIconSizeDp.dp
     val labelMinFont = density.pinnedLabelMinSp.sp
     val labelMaxFont = density.pinnedLabelMaxSp.sp
@@ -83,36 +90,64 @@ fun NotesPinnedBar(
             .navigationBarsPadding(),
     ) {
         HorizontalDivider()
-        Row(
-            modifier =
-            Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 8.dp, vertical = barPadding),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.Top,
-        ) {
-            items.forEach { item ->
-                NotesPinnedBarItem(
-                    item = item,
-                    itemWidth = itemWidth,
-                    iconSize = iconSize,
-                    labelMinFont = labelMinFont,
-                    labelMaxFont = labelMaxFont,
-                    labelHeight = labelHeight,
-                    onOpen = { onOpen(item) },
-                    onUnpin = { onUnpin(item) },
-                )
-            }
-            repeat(emptyCount) {
-                NotesPinnedEmptySlot(
-                    itemWidth = itemWidth,
-                    iconSize = iconSize,
-                    labelMinFont = labelMinFont,
-                    labelMaxFont = labelMaxFont,
-                    labelHeight = labelHeight,
-                    onClick = { showHowToPin = true },
-                )
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val availableWidth = maxWidth - PinnedBarHorizontalPadding * 2
+            val needsScroll = minItemWidth * slots > availableWidth
+            val scrollState = rememberScrollState()
+
+            Column(modifier = Modifier.fillMaxWidth()) {
+                if (needsScroll) {
+                    Row(
+                        modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(scrollState)
+                            .padding(horizontal = PinnedBarHorizontalPadding, vertical = barPadding),
+                        horizontalArrangement = Arrangement.spacedBy(0.dp),
+                        verticalAlignment = Alignment.Top,
+                    ) {
+                        NotesPinnedBarSlots(
+                            items = items,
+                            emptyCount = emptyCount,
+                            slotModifier = { Modifier.width(minItemWidth) },
+                            iconSize = iconSize,
+                            labelMinFont = labelMinFont,
+                            labelMaxFont = labelMaxFont,
+                            labelHeight = labelHeight,
+                            onOpen = onOpen,
+                            onUnpin = onUnpin,
+                            onEmptyClick = { showHowToPin = true },
+                        )
+                    }
+                    NotesPinnedHorizontalScrollbar(
+                        state = scrollState,
+                        modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = PinnedBarHorizontalPadding, vertical = 2.dp),
+                    )
+                } else {
+                    Row(
+                        modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = PinnedBarHorizontalPadding, vertical = barPadding),
+                        verticalAlignment = Alignment.Top,
+                    ) {
+                        NotesPinnedBarSlots(
+                            items = items,
+                            emptyCount = emptyCount,
+                            slotModifier = { Modifier.weight(1f) },
+                            iconSize = iconSize,
+                            labelMinFont = labelMinFont,
+                            labelMaxFont = labelMaxFont,
+                            labelHeight = labelHeight,
+                            onOpen = onOpen,
+                            onUnpin = onUnpin,
+                            onEmptyClick = { showHowToPin = true },
+                        )
+                    }
+                }
             }
         }
     }
@@ -131,11 +166,48 @@ fun NotesPinnedBar(
     }
 }
 
+@Composable
+private fun RowScope.NotesPinnedBarSlots(
+    items: List<NotesPinnedItem>,
+    emptyCount: Int,
+    slotModifier: RowScope.() -> Modifier,
+    iconSize: Dp,
+    labelMinFont: TextUnit,
+    labelMaxFont: TextUnit,
+    labelHeight: Dp,
+    onOpen: (NotesPinnedItem) -> Unit,
+    onUnpin: (NotesPinnedItem) -> Unit,
+    onEmptyClick: () -> Unit,
+) {
+    items.forEach { item ->
+        NotesPinnedBarItem(
+            item = item,
+            modifier = slotModifier(),
+            iconSize = iconSize,
+            labelMinFont = labelMinFont,
+            labelMaxFont = labelMaxFont,
+            labelHeight = labelHeight,
+            onOpen = { onOpen(item) },
+            onUnpin = { onUnpin(item) },
+        )
+    }
+    repeat(emptyCount) {
+        NotesPinnedEmptySlot(
+            modifier = slotModifier(),
+            iconSize = iconSize,
+            labelMinFont = labelMinFont,
+            labelMaxFont = labelMaxFont,
+            labelHeight = labelHeight,
+            onClick = onEmptyClick,
+        )
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun NotesPinnedBarItem(
     item: NotesPinnedItem,
-    itemWidth: Dp,
+    modifier: Modifier,
     iconSize: Dp,
     labelMinFont: TextUnit,
     labelMaxFont: TextUnit,
@@ -152,9 +224,7 @@ private fun NotesPinnedBarItem(
             else -> item.title.ifBlank { item.documentId }
         }
 
-    Box(
-        modifier = Modifier.width(itemWidth),
-    ) {
+    Box(modifier = modifier) {
         Column(
             modifier =
             Modifier
@@ -201,7 +271,7 @@ private fun NotesPinnedBarItem(
 
 @Composable
 private fun NotesPinnedEmptySlot(
-    itemWidth: Dp,
+    modifier: Modifier,
     iconSize: Dp,
     labelMinFont: TextUnit,
     labelMaxFont: TextUnit,
@@ -210,8 +280,7 @@ private fun NotesPinnedEmptySlot(
 ) {
     Column(
         modifier =
-        Modifier
-            .width(itemWidth)
+        modifier
             .clickable(onClick = onClick)
             .padding(horizontal = 2.dp, vertical = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -261,6 +330,39 @@ private fun NotesPinnedGlyph(
         NotesPinnedKind.Note -> {
             NotesNoteGlyph(icon = item.icon, size = iconSize)
         }
+    }
+}
+
+@Composable
+private fun NotesPinnedHorizontalScrollbar(
+    state: ScrollState,
+    modifier: Modifier = Modifier,
+) {
+    val maxValue = state.maxValue
+    if (maxValue <= 0) {
+        return
+    }
+    val density = LocalDensity.current
+    val scrollFraction = (state.value.toFloat() / maxValue.toFloat()).coerceIn(0f, 1f)
+
+    BoxWithConstraints(modifier = modifier.height(3.dp)) {
+        val trackWidthPx = with(density) { maxWidth.toPx() }
+        val contentWidthPx = trackWidthPx + maxValue
+        val thumbWidthPx =
+            (trackWidthPx * trackWidthPx / contentWidthPx)
+                .coerceIn(trackWidthPx * 0.12f, trackWidthPx)
+        val thumbOffsetPx = scrollFraction * (trackWidthPx - thumbWidthPx)
+        Box(
+            modifier =
+            Modifier
+                .fillMaxHeight()
+                .width(with(density) { thumbWidthPx.toDp() })
+                .offset(x = with(density) { thumbOffsetPx.toDp() })
+                .background(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+                    shape = RoundedCornerShape(2.dp),
+                ),
+        )
     }
 }
 
