@@ -924,6 +924,39 @@ fun NotesViewerScreen(
                     .padding(innerPadding)
                     .fillMaxSize(),
             ) {
+                if (!notesTreeUri.isNullOrBlank()) {
+                    NotesNavigationRow(
+                        onBack = { navigateBack() },
+                        segments =
+                        if (selectedTab != null) {
+                            selectedTab.folderPath +
+                                NotesPathSegment(
+                                    documentId = selectedTab.documentId,
+                                    name = selectedTab.title,
+                                    uri = selectedTab.uri,
+                                )
+                        } else {
+                            folderPath
+                        },
+                        lastIsNote = selectedTab != null,
+                        showCloseNote = selectedTab != null,
+                        onCloseNote = {
+                            selectedTab?.let { closeTab(it.documentId) }
+                        },
+                        onSegmentClick = { index ->
+                            val path =
+                                if (selectedTab != null) {
+                                    selectedTab.folderPath
+                                } else {
+                                    folderPath
+                                }
+                            val targetIndex = index.coerceAtMost(path.lastIndex)
+                            if (targetIndex >= 0) {
+                                openFolderList(path.take(targetIndex + 1))
+                            }
+                        },
+                    )
+                }
                 NotesTopChrome(
                     onOpenDrawer = {
                         scope.launch { drawerState.open() }
@@ -958,37 +991,6 @@ fun NotesViewerScreen(
                         )
                     }
                 } else {
-                    NotesNavigationRow(
-                        onBack = { navigateBack() },
-                        segments =
-                        if (selectedTab != null) {
-                            selectedTab.folderPath +
-                                NotesPathSegment(
-                                    documentId = selectedTab.documentId,
-                                    name = selectedTab.title,
-                                    uri = selectedTab.uri,
-                                )
-                        } else {
-                            folderPath
-                        },
-                        lastIsNote = selectedTab != null,
-                        showCloseNote = selectedTab != null,
-                        onCloseNote = {
-                            selectedTab?.let { closeTab(it.documentId) }
-                        },
-                        onSegmentClick = { index ->
-                            val path =
-                                if (selectedTab != null) {
-                                    selectedTab.folderPath
-                                } else {
-                                    folderPath
-                                }
-                            val targetIndex = index.coerceAtMost(path.lastIndex)
-                            if (targetIndex >= 0) {
-                                openFolderList(path.take(targetIndex + 1))
-                            }
-                        },
-                    )
                     if (isEditing && (isSaving || saveFeedback != null)) {
                         Text(
                             text =
