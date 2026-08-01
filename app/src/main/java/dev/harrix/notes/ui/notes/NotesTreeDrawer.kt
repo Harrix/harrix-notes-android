@@ -39,6 +39,8 @@ import dev.harrix.notes.NotesPathSegment
 import dev.harrix.notes.R
 import dev.harrix.notes.ui.adaptiveDrawerWidth
 
+private val DrawerLogoSize = 40.dp
+
 data class NotesTreeRow(
     val entry: NotesEntry,
     val depth: Int,
@@ -48,7 +50,6 @@ data class NotesTreeRow(
 
 @Composable
 fun NotesTreeDrawerContent(
-    rootLabel: String,
     rows: List<NotesTreeRow>,
     expandedFolderIds: Set<String>,
     selectedNoteDocumentId: String?,
@@ -61,18 +62,20 @@ fun NotesTreeDrawerContent(
 ) {
     ModalDrawerSheet(modifier = modifier.adaptiveDrawerWidth()) {
         Column(modifier = Modifier.fillMaxHeight()) {
-            Text(
-                text = rootLabel,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+            NotesBrandTitle(
+                logoSize = DrawerLogoSize,
+                textStyle = MaterialTheme.typography.titleLarge,
                 modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                    .padding(
+                        horizontal = 28.dp,
+                        vertical = 24.dp,
+                    ),
             )
-            HorizontalDivider()
+            HorizontalDivider(
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
             when {
                 isLoadingRoot && rows.isEmpty() -> {
                     Column(

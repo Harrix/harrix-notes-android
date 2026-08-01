@@ -85,11 +85,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -131,6 +129,7 @@ private val NotesIconsLabelMaxFontSize = 13.sp
 private const val NotesIconsLabelMaxLines = 3
 private const val NotesIconsLabelCompactMaxLines = 2
 private const val NotesIconsLabelFontStepSp = 0.5f
+private val TopBarLogoSize = 28.dp
 
 @Composable
 fun NotesViewerScreen(
@@ -1136,11 +1135,6 @@ fun NotesViewerScreen(
                 expandedFolderIds = treeExpandedFolderIds,
             )
         }
-    val drawerTitle =
-        treeRoot?.name
-            ?: notesTreeUri?.let { notesFolderDisplayName(context, it) }
-            ?: stringResource(R.string.markdown_notes_title)
-
     ModalNavigationDrawer(
         drawerState = drawerState,
         modifier = modifier,
@@ -1148,7 +1142,6 @@ fun NotesViewerScreen(
         gesturesEnabled = drawerState.isOpen || !notesTreeUri.isNullOrBlank(),
         drawerContent = {
             NotesTreeDrawerContent(
-                rootLabel = drawerTitle,
                 rows = treeRows,
                 expandedFolderIds = treeExpandedFolderIds,
                 selectedNoteDocumentId = selectedTabDocumentId,
@@ -1404,18 +1397,18 @@ private fun NotesTopChrome(
                 contentDescription = stringResource(R.string.nav_open),
             )
         }
-        if (breadcrumbSegments == null) {
-            Text(
-                text = stringResource(R.string.markdown_notes_title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+        val showBrandTitle =
+            breadcrumbSegments == null ||
+                (!lastIsNote && breadcrumbSegments.size <= 1)
+        if (showBrandTitle) {
+            NotesBrandTitle(
+                logoSize = TopBarLogoSize,
+                textStyle = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.weight(1f),
             )
         } else {
             NotesBreadcrumbs(
-                segments = breadcrumbSegments,
+                segments = breadcrumbSegments.orEmpty(),
                 lastIsNote = lastIsNote,
                 onSegmentClick = onSegmentClick,
                 modifier = Modifier.weight(1f),
@@ -1804,7 +1797,9 @@ private fun NotesNavigationRow(
                             onLongPress = { tabsMenuExpanded = true },
                         )
                     }
-                    NotesNewNoteTabChip(onClick = onCreateNote)
+                    if (openTabs.isEmpty()) {
+                        NotesNewNoteTabChip(onClick = onCreateNote)
+                    }
                 }
                 NotesHorizontalScrollbar(
                     state = tabsScrollState,
@@ -1889,6 +1884,9 @@ private fun NotesBreadcrumbs(
     onSegmentClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    if (segments.isEmpty()) {
+        return
+    }
     Row(
         modifier =
         modifier
@@ -1896,25 +1894,6 @@ private fun NotesBreadcrumbs(
             .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_notes_logo),
-            contentDescription = null,
-            tint = Color.Unspecified,
-            modifier = Modifier.size(20.dp),
-        )
-        Spacer(modifier = Modifier.width(6.dp))
-        Text(
-            text = stringResource(R.string.app_name),
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        if (segments.isEmpty()) {
-            return@Row
-        }
-        Spacer(modifier = Modifier.width(10.dp))
         segments.forEachIndexed { index, segment ->
             if (index > 0) {
                 Text(
