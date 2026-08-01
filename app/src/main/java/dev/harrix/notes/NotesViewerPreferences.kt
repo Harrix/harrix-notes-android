@@ -59,8 +59,9 @@ class NotesViewerPreferences(
         prefs.edit().putBoolean(KEY_PINNED_BAR_ENABLED, enabled).apply()
     }
 
-    fun loadMaxPinnedItems(): Int =
-        prefs.getInt(KEY_MAX_PINNED_ITEMS, DEFAULT_MAX_PINNED_ITEMS).coerceIn(MIN_PINNED_ITEMS, MAX_PINNED_ITEMS)
+    fun loadMaxPinnedItems(): Int = prefs
+        .getInt(KEY_MAX_PINNED_ITEMS, DEFAULT_MAX_PINNED_ITEMS)
+        .coerceIn(MIN_PINNED_ITEMS, MAX_PINNED_ITEMS)
 
     fun saveMaxPinnedItems(value: Int) {
         prefs.edit().putInt(KEY_MAX_PINNED_ITEMS, value.coerceIn(MIN_PINNED_ITEMS, MAX_PINNED_ITEMS)).apply()

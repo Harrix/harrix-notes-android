@@ -573,17 +573,16 @@ class NotesTreeRepository(
     }
 
     /** Returns true when [uri] still resolves to a document under the granted tree. */
-    fun documentExists(uri: Uri): Boolean =
-        runCatching {
-            resolver
-                .query(
-                    uri,
-                    arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID),
-                    null,
-                    null,
-                    null,
-                )?.use { cursor -> cursor.moveToFirst() } == true
-        }.getOrDefault(false)
+    fun documentExists(uri: Uri): Boolean = runCatching {
+        resolver
+            .query(
+                uri,
+                arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID),
+                null,
+                null,
+                null,
+            )?.use { cursor -> cursor.moveToFirst() } == true
+    }.getOrDefault(false)
 
     fun readText(uri: Uri): String = resolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
         ?: error("Could not open note")

@@ -12,8 +12,7 @@ enum class NotesPinnedKind {
     ;
 
     companion object {
-        fun fromStorageKey(raw: String?): NotesPinnedKind? =
-            entries.firstOrNull { it.name.equals(raw, ignoreCase = true) }
+        fun fromStorageKey(raw: String?): NotesPinnedKind? = entries.firstOrNull { it.name.equals(raw, ignoreCase = true) }
     }
 }
 
@@ -83,37 +82,35 @@ data class NotesPinnedItemsStore(
 
         fun empty(): NotesPinnedItemsStore = NotesPinnedItemsStore(byTreeUri = emptyMap())
 
-        fun fromJson(raw: String): NotesPinnedItemsStore? =
-            runCatching {
-                val root = JSONObject(raw)
-                val treesJson = root.optJSONObject(KEY_TREES) ?: return empty()
-                val map = linkedMapOf<String, List<NotesPinnedItem>>()
-                treesJson.keys().forEach { treeUri ->
-                    if (treeUri.isNullOrBlank()) {
-                        return@forEach
-                    }
-                    val itemsJson = treesJson.optJSONArray(treeUri) ?: JSONArray()
-                    val items =
-                        buildList {
-                            for (index in 0 until itemsJson.length()) {
-                                val itemJson = itemsJson.optJSONObject(index) ?: continue
-                                parseItem(itemJson)?.let(::add)
-                            }
-                        }
-                    map[treeUri] = items
+        fun fromJson(raw: String): NotesPinnedItemsStore? = runCatching {
+            val root = JSONObject(raw)
+            val treesJson = root.optJSONObject(KEY_TREES) ?: return empty()
+            val map = linkedMapOf<String, List<NotesPinnedItem>>()
+            treesJson.keys().forEach { treeUri ->
+                if (treeUri.isNullOrBlank()) {
+                    return@forEach
                 }
-                NotesPinnedItemsStore(byTreeUri = map)
-            }.getOrNull()
+                val itemsJson = treesJson.optJSONArray(treeUri) ?: JSONArray()
+                val items =
+                    buildList {
+                        for (index in 0 until itemsJson.length()) {
+                            val itemJson = itemsJson.optJSONObject(index) ?: continue
+                            parseItem(itemJson)?.let(::add)
+                        }
+                    }
+                map[treeUri] = items
+            }
+            NotesPinnedItemsStore(byTreeUri = map)
+        }.getOrNull()
 
-        fun defaultHome(root: NotesPathSegment): NotesPinnedItem =
-            NotesPinnedItem(
-                id = NotesPinnedItem.HOME_ID,
-                kind = NotesPinnedKind.Home,
-                documentId = root.documentId,
-                uri = root.uri,
-                title = "",
-                folderPath = emptyList(),
-            )
+        fun defaultHome(root: NotesPathSegment): NotesPinnedItem = NotesPinnedItem(
+            id = NotesPinnedItem.HOME_ID,
+            kind = NotesPinnedKind.Home,
+            documentId = root.documentId,
+            uri = root.uri,
+            title = "",
+            folderPath = emptyList(),
+        )
 
         private fun parseItem(json: JSONObject): NotesPinnedItem? {
             val id = json.optString(KEY_ID).takeIf { it.isNotBlank() } ?: return null

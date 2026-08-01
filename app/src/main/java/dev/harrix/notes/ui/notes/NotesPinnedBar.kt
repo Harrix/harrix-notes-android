@@ -37,12 +37,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.rememberTextMeasurer
 import dev.harrix.notes.NotesPinnedItem
 import dev.harrix.notes.NotesPinnedKind
 import dev.harrix.notes.R
@@ -105,6 +105,7 @@ private fun NotesPinnedBarItem(
             item.kind == NotesPinnedKind.Home || item.id == NotesPinnedItem.HOME_ID -> {
                 stringResource(R.string.nav_drawer_home)
             }
+
             else -> item.title.ifBlank { item.documentId }
         }
 
@@ -163,6 +164,7 @@ private fun NotesPinnedGlyph(item: NotesPinnedItem) {
                 modifier = Modifier.size(PinnedIconSize),
             )
         }
+
         NotesPinnedKind.Folder -> {
             Icon(
                 imageVector = Icons.Filled.Folder,
@@ -171,6 +173,7 @@ private fun NotesPinnedGlyph(item: NotesPinnedItem) {
                 modifier = Modifier.size(PinnedIconSize),
             )
         }
+
         NotesPinnedKind.Note -> {
             NotesNoteGlyph(icon = item.icon, size = PinnedIconSize)
         }

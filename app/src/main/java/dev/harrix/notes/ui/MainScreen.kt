@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import dev.harrix.notes.ui.notes.NotesViewerScreen
@@ -20,8 +20,9 @@ fun MainScreen(
     onExitApp: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var showSettings by remember { mutableStateOf(false) }
-    var settingsRevision by remember { mutableIntStateOf(0) }
+    // Survive Activity recreation (e.g. landscape rotation).
+    var showSettings by rememberSaveable { mutableStateOf(false) }
+    var settingsRevision by rememberSaveable { mutableIntStateOf(0) }
 
     Box(modifier = modifier.fillMaxSize()) {
         NotesViewerScreen(

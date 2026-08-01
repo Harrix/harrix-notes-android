@@ -201,11 +201,10 @@ fun NotesViewerScreen(
         persistPinnedItems(pinnedItems.take(maxPinnedItems))
     }
 
-    fun isPinned(documentId: String): Boolean =
-        pinnedItems.any {
-            it.id == documentId ||
-                (it.kind != NotesPinnedKind.Home && it.documentId == documentId)
-        }
+    fun isPinned(documentId: String): Boolean = pinnedItems.any {
+        it.id == documentId ||
+            (it.kind != NotesPinnedKind.Home && it.documentId == documentId)
+    }
 
     fun pinFolder(
         folder: NotesEntry.Folder,
@@ -758,10 +757,12 @@ fun NotesViewerScreen(
             NotesPinnedKind.Home -> {
                 openFolderList(listOf(root))
             }
+
             NotesPinnedKind.Folder -> {
                 val path = item.folderPath.ifEmpty { listOf(root) }
                 openFolderList(path)
             }
+
             NotesPinnedKind.Note -> {
                 openNote(
                     NotesEntry.Note(
@@ -1345,6 +1346,7 @@ private fun NotesTopChrome(
                     modifier = Modifier.weight(1f),
                 )
             }
+
             breadcrumbSegments.isNotEmpty() -> {
                 NotesBreadcrumbs(
                     segments = breadcrumbSegments,
@@ -1353,6 +1355,7 @@ private fun NotesTopChrome(
                     modifier = Modifier.weight(1f),
                 )
             }
+
             else -> {
                 Spacer(modifier = Modifier.weight(1f))
             }

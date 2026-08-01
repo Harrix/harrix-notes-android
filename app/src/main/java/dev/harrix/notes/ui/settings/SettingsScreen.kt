@@ -38,7 +38,6 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -78,13 +77,10 @@ fun SettingsScreen(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val background = MaterialTheme.colorScheme.background
-
     BackHandler(onBack = onClose)
 
     Scaffold(
         modifier = modifier,
-        containerColor = background,
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_title)) },
@@ -96,11 +92,6 @@ fun SettingsScreen(
                         )
                     }
                 },
-                colors =
-                TopAppBarDefaults.topAppBarColors(
-                    containerColor = background,
-                    scrolledContainerColor = background,
-                ),
             )
         },
     ) { innerPadding ->
@@ -471,6 +462,7 @@ private fun SettingsPinnedItemRow(
             item.kind == NotesPinnedKind.Home || item.id == NotesPinnedItem.HOME_ID -> {
                 stringResource(R.string.nav_drawer_home)
             }
+
             else -> item.title.ifBlank { item.documentId }
         }
 
@@ -515,6 +507,7 @@ private fun SettingsPinnedItemRow(
                     modifier = Modifier.size(20.dp),
                 )
             }
+
             NotesPinnedKind.Folder -> {
                 Icon(
                     imageVector = Icons.Filled.Folder,
@@ -523,6 +516,7 @@ private fun SettingsPinnedItemRow(
                     modifier = Modifier.size(20.dp),
                 )
             }
+
             NotesPinnedKind.Note -> {
                 NotesNoteGlyph(icon = item.icon, size = 20.dp)
             }
