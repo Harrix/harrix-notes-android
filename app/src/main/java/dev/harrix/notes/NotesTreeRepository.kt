@@ -43,7 +43,8 @@ class NotesTreeRepository(
             rawChildrenCache.clear()
             listingCache.clear()
             titleByDocumentId.clear()
-            titleLookupDone.clear()
+            iconByDocumentId.clear()
+            metaLookupDone.clear()
             cachedTreeUriString = treeUriString
         }
     }
@@ -86,6 +87,7 @@ class NotesTreeRepository(
                         name = entry.name,
                         uri = entry.uri,
                         displayLabel = resolvedDisplayLabel(entry.documentId, entry.name),
+                        displayIcon = resolvedDisplayIcon(entry.documentId),
                     ),
                 )
             }
@@ -226,6 +228,7 @@ class NotesTreeRepository(
         name = raw.name,
         uri = raw.uri,
         displayLabel = resolvedDisplayLabel(raw.documentId, raw.name),
+        displayIcon = resolvedDisplayIcon(raw.documentId),
     )
 
     private fun resolvedDisplayLabel(
@@ -233,62 +236,99 @@ class NotesTreeRepository(
         fileName: String,
     ): String = titleByDocumentId[documentId] ?: noteDisplayLabel(fileName)
 
+    private fun resolvedDisplayIcon(documentId: String): String = iconByDocumentId[documentId].orEmpty()
+
     /**
-     * Reads note prefixes in the background and returns documentId → content title for labels
-     * that should change in the UI. Filenames stay until a title is found.
+     * Reads note prefixes in the background and returns title/icon updates for the UI.
+     * Titles are included only when [applyTitles] is true; icons always apply when found.
      */
-    suspend fun resolveMissingContentTitles(notes: List<NotesEntry.Note>): Map<String, String> {
+    suspend fun resolveMissingNoteMeta(
+        notes: List<NotesEntry.Note>,
+        applyTitles: Boolean,
+    ): NoteMetaUpdates {
         if (notes.isEmpty()) {
-            return emptyMap()
+            return NoteMetaUpdates()
         }
-        val updates = LinkedHashMap<String, String>()
+        val titleUpdates = LinkedHashMap<String, String>()
+        val iconUpdates = LinkedHashMap<String, String>()
         coroutineScope {
             notes.chunked(TitleResolveParallelism).forEach { chunk ->
                 chunk
                     .map { note ->
                         async(Dispatchers.IO) {
-                            if (!titleLookupDone.add(note.documentId)) {
+                            if (!metaLookupDone.add(note.documentId)) {
                                 return@async null
                             }
                             val text =
                                 runCatching { readTextPrefix(note.uri, NoteTitleReadBytes) }
                                     .getOrDefault("")
-                            val title = NoteTitleExtractor.extract(text)
-                            if (title.isNotEmpty()) {
-                                titleByDocumentId[note.documentId] = title
-                                if (title != note.displayLabel) {
-                                    note.documentId to title
+                            val meta = NoteTitleExtractor.extractMeta(text)
+                            if (meta.title.isNotEmpty()) {
+                                titleByDocumentId[note.documentId] = meta.title
+                            }
+                            if (meta.icon.isNotEmpty()) {
+                                iconByDocumentId[note.documentId] = meta.icon
+                            } else {
+                                iconByDocumentId.remove(note.documentId)
+                            }
+                            val titleUpdate =
+                                if (applyTitles && meta.title.isNotEmpty() && meta.title != note.displayLabel) {
+                                    meta.title
                                 } else {
                                     null
                                 }
-                            } else {
+                            val iconUpdate =
+                                if (meta.icon != note.displayIcon) {
+                                    meta.icon
+                                } else {
+                                    null
+                                }
+                            if (titleUpdate == null && iconUpdate == null) {
                                 null
+                            } else {
+                                Triple(note.documentId, titleUpdate, iconUpdate)
                             }
                         }
                     }.awaitAll()
-                    .forEach { pair ->
-                        if (pair != null) {
-                            updates[pair.first] = pair.second
+                    .forEach { triple ->
+                        if (triple != null) {
+                            val (documentId, title, icon) = triple
+                            if (title != null) {
+                                titleUpdates[documentId] = title
+                            }
+                            if (icon != null) {
+                                iconUpdates[documentId] = icon
+                            }
                         }
                     }
             }
         }
-        return updates
+        return NoteMetaUpdates(titles = titleUpdates, icons = iconUpdates)
     }
 
     fun withUpdatedNoteLabels(
         entries: List<NotesEntry>,
         labels: Map<String, String>,
+    ): List<NotesEntry> = withUpdatedNoteMeta(entries, titles = labels)
+
+    fun withUpdatedNoteMeta(
+        entries: List<NotesEntry>,
+        titles: Map<String, String> = emptyMap(),
+        icons: Map<String, String> = emptyMap(),
     ): List<NotesEntry> {
-        if (labels.isEmpty()) {
+        if (titles.isEmpty() && icons.isEmpty()) {
             return entries
         }
         return entries
             .map { entry ->
                 if (entry is NotesEntry.Note) {
-                    val label = labels[entry.documentId]
-                    if (label != null) {
-                        entry.copy(displayLabel = label)
+                    val label = titles[entry.documentId]
+                    val icon = icons[entry.documentId]
+                    if (label != null || icon != null) {
+                        entry.copy(
+                            displayLabel = label ?: entry.displayLabel,
+                            displayIcon = icon ?: entry.displayIcon,
+                        )
                     } else {
                         entry
                     }
@@ -321,6 +361,25 @@ class NotesTreeRepository(
         }
     }
 
+    fun withCachedNoteIcons(entries: List<NotesEntry>): List<NotesEntry> {
+        var changed = false
+        val mapped =
+            entries.map { entry ->
+                if (entry is NotesEntry.Note) {
+                    val cached = iconByDocumentId[entry.documentId].orEmpty()
+                    if (cached != entry.displayIcon) {
+                        changed = true
+                        entry.copy(displayIcon = cached)
+                    } else {
+                        entry
+                    }
+                } else {
+                    entry
+                }
+            }
+        return if (changed) mapped else entries
+    }
+
     fun withFileNameLabels(entries: List<NotesEntry>): List<NotesEntry> {
         var changed = false
         val mapped =
@@ -347,9 +406,13 @@ class NotesTreeRepository(
     fun applyTitleSource(
         entries: List<NotesEntry>,
         source: NotesTitleSource,
-    ): List<NotesEntry> = when (source) {
-        NotesTitleSource.FileName -> withFileNameLabels(entries)
-        NotesTitleSource.Content -> withCachedContentTitles(withFileNameLabels(entries))
+    ): List<NotesEntry> {
+        val withLabels =
+            when (source) {
+                NotesTitleSource.FileName -> withFileNameLabels(entries)
+                NotesTitleSource.Content -> withCachedContentTitles(withFileNameLabels(entries))
+            }
+        return withCachedNoteIcons(withLabels)
     }
 
     fun displayTitleFor(
@@ -371,32 +434,49 @@ class NotesTreeRepository(
         dirDocumentId: String,
         labels: Map<String, String>,
     ) {
-        if (labels.isEmpty()) {
+        patchListingNoteMeta(treeUri, dirDocumentId, titles = labels)
+    }
+
+    fun patchListingNoteMeta(
+        treeUri: Uri,
+        dirDocumentId: String,
+        titles: Map<String, String> = emptyMap(),
+        icons: Map<String, String> = emptyMap(),
+    ) {
+        if (titles.isEmpty() && icons.isEmpty()) {
             return
         }
         val key = cacheKey(treeUri, dirDocumentId)
         val current = listingCache[key] ?: return
-        listingCache[key] = withUpdatedNoteLabels(current, labels)
+        listingCache[key] = withUpdatedNoteMeta(current, titles = titles, icons = icons)
     }
 
     /**
-     * Updates the title cache after a note is saved (no extra disk read).
+     * Updates title/icon caches after a note is saved (no extra disk read).
      *
-     * @return content title when found, otherwise `null` (caller may fall back to file stem)
+     * @return content title when found, otherwise `null` (caller may fall back to file stem),
+     * and the YAML icon (empty when absent).
      */
-    fun rememberTitleFromContent(
+    fun rememberMetaFromContent(
         documentId: String,
         text: String,
-    ): String? {
-        titleLookupDone.add(documentId)
-        val title = NoteTitleExtractor.extract(text)
-        return if (title.isNotEmpty()) {
-            titleByDocumentId[documentId] = title
-            title
+    ): Pair<String?, String> {
+        metaLookupDone.add(documentId)
+        val meta = NoteTitleExtractor.extractMeta(text)
+        val title =
+            if (meta.title.isNotEmpty()) {
+                titleByDocumentId[documentId] = meta.title
+                meta.title
+            } else {
+                titleByDocumentId.remove(documentId)
+                null
+            }
+        if (meta.icon.isNotEmpty()) {
+            iconByDocumentId[documentId] = meta.icon
         } else {
-            titleByDocumentId.remove(documentId)
-            null
+            iconByDocumentId.remove(documentId)
         }
+        return title to meta.icon
     }
 
     fun readTextPrefix(
@@ -540,7 +620,8 @@ class NotesTreeRepository(
             rawChildrenCache.clear()
             listingCache.clear()
             titleByDocumentId.clear()
-            titleLookupDone.clear()
+            iconByDocumentId.clear()
+            metaLookupDone.clear()
             cachedTreeUriString = null
         }
 
@@ -550,7 +631,8 @@ class NotesTreeRepository(
         ): String = "$treeUri::$dirDocumentId"
 
         private val titleByDocumentId = ConcurrentHashMap<String, String>()
-        private val titleLookupDone = ConcurrentHashMap.newKeySet<String>()
+        private val iconByDocumentId = ConcurrentHashMap<String, String>()
+        private val metaLookupDone = ConcurrentHashMap.newKeySet<String>()
 
         private const val NoteTitleReadBytes = 16 * 1024
         private const val TitleResolveParallelism = 6

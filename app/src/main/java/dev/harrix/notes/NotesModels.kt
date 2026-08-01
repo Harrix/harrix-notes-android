@@ -25,9 +25,19 @@ sealed class NotesEntry {
         override val name: String,
         override val uri: Uri,
         val displayLabel: String,
+        /** YAML `icon:` emoji when resolved; empty until background meta resolve finishes. */
+        val displayIcon: String = "",
     ) : NotesEntry() {
         override val sortLabel: String get() = displayLabel
     }
+}
+
+/** Title and/or icon updates from a background note-prefix read. */
+data class NoteMetaUpdates(
+    val titles: Map<String, String> = emptyMap(),
+    val icons: Map<String, String> = emptyMap(),
+) {
+    val isEmpty: Boolean get() = titles.isEmpty() && icons.isEmpty()
 }
 
 /** One segment in the folder navigation / breadcrumb path. */

@@ -1,28 +1,43 @@
 ﻿package dev.harrix.notes
 
 /**
- * Extracts a note display title from Markdown the same way as
- * `vscode/harrix-notes-explorer-hsk` (YAML `title:` or first `#` heading).
+ * Extracts note display metadata from Markdown the same way as
+ * `vscode/harrix-notes-explorer-hsk` (YAML `title:` / `icon:`, or first `#` heading).
  */
 object NoteTitleExtractor {
     private val FRONTMATTER_REGEX = Regex("^---\\r?\\n([\\s\\S]*?)\\r?\\n---\\r?\\n?")
     private val TITLE_LINE_REGEX = Regex("^title\\s*:\\s*(.*)$", RegexOption.IGNORE_CASE)
+    private val ICON_LINE_REGEX = Regex("^icon\\s*:\\s*(.*)$", RegexOption.IGNORE_CASE)
     private val H1_REGEX = Regex("^#\\s+(.+)$")
+    private val HTTP_URL_REGEX = Regex("^https?://", RegexOption.IGNORE_CASE)
+    private val IMAGE_EXT_REGEX = Regex("\\.(png|jpe?g|gif|svg|webp|avif|ico)$", RegexOption.IGNORE_CASE)
 
-    fun extract(text: String): String {
+    data class Meta(
+        val title: String,
+        val icon: String,
+    )
+
+    fun extract(text: String): String = extractMeta(text).title
+
+    fun extractMeta(text: String): Meta {
         var src = text
         if (src.isNotEmpty() && src[0] == '\uFEFF') {
             src = src.substring(1)
         }
         val fmMatch = FRONTMATTER_REGEX.find(src)
-        val title =
-            if (fmMatch != null) {
-                titleFromFrontmatterBlock(fmMatch.groupValues[1])
+        val title: String
+        val icon: String
+        if (fmMatch != null) {
+            val fm = fmMatch.groupValues[1]
+            title =
+                titleFromFrontmatterBlock(fm)
                     .ifEmpty { firstH1AfterFrontmatter(src.substring(fmMatch.range.last + 1)) }
-            } else {
-                firstH1AfterFrontmatter(src)
-            }
-        return stripHtmlComments(title)
+            icon = iconFromFrontmatterBlock(fm)
+        } else {
+            title = firstH1AfterFrontmatter(src)
+            icon = ""
+        }
+        return Meta(title = stripHtmlComments(title), icon = icon)
     }
 
     private fun titleFromFrontmatterBlock(fmText: String): String {
@@ -34,6 +49,35 @@ object NoteTitleExtractor {
             }
         }
         return ""
+    }
+
+    private fun iconFromFrontmatterBlock(fmText: String): String {
+        for (line in fmText.lineSequence()) {
+            val match = ICON_LINE_REGEX.find(line) ?: continue
+            val icon = unquoteYamlScalar(match.groupValues[1])
+            if (icon.isNotEmpty() && isNoteTreeEmojiIcon(icon)) {
+                return icon
+            }
+        }
+        return ""
+    }
+
+    /** Short emoji/symbol for the tree (not a path or image URL). */
+    fun isNoteTreeEmojiIcon(value: String): Boolean {
+        val v = value.trim()
+        if (v.isEmpty()) {
+            return false
+        }
+        if (v.codePointCount(0, v.length) > 8) {
+            return false
+        }
+        if (HTTP_URL_REGEX.containsMatchIn(v) || v.contains('/') || v.contains('\\')) {
+            return false
+        }
+        if (IMAGE_EXT_REGEX.containsMatchIn(v)) {
+            return false
+        }
+        return true
     }
 
     private fun firstH1AfterFrontmatter(body: String): String {

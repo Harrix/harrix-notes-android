@@ -43,7 +43,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Edit
@@ -95,6 +94,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import dev.harrix.notes.NoteMetaUpdates
 import dev.harrix.notes.NotesBrowseLayout
 import dev.harrix.notes.NotesEntry
 import dev.harrix.notes.NotesListDensity
@@ -183,6 +183,23 @@ fun NotesViewerScreen(
         treeChildrenByFolderId = treeChildrenByFolderId + (dirDocumentId to children)
     }
 
+    fun applyNoteMetaUpdates(
+        dirDocumentId: String,
+        updates: NoteMetaUpdates,
+    ) {
+        if (updates.isEmpty) {
+            return
+        }
+        putTreeChildren(
+            dirDocumentId,
+            repository.withUpdatedNoteMeta(
+                treeChildrenByFolderId[dirDocumentId].orEmpty(),
+                titles = updates.titles,
+                icons = updates.icons,
+            ),
+        )
+    }
+
     fun loadTreeFolder(
         treeUri: Uri,
         dir: NotesPathSegment,
@@ -193,22 +210,14 @@ fun NotesViewerScreen(
             val withTitles = repository.applyTitleSource(cached, titleSource)
             putTreeChildren(dir.documentId, withTitles)
             onLoaded?.invoke(withTitles)
-            if (titleSource == NotesTitleSource.Content) {
-                scope.launch {
-                    val updates =
-                        repository.resolveMissingContentTitles(
-                            withTitles.filterIsInstance<NotesEntry.Note>(),
-                        )
-                    if (updates.isNotEmpty()) {
-                        putTreeChildren(
-                            dir.documentId,
-                            repository.withUpdatedNoteLabels(
-                                treeChildrenByFolderId[dir.documentId].orEmpty(),
-                                updates,
-                            ),
-                        )
-                    }
-                }
+            scope.launch {
+                applyNoteMetaUpdates(
+                    dir.documentId,
+                    repository.resolveMissingNoteMeta(
+                        withTitles.filterIsInstance<NotesEntry.Note>(),
+                        applyTitles = titleSource == NotesTitleSource.Content,
+                    ),
+                )
             }
             return
         }
@@ -224,21 +233,13 @@ fun NotesViewerScreen(
             val withTitles = repository.applyTitleSource(listed, titleSource)
             putTreeChildren(dir.documentId, withTitles)
             onLoaded?.invoke(withTitles)
-            if (titleSource == NotesTitleSource.Content) {
-                val updates =
-                    repository.resolveMissingContentTitles(
-                        withTitles.filterIsInstance<NotesEntry.Note>(),
-                    )
-                if (updates.isNotEmpty()) {
-                    putTreeChildren(
-                        dir.documentId,
-                        repository.withUpdatedNoteLabels(
-                            treeChildrenByFolderId[dir.documentId].orEmpty(),
-                            updates,
-                        ),
-                    )
-                }
-            }
+            applyNoteMetaUpdates(
+                dir.documentId,
+                repository.resolveMissingNoteMeta(
+                    withTitles.filterIsInstance<NotesEntry.Note>(),
+                    applyTitles = titleSource == NotesTitleSource.Content,
+                ),
+            )
         }
     }
 
@@ -324,7 +325,8 @@ fun NotesViewerScreen(
                 statusMessage = null
                 val tab = openTabs.firstOrNull { it.documentId == selectedTabDocumentId }
                 if (tab != null) {
-                    val contentTitle = repository.rememberTitleFromContent(tab.documentId, text)
+                    val (contentTitle, contentIcon) =
+                        repository.rememberMetaFromContent(tab.documentId, text)
                     val fileStem =
                         tab.fileName
                             .takeIf { it.isNotBlank() }
@@ -346,17 +348,31 @@ fun NotesViewerScreen(
                                 openTab
                             }
                         }
-                    if (titleSource == NotesTitleSource.Content || fileStem != null) {
-                        val labels = mapOf(tab.documentId to label)
-                        entries = repository.withUpdatedNoteLabels(entries, labels)
-                        notesTreeUri?.let { tree ->
-                            folderPath.lastOrNull()?.let { dir ->
-                                repository.patchListingNoteLabels(
-                                    Uri.parse(tree),
-                                    dir.documentId,
-                                    labels,
-                                )
-                            }
+                    val titles =
+                        if (titleSource == NotesTitleSource.Content || fileStem != null) {
+                            mapOf(tab.documentId to label)
+                        } else {
+                            emptyMap()
+                        }
+                    val icons = mapOf(tab.documentId to contentIcon)
+                    entries =
+                        repository.withUpdatedNoteMeta(
+                            entries,
+                            titles = titles,
+                            icons = icons,
+                        )
+                    notesTreeUri?.let { tree ->
+                        folderPath.lastOrNull()?.let { dir ->
+                            repository.patchListingNoteMeta(
+                                Uri.parse(tree),
+                                dir.documentId,
+                                titles = titles,
+                                icons = icons,
+                            )
+                            applyNoteMetaUpdates(
+                                dir.documentId,
+                                NoteMetaUpdates(titles = titles, icons = icons),
+                            )
                         }
                     }
                 }
@@ -409,46 +425,66 @@ fun NotesViewerScreen(
         }
     }
 
-    fun enrichNoteTitles(
+    fun enrichNoteMeta(
         treeUri: Uri,
         dirDocumentId: String,
         listed: List<NotesEntry>,
         requestId: Int,
     ) {
-        if (titleSource != NotesTitleSource.Content) {
-            return
-        }
         val notes = listed.filterIsInstance<NotesEntry.Note>()
         if (notes.isEmpty()) {
             return
         }
         scope.launch {
-            val updates = repository.resolveMissingContentTitles(notes)
-            if (updates.isEmpty() || requestId != folderListRequestId) {
+            val updates =
+                repository.resolveMissingNoteMeta(
+                    notes,
+                    applyTitles = titleSource == NotesTitleSource.Content,
+                )
+            if (updates.isEmpty || requestId != folderListRequestId) {
                 return@launch
             }
             if (folderPath.lastOrNull()?.documentId != dirDocumentId) {
-                repository.patchListingNoteLabels(treeUri, dirDocumentId, updates)
+                repository.patchListingNoteMeta(
+                    treeUri,
+                    dirDocumentId,
+                    titles = updates.titles,
+                    icons = updates.icons,
+                )
+                applyNoteMetaUpdates(dirDocumentId, updates)
                 return@launch
             }
-            entries = repository.withUpdatedNoteLabels(entries, updates)
+            entries =
+                repository.withUpdatedNoteMeta(
+                    entries,
+                    titles = updates.titles,
+                    icons = updates.icons,
+                )
             putTreeChildren(
                 dirDocumentId,
-                repository.withUpdatedNoteLabels(
+                repository.withUpdatedNoteMeta(
                     treeChildrenByFolderId[dirDocumentId] ?: entries,
-                    updates,
+                    titles = updates.titles,
+                    icons = updates.icons,
                 ),
             )
-            repository.patchListingNoteLabels(treeUri, dirDocumentId, updates)
-            openTabs =
-                openTabs.map { tab ->
-                    val label = updates[tab.documentId]
-                    if (label != null) {
-                        tab.copy(title = label)
-                    } else {
-                        tab
+            repository.patchListingNoteMeta(
+                treeUri,
+                dirDocumentId,
+                titles = updates.titles,
+                icons = updates.icons,
+            )
+            if (updates.titles.isNotEmpty()) {
+                openTabs =
+                    openTabs.map { tab ->
+                        val label = updates.titles[tab.documentId]
+                        if (label != null) {
+                            tab.copy(title = label)
+                        } else {
+                            tab
+                        }
                     }
-                }
+            }
         }
     }
 
@@ -458,10 +494,8 @@ fun NotesViewerScreen(
             val updated = repository.applyTitleSource(entries, titleSource)
             entries = updated
             putTreeChildren(dir.documentId, updated)
-            if (titleSource == NotesTitleSource.Content) {
-                notesTreeUri?.let { tree ->
-                    enrichNoteTitles(Uri.parse(tree), dir.documentId, updated, folderListRequestId)
-                }
+            notesTreeUri?.let { tree ->
+                enrichNoteMeta(Uri.parse(tree), dir.documentId, updated, folderListRequestId)
             }
         }
         treeChildrenByFolderId =
@@ -495,7 +529,7 @@ fun NotesViewerScreen(
                 putTreeChildren(current.documentId, withTitles)
                 isLoading = false
                 prefetchChildFolders(treeUri, withTitles)
-                enrichNoteTitles(treeUri, current.documentId, withTitles, requestId)
+                enrichNoteMeta(treeUri, current.documentId, withTitles, requestId)
                 return@persistCurrentDraft
             }
 
@@ -510,7 +544,7 @@ fun NotesViewerScreen(
                     entries = repository.applyTitleSource(shallow, titleSource)
                     putTreeChildren(current.documentId, entries)
                     isLoading = false
-                    enrichNoteTitles(treeUri, current.documentId, entries, requestId)
+                    enrichNoteMeta(treeUri, current.documentId, entries, requestId)
                 }
 
                 val result =
@@ -527,7 +561,7 @@ fun NotesViewerScreen(
                         entries = withTitles
                         putTreeChildren(current.documentId, withTitles)
                         prefetchChildFolders(treeUri, withTitles)
-                        enrichNoteTitles(treeUri, current.documentId, withTitles, requestId)
+                        enrichNoteMeta(treeUri, current.documentId, withTitles, requestId)
                     }.onFailure { error ->
                         if (shallow == null) {
                             statusMessage =
@@ -1742,12 +1776,7 @@ private fun NotesNoteRow(
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.InsertDriveFile,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(iconSize),
-        )
+        NotesNoteGlyph(icon = note.displayIcon, size = iconSize)
         Spacer(modifier = Modifier.width(10.dp))
         Text(
             text = note.displayLabel,
@@ -1806,11 +1835,9 @@ private fun NotesNoteIconCell(
         label = note.displayLabel,
         density = density,
         icon = {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.InsertDriveFile,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(notesGridIconSize(density)),
+            NotesNoteGlyph(
+                icon = note.displayIcon,
+                size = notesGridIconSize(density),
             )
         },
         onOpen = onOpen,
