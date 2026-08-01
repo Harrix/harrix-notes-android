@@ -44,16 +44,15 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.harrix.notes.NotesListDensity
 import dev.harrix.notes.NotesPinnedItem
 import dev.harrix.notes.NotesPinnedKind
 import dev.harrix.notes.R
 
-private val PinnedItemWidth = 72.dp
-private val PinnedIconSize = 28.dp
-private val PinnedLabelMinFont = 9.sp
-private val PinnedLabelMaxFont = 12.sp
 private const val PinnedLabelMaxLines = 2
 private const val PinnedLabelFontStepSp = 0.5f
 
@@ -61,6 +60,7 @@ private const val PinnedLabelFontStepSp = 0.5f
 fun NotesPinnedBar(
     items: List<NotesPinnedItem>,
     maxSlots: Int,
+    density: NotesListDensity,
     onOpen: (NotesPinnedItem) -> Unit,
     onUnpin: (NotesPinnedItem) -> Unit,
     modifier: Modifier = Modifier,
@@ -68,6 +68,12 @@ fun NotesPinnedBar(
     val slots = maxSlots.coerceAtLeast(1)
     val emptyCount = (slots - items.size).coerceAtLeast(0)
     var showHowToPin by remember { mutableStateOf(false) }
+    val itemWidth = density.pinnedItemWidthDp.dp
+    val iconSize = density.pinnedIconSizeDp.dp
+    val labelMinFont = density.pinnedLabelMinSp.sp
+    val labelMaxFont = density.pinnedLabelMaxSp.sp
+    val labelHeight = density.pinnedLabelHeightDp.dp
+    val barPadding = density.pinnedBarVerticalPaddingDp.dp
 
     Column(
         modifier =
@@ -82,19 +88,29 @@ fun NotesPinnedBar(
             Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 8.dp, vertical = 6.dp),
+                .padding(horizontal = 8.dp, vertical = barPadding),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.Top,
         ) {
             items.forEach { item ->
                 NotesPinnedBarItem(
                     item = item,
+                    itemWidth = itemWidth,
+                    iconSize = iconSize,
+                    labelMinFont = labelMinFont,
+                    labelMaxFont = labelMaxFont,
+                    labelHeight = labelHeight,
                     onOpen = { onOpen(item) },
                     onUnpin = { onUnpin(item) },
                 )
             }
             repeat(emptyCount) {
                 NotesPinnedEmptySlot(
+                    itemWidth = itemWidth,
+                    iconSize = iconSize,
+                    labelMinFont = labelMinFont,
+                    labelMaxFont = labelMaxFont,
+                    labelHeight = labelHeight,
                     onClick = { showHowToPin = true },
                 )
             }
@@ -119,6 +135,11 @@ fun NotesPinnedBar(
 @Composable
 private fun NotesPinnedBarItem(
     item: NotesPinnedItem,
+    itemWidth: Dp,
+    iconSize: Dp,
+    labelMinFont: TextUnit,
+    labelMaxFont: TextUnit,
+    labelHeight: Dp,
     onOpen: () -> Unit,
     onUnpin: () -> Unit,
 ) {
@@ -132,7 +153,7 @@ private fun NotesPinnedBarItem(
         }
 
     Box(
-        modifier = Modifier.width(PinnedItemWidth),
+        modifier = Modifier.width(itemWidth),
     ) {
         Column(
             modifier =
@@ -144,15 +165,17 @@ private fun NotesPinnedBarItem(
                 ).padding(horizontal = 2.dp, vertical = 2.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            NotesPinnedGlyph(item = item)
+            NotesPinnedGlyph(item = item, iconSize = iconSize)
             Spacer(modifier = Modifier.height(4.dp))
             NotesPinnedAutoSizeLabel(
                 text = label,
                 muted = false,
+                minFont = labelMinFont,
+                maxFont = labelMaxFont,
                 modifier =
                 Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 28.dp, max = 36.dp),
+                    .heightIn(min = labelHeight * 0.85f, max = labelHeight),
             )
         }
         DropdownMenu(
@@ -177,11 +200,18 @@ private fun NotesPinnedBarItem(
 }
 
 @Composable
-private fun NotesPinnedEmptySlot(onClick: () -> Unit) {
+private fun NotesPinnedEmptySlot(
+    itemWidth: Dp,
+    iconSize: Dp,
+    labelMinFont: TextUnit,
+    labelMaxFont: TextUnit,
+    labelHeight: Dp,
+    onClick: () -> Unit,
+) {
     Column(
         modifier =
         Modifier
-            .width(PinnedItemWidth)
+            .width(itemWidth)
             .clickable(onClick = onClick)
             .padding(horizontal = 2.dp, vertical = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -190,29 +220,34 @@ private fun NotesPinnedEmptySlot(onClick: () -> Unit) {
             imageVector = Icons.Outlined.PushPin,
             contentDescription = stringResource(R.string.markdown_notes_pin_empty),
             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f),
-            modifier = Modifier.size(PinnedIconSize),
+            modifier = Modifier.size(iconSize),
         )
         Spacer(modifier = Modifier.height(4.dp))
         NotesPinnedAutoSizeLabel(
             text = stringResource(R.string.markdown_notes_pin_empty),
             muted = true,
+            minFont = labelMinFont,
+            maxFont = labelMaxFont,
             modifier =
             Modifier
                 .fillMaxWidth()
-                .heightIn(min = 28.dp, max = 36.dp),
+                .heightIn(min = labelHeight * 0.85f, max = labelHeight),
         )
     }
 }
 
 @Composable
-private fun NotesPinnedGlyph(item: NotesPinnedItem) {
+private fun NotesPinnedGlyph(
+    item: NotesPinnedItem,
+    iconSize: Dp,
+) {
     when (item.kind) {
         NotesPinnedKind.Home -> {
             Icon(
                 imageVector = Icons.Filled.Home,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(PinnedIconSize),
+                modifier = Modifier.size(iconSize),
             )
         }
         NotesPinnedKind.Folder -> {
@@ -220,11 +255,11 @@ private fun NotesPinnedGlyph(item: NotesPinnedItem) {
                 imageVector = Icons.Filled.Folder,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(PinnedIconSize),
+                modifier = Modifier.size(iconSize),
             )
         }
         NotesPinnedKind.Note -> {
-            NotesNoteGlyph(icon = item.icon, size = PinnedIconSize)
+            NotesNoteGlyph(icon = item.icon, size = iconSize)
         }
     }
 }
@@ -233,11 +268,13 @@ private fun NotesPinnedGlyph(item: NotesPinnedItem) {
 private fun NotesPinnedAutoSizeLabel(
     text: String,
     muted: Boolean,
+    minFont: TextUnit,
+    maxFont: TextUnit,
     modifier: Modifier = Modifier,
 ) {
     val baseStyle = MaterialTheme.typography.labelSmall
     val textMeasurer = rememberTextMeasurer()
-    var fontSize by remember(text) { mutableStateOf(PinnedLabelMaxFont) }
+    var fontSize by remember(text, maxFont) { mutableStateOf(maxFont) }
     val color =
         if (muted) {
             MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)
@@ -248,12 +285,12 @@ private fun NotesPinnedAutoSizeLabel(
     BoxWithConstraints(modifier = modifier) {
         val maxWidthPx = constraints.maxWidth
         val maxHeightPx = constraints.maxHeight
-        LaunchedEffect(text, maxWidthPx, maxHeightPx, baseStyle) {
+        LaunchedEffect(text, maxWidthPx, maxHeightPx, baseStyle, minFont, maxFont) {
             if (maxWidthPx <= 0) {
                 return@LaunchedEffect
             }
-            var candidate = PinnedLabelMaxFont
-            while (candidate > PinnedLabelMinFont) {
+            var candidate = maxFont
+            while (candidate > minFont) {
                 val layout =
                     textMeasurer.measure(
                         text = text,
@@ -272,7 +309,7 @@ private fun NotesPinnedAutoSizeLabel(
                 }
                 candidate =
                     (candidate.value - PinnedLabelFontStepSp)
-                        .coerceAtLeast(PinnedLabelMinFont.value)
+                        .coerceAtLeast(minFont.value)
                         .sp
             }
             fontSize = candidate

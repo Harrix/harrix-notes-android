@@ -1284,6 +1284,7 @@ fun NotesViewerScreen(
                         NotesPinnedBar(
                             items = pinnedItems,
                             maxSlots = maxPinnedItems,
+                            density = listDensity,
                             onOpen = { openPinnedItem(it) },
                             onUnpin = { unpinItem(it.id) },
                         )
