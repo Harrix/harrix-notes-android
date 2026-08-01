@@ -619,15 +619,20 @@ fun NotesViewerScreen(
             }
     }
 
-    fun openFolderList(path: List<NotesPathSegment>) {
+    fun openFolderList(
+        path: List<NotesPathSegment>,
+        clearSelection: Boolean = true,
+    ) {
         val tree = notesTreeUri ?: return
         val treeUri = Uri.parse(tree)
         val current = path.lastOrNull() ?: return
         persistCurrentDraft {
             statusMessage = null
-            selectedTabDocumentId = null
-            noteContent = null
-            resetEditorState()
+            if (clearSelection) {
+                selectedTabDocumentId = null
+                noteContent = null
+                resetEditorState()
+            }
 
             folderListRequestId += 1
             val requestId = folderListRequestId
@@ -697,6 +702,13 @@ fun NotesViewerScreen(
     ) {
         val limit = maxOpenTabs.coerceAtLeast(NotesViewerPreferences.MIN_OPEN_TABS)
         if (openTabs.size <= limit) {
+            if (preferredSelectedId != null && openTabs.any { it.documentId == preferredSelectedId }) {
+                selectedTabDocumentId = preferredSelectedId
+            } else if (selectedTabDocumentId != null &&
+                openTabs.none { it.documentId == selectedTabDocumentId }
+            ) {
+                selectedTabDocumentId = openTabs.lastOrNull()?.documentId
+            }
             return
         }
         // Drop oldest tabs first (left side of the tab bar) until within the limit.
@@ -944,7 +956,13 @@ fun NotesViewerScreen(
                     }
                 }
             }
-            openFolderList(root)
+            val restoredTab = openTabs.firstOrNull { it.documentId == selectedTabDocumentId }
+            if (restoredTab != null) {
+                val path = restoredTab.folderPath.ifEmpty { root }
+                openFolderList(path, clearSelection = false)
+            } else {
+                openFolderList(root)
+            }
             ensureTreeRootLoaded()
         } else {
             sessionRestoredForTree = null
