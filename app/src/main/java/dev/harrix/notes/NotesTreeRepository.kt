@@ -597,6 +597,61 @@ class NotesTreeRepository(
         } ?: error("Could not save note")
     }
 
+    /** Drops cached listings for one directory so the next list reflects create/delete. */
+    fun invalidateDirectory(
+        treeUri: Uri,
+        dirDocumentId: String,
+    ) {
+        val key = cacheKey(treeUri, dirDocumentId)
+        rawChildrenCache.remove(key)
+        listingCache.remove(key)
+    }
+
+    /**
+     * Creates an empty Markdown file in [parentDocumentId] with a unique `Untitled.md` name.
+     * Uses `text/markdown` when the provider accepts it, otherwise `text/plain`.
+     */
+    fun createMarkdownNote(
+        treeUri: Uri,
+        parentDocumentId: String,
+    ): NotesEntry.Note {
+        val parentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, parentDocumentId)
+        val existingNames =
+            queryChildren(treeUri, parentDocumentId)
+                .map { it.name.lowercase(Locale.ROOT) }
+                .toSet()
+        val displayName = nextUntitledMarkdownName(existingNames)
+        val created =
+            DocumentsContract.createDocument(
+                resolver,
+                parentUri,
+                "text/markdown",
+                displayName,
+            ) ?: DocumentsContract.createDocument(
+                resolver,
+                parentUri,
+                "text/plain",
+                displayName,
+            ) ?: error("Could not create note")
+        runCatching { writeText(created, "") }
+        val documentId = DocumentsContract.getDocumentId(created)
+        val noteUri =
+            runCatching {
+                DocumentsContract.buildDocumentUriUsingTree(treeUri, documentId)
+            }.getOrDefault(created)
+        invalidateDirectory(treeUri, parentDocumentId)
+        val label =
+            displayName
+                .removeSuffix(".md")
+                .removeSuffix(".MD")
+        return NotesEntry.Note(
+            documentId = documentId,
+            name = displayName,
+            uri = noteUri,
+            displayLabel = label,
+        )
+    }
+
     private data class RawEntry(
         val documentId: String,
         val name: String,
@@ -654,6 +709,20 @@ class NotesTreeRepository(
         fun isMd(fileName: String): Boolean = fileName.lowercase(Locale.ROOT).endsWith(".md")
 
         fun isGMd(fileName: String): Boolean = fileName.lowercase(Locale.ROOT).endsWith(".g.md")
+
+        fun nextUntitledMarkdownName(existingLowercaseNames: Set<String>): String {
+            if ("untitled.md" !in existingLowercaseNames) {
+                return "Untitled.md"
+            }
+            var index = 2
+            while (true) {
+                val candidate = "Untitled $index.md"
+                if (candidate.lowercase(Locale.ROOT) !in existingLowercaseNames) {
+                    return candidate
+                }
+                index += 1
+            }
+        }
 
         fun isMergedTemplateGmd(
             fileName: String,

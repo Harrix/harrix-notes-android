@@ -68,4 +68,6 @@
     <string name="markdown_notes_edit">Edit note</string>
     <string name="markdown_notes_save">Save note</string>
     <string name="markdown_notes_saved">Saved</string>
+    <string name="markdown_notes_new_note">+ New Note</string>
+    <string name="markdown_notes_create_failed">Could not create note</string>
 </resources>

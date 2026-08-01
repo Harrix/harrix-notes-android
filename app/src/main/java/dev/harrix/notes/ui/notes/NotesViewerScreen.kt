@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
@@ -84,9 +85,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -150,6 +153,7 @@ fun NotesViewerScreen(
     var noteContent by remember { mutableStateOf<String?>(null) }
     var noteLoading by remember { mutableStateOf(false) }
     var isEditing by remember { mutableStateOf(false) }
+    var autoEditDocumentId by remember { mutableStateOf<String?>(null) }
     var draftText by remember { mutableStateOf("") }
     var lastSavedText by remember { mutableStateOf<String?>(null) }
     var isSaving by remember { mutableStateOf(false) }
@@ -752,6 +756,53 @@ fun NotesViewerScreen(
         selectedTabDocumentId = note.documentId
     }
 
+    fun createNewNote() {
+        val tree = notesTreeUri ?: return
+        val treeUri = Uri.parse(tree)
+        val currentTab = openTabs.firstOrNull { it.documentId == selectedTabDocumentId }
+        val path =
+            when {
+                currentTab != null ->
+                    currentTab.folderPath.ifEmpty { ensureRootPath() ?: return }
+
+                folderPath.isNotEmpty() -> folderPath
+                else -> ensureRootPath() ?: return
+            }
+        val dir = path.lastOrNull() ?: return
+        scope.launch {
+            val note =
+                withContext(Dispatchers.IO) {
+                    runCatching {
+                        repository.createMarkdownNote(treeUri, dir.documentId)
+                    }
+                }.getOrElse { error ->
+                    statusMessage =
+                        error.message
+                            ?: context.getString(R.string.markdown_notes_create_failed)
+                    return@launch
+                }
+            val listed =
+                withContext(Dispatchers.IO) {
+                    runCatching {
+                        repository.listChildren(treeUri, dir.documentId, dir.name)
+                    }.getOrNull()
+                }
+            if (listed != null && folderPath.lastOrNull()?.documentId == dir.documentId) {
+                val withTitles = repository.applyTitleSource(listed, titleSource)
+                entries = withTitles
+                putTreeChildren(dir.documentId, withTitles)
+                enrichNoteMeta(treeUri, dir.documentId, withTitles, folderListRequestId)
+            } else if (listed != null) {
+                putTreeChildren(
+                    dir.documentId,
+                    repository.applyTitleSource(listed, titleSource),
+                )
+            }
+            autoEditDocumentId = note.documentId
+            openNote(note, path)
+        }
+    }
+
     fun openPinnedItem(item: NotesPinnedItem) {
         val root = ensureRootPath()?.firstOrNull() ?: return
         when (item.kind) {
@@ -1037,12 +1088,19 @@ fun NotesViewerScreen(
                 noteContent = loaded
                 draftText = loaded
                 lastSavedText = loaded
-                isEditing = false
+                val shouldEdit = autoEditDocumentId == tab.documentId
+                if (shouldEdit) {
+                    autoEditDocumentId = null
+                }
+                isEditing = shouldEdit
                 statusMessage = null
             }.onFailure { error ->
                 noteContent = null
                 draftText = ""
                 lastSavedText = null
+                if (autoEditDocumentId == tab.documentId) {
+                    autoEditDocumentId = null
+                }
                 isEditing = false
                 statusMessage =
                     error.message ?: context.getString(R.string.markdown_notes_load_failed)
@@ -1174,6 +1232,7 @@ fun NotesViewerScreen(
                         onSelectTab = { selectTab(it) },
                         onCloseTab = { closeTab(it) },
                         onReorderTabs = { from, to -> reorderTabs(from, to) },
+                        onCreateNote = { createNewNote() },
                         showEditActions = selectedTab != null && !noteLoading && noteContent != null,
                         isEditing = isEditing,
                         isSaving = isSaving,
@@ -1338,30 +1397,22 @@ private fun NotesTopChrome(
                 contentDescription = stringResource(R.string.nav_open),
             )
         }
-        when {
-            breadcrumbSegments == null -> {
-                Text(
-                    text = stringResource(R.string.markdown_notes_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
-            }
-
-            breadcrumbSegments.isNotEmpty() -> {
-                NotesBreadcrumbs(
-                    segments = breadcrumbSegments,
-                    lastIsNote = lastIsNote,
-                    onSegmentClick = onSegmentClick,
-                    modifier = Modifier.weight(1f),
-                )
-            }
-
-            else -> {
-                Spacer(modifier = Modifier.weight(1f))
-            }
+        if (breadcrumbSegments == null) {
+            Text(
+                text = stringResource(R.string.markdown_notes_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+        } else {
+            NotesBreadcrumbs(
+                segments = breadcrumbSegments,
+                lastIsNote = lastIsNote,
+                onSegmentClick = onSegmentClick,
+                modifier = Modifier.weight(1f),
+            )
         }
         Box {
             IconButton(onClick = { onMenuExpandedChange(true) }) {
@@ -1691,6 +1742,7 @@ private fun NotesNavigationRow(
     onSelectTab: (String) -> Unit,
     onCloseTab: (String) -> Unit,
     onReorderTabs: (Int, Int) -> Unit,
+    onCreateNote: () -> Unit,
     showEditActions: Boolean,
     isEditing: Boolean,
     isSaving: Boolean,
@@ -1720,43 +1772,40 @@ private fun NotesNavigationRow(
                     contentDescription = stringResource(R.string.markdown_notes_back),
                 )
             }
-            if (openTabs.isNotEmpty()) {
-                val tabsScrollState = rememberScrollState()
-                LaunchedEffect(openTabs.size, selectedTabDocumentId, tabsScrollState.maxValue) {
-                    if (selectedTabDocumentId == openTabs.lastOrNull()?.documentId) {
-                        tabsScrollState.animateScrollTo(tabsScrollState.maxValue)
-                    }
+            val tabsScrollState = rememberScrollState()
+            LaunchedEffect(openTabs.size, selectedTabDocumentId, tabsScrollState.maxValue) {
+                if (selectedTabDocumentId == openTabs.lastOrNull()?.documentId) {
+                    tabsScrollState.animateScrollTo(tabsScrollState.maxValue)
                 }
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(
-                        modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(tabsScrollState)
-                            .padding(vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        openTabs.forEach { tab ->
-                            NotesTabChip(
-                                title = tab.title,
-                                selected = tab.documentId == selectedTabDocumentId,
-                                onSelect = { onSelectTab(tab.documentId) },
-                                onClose = { onCloseTab(tab.documentId) },
-                                onLongPress = { tabsMenuExpanded = true },
-                            )
-                        }
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(tabsScrollState)
+                        .padding(vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    openTabs.forEach { tab ->
+                        NotesTabChip(
+                            title = tab.title,
+                            selected = tab.documentId == selectedTabDocumentId,
+                            onSelect = { onSelectTab(tab.documentId) },
+                            onClose = { onCloseTab(tab.documentId) },
+                            onLongPress = { tabsMenuExpanded = true },
+                        )
                     }
-                    NotesHorizontalScrollbar(
-                        state = tabsScrollState,
-                        modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(top = 2.dp),
-                    )
+                    NotesNewNoteTabChip(onClick = onCreateNote)
                 }
-            } else {
-                Spacer(modifier = Modifier.weight(1f))
+                NotesHorizontalScrollbar(
+                    state = tabsScrollState,
+                    modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 2.dp),
+                )
             }
             if (showEditActions) {
                 if (isEditing) {
@@ -1804,15 +1853,35 @@ private fun NotesNavigationRow(
 }
 
 @Composable
+private fun NotesNewNoteTabChip(onClick: () -> Unit) {
+    Surface(
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = Modifier.clickable(onClick = onClick),
+    ) {
+        Text(
+            text = stringResource(R.string.markdown_notes_new_note),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.primary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier =
+            Modifier
+                .padding(horizontal = 12.dp, vertical = 6.dp)
+                .widthIn(max = NotesTabMaxWidth),
+        )
+    }
+}
+
+@Composable
 private fun NotesBreadcrumbs(
     segments: List<NotesPathSegment>,
     lastIsNote: Boolean,
     onSegmentClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (segments.isEmpty()) {
-        return
-    }
     Row(
         modifier =
         modifier
@@ -1820,6 +1889,25 @@ private fun NotesBreadcrumbs(
             .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_notes_logo),
+            contentDescription = null,
+            tint = Color.Unspecified,
+            modifier = Modifier.size(20.dp),
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = stringResource(R.string.app_name),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (segments.isEmpty()) {
+            return@Row
+        }
+        Spacer(modifier = Modifier.width(10.dp))
         segments.forEachIndexed { index, segment ->
             if (index > 0) {
                 Text(
