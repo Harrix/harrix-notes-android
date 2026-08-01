@@ -1163,6 +1163,12 @@ fun NotesViewerScreen(
                     scope.launch { drawerState.close() }
                     openNote(note, parentPath)
                 },
+                onOpenSettings = {
+                    scope.launch {
+                        drawerState.close()
+                        onOpenSettings()
+                    }
+                },
             )
         },
     ) {

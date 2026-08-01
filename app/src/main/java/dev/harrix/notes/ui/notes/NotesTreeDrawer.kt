@@ -18,9 +18,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.Text
@@ -58,21 +60,30 @@ fun NotesTreeDrawerContent(
     onToggleFolder: (NotesEntry.Folder) -> Unit,
     onOpenFolder: (NotesEntry.Folder, List<NotesPathSegment>) -> Unit,
     onOpenNote: (NotesEntry.Note, List<NotesPathSegment>) -> Unit,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     ModalDrawerSheet(modifier = modifier.adaptiveDrawerWidth()) {
         Column(modifier = Modifier.fillMaxHeight()) {
-            NotesBrandTitle(
-                logoSize = DrawerLogoSize,
-                textStyle = MaterialTheme.typography.titleLarge,
+            Row(
                 modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(
-                        horizontal = 28.dp,
-                        vertical = 24.dp,
-                    ),
-            )
+                    .padding(start = 20.dp, end = 4.dp, top = 12.dp, bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                NotesBrandTitle(
+                    logoSize = DrawerLogoSize,
+                    textStyle = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.weight(1f),
+                )
+                IconButton(onClick = onOpenSettings) {
+                    Icon(
+                        imageVector = Icons.Filled.Settings,
+                        contentDescription = stringResource(R.string.nav_settings),
+                    )
+                }
+            }
             HorizontalDivider(
                 modifier = Modifier.padding(bottom = 8.dp),
             )
