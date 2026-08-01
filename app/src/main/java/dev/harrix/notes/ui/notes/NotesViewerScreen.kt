@@ -924,48 +924,36 @@ fun NotesViewerScreen(
                     .padding(innerPadding)
                     .fillMaxSize(),
             ) {
-                if (!notesTreeUri.isNullOrBlank()) {
-                    NotesNavigationRow(
-                        onBack = { navigateBack() },
-                        segments =
-                        if (selectedTab != null) {
-                            selectedTab.folderPath +
-                                NotesPathSegment(
-                                    documentId = selectedTab.documentId,
-                                    name = selectedTab.title,
-                                    uri = selectedTab.uri,
-                                )
-                        } else {
-                            folderPath
-                        },
-                        lastIsNote = selectedTab != null,
-                        showCloseNote = selectedTab != null,
-                        onCloseNote = {
-                            selectedTab?.let { closeTab(it.documentId) }
-                        },
-                        onSegmentClick = { index ->
-                            val path =
-                                if (selectedTab != null) {
-                                    selectedTab.folderPath
-                                } else {
-                                    folderPath
-                                }
-                            val targetIndex = index.coerceAtMost(path.lastIndex)
-                            if (targetIndex >= 0) {
-                                openFolderList(path.take(targetIndex + 1))
-                            }
-                        },
-                    )
-                }
                 NotesTopChrome(
                     onOpenDrawer = {
                         scope.launch { drawerState.open() }
                     },
-                    openTabs = openTabs,
-                    selectedTabDocumentId = selectedTabDocumentId,
-                    onSelectTab = { selectTab(it) },
-                    onCloseTab = { closeTab(it) },
-                    onReorderTabs = { from, to -> reorderTabs(from, to) },
+                    breadcrumbSegments =
+                    if (notesTreeUri.isNullOrBlank()) {
+                        null
+                    } else if (selectedTab != null) {
+                        selectedTab.folderPath +
+                            NotesPathSegment(
+                                documentId = selectedTab.documentId,
+                                name = selectedTab.title,
+                                uri = selectedTab.uri,
+                            )
+                    } else {
+                        folderPath
+                    },
+                    lastIsNote = selectedTab != null,
+                    onSegmentClick = { index ->
+                        val path =
+                            if (selectedTab != null) {
+                                selectedTab.folderPath
+                            } else {
+                                folderPath
+                            }
+                        val targetIndex = index.coerceAtMost(path.lastIndex)
+                        if (targetIndex >= 0) {
+                            openFolderList(path.take(targetIndex + 1))
+                        }
+                    },
                     showEditActions = selectedTab != null && !noteLoading && noteContent != null,
                     isEditing = isEditing,
                     isSaving = isSaving,
@@ -991,6 +979,18 @@ fun NotesViewerScreen(
                         )
                     }
                 } else {
+                    NotesNavigationRow(
+                        onBack = { navigateBack() },
+                        openTabs = openTabs,
+                        selectedTabDocumentId = selectedTabDocumentId,
+                        onSelectTab = { selectTab(it) },
+                        onCloseTab = { closeTab(it) },
+                        onReorderTabs = { from, to -> reorderTabs(from, to) },
+                        showCloseNote = selectedTab != null,
+                        onCloseNote = {
+                            selectedTab?.let { closeTab(it.documentId) }
+                        },
+                    )
                     if (isEditing && (isSaving || saveFeedback != null)) {
                         Text(
                             text =
@@ -1086,11 +1086,9 @@ private fun <T> List<T>.moved(
 @Composable
 private fun NotesTopChrome(
     onOpenDrawer: () -> Unit,
-    openTabs: List<OpenNoteTab>,
-    selectedTabDocumentId: String?,
-    onSelectTab: (String) -> Unit,
-    onCloseTab: (String) -> Unit,
-    onReorderTabs: (Int, Int) -> Unit,
+    breadcrumbSegments: List<NotesPathSegment>?,
+    lastIsNote: Boolean,
+    onSegmentClick: (Int) -> Unit,
     showEditActions: Boolean,
     isEditing: Boolean,
     isSaving: Boolean,
@@ -1100,62 +1098,21 @@ private fun NotesTopChrome(
     onMenuExpandedChange: (Boolean) -> Unit,
     onOpenSettings: () -> Unit,
 ) {
-    var tabsMenuExpanded by remember { mutableStateOf(false) }
-    LaunchedEffect(openTabs.isEmpty()) {
-        if (openTabs.isEmpty()) {
-            tabsMenuExpanded = false
+    Row(
+        modifier =
+        Modifier
+            .fillMaxWidth()
+            .padding(start = 4.dp, end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconButton(onClick = onOpenDrawer) {
+            Icon(
+                imageVector = Icons.Filled.Menu,
+                contentDescription = stringResource(R.string.nav_open),
+            )
         }
-    }
-
-    Box(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(start = 4.dp, end = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            IconButton(onClick = onOpenDrawer) {
-                Icon(
-                    imageVector = Icons.Filled.Menu,
-                    contentDescription = stringResource(R.string.nav_open),
-                )
-            }
-            if (openTabs.isNotEmpty()) {
-                val tabsScrollState = rememberScrollState()
-                LaunchedEffect(openTabs.size, selectedTabDocumentId, tabsScrollState.maxValue) {
-                    if (selectedTabDocumentId == openTabs.lastOrNull()?.documentId) {
-                        tabsScrollState.animateScrollTo(tabsScrollState.maxValue)
-                    }
-                }
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(
-                        modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(tabsScrollState),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        openTabs.forEach { tab ->
-                            NotesTabChip(
-                                title = tab.title,
-                                selected = tab.documentId == selectedTabDocumentId,
-                                onSelect = { onSelectTab(tab.documentId) },
-                                onClose = { onCloseTab(tab.documentId) },
-                                onLongPress = { tabsMenuExpanded = true },
-                            )
-                        }
-                    }
-                    NotesHorizontalScrollbar(
-                        state = tabsScrollState,
-                        modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(top = 2.dp),
-                    )
-                }
-            } else {
+        when {
+            breadcrumbSegments == null -> {
                 Text(
                     text = stringResource(R.string.markdown_notes_title),
                     style = MaterialTheme.typography.titleMedium,
@@ -1165,61 +1122,59 @@ private fun NotesTopChrome(
                     modifier = Modifier.weight(1f),
                 )
             }
-            if (showEditActions) {
-                if (isEditing) {
-                    IconButton(
-                        onClick = onSave,
-                        enabled = !isSaving,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Save,
-                            contentDescription = stringResource(R.string.markdown_notes_save),
-                        )
-                    }
-                } else {
-                    IconButton(onClick = onEdit) {
-                        Icon(
-                            imageVector = Icons.Filled.Edit,
-                            contentDescription = stringResource(R.string.markdown_notes_edit),
-                        )
-                    }
-                }
+            breadcrumbSegments.isNotEmpty() -> {
+                NotesBreadcrumbs(
+                    segments = breadcrumbSegments,
+                    lastIsNote = lastIsNote,
+                    onSegmentClick = onSegmentClick,
+                    modifier = Modifier.weight(1f),
+                )
             }
-            Box {
-                IconButton(onClick = { onMenuExpandedChange(true) }) {
+            else -> {
+                Spacer(modifier = Modifier.weight(1f))
+            }
+        }
+        if (showEditActions) {
+            if (isEditing) {
+                IconButton(
+                    onClick = onSave,
+                    enabled = !isSaving,
+                ) {
                     Icon(
-                        imageVector = Icons.Filled.MoreVert,
-                        contentDescription = stringResource(R.string.markdown_notes_menu),
+                        imageVector = Icons.Filled.Save,
+                        contentDescription = stringResource(R.string.markdown_notes_save),
                     )
                 }
-                DropdownMenu(
-                    expanded = menuExpanded,
-                    onDismissRequest = { onMenuExpandedChange(false) },
-                ) {
-                    DropdownMenuItem(
-                        text = {
-                            Text(stringResource(R.string.markdown_notes_settings))
-                        },
-                        onClick = {
-                            onMenuExpandedChange(false)
-                            onOpenSettings()
-                        },
+            } else {
+                IconButton(onClick = onEdit) {
+                    Icon(
+                        imageVector = Icons.Filled.Edit,
+                        contentDescription = stringResource(R.string.markdown_notes_edit),
                     )
                 }
             }
         }
-        if (tabsMenuExpanded && openTabs.isNotEmpty()) {
-            NotesOpenTabsPopup(
-                tabs = openTabs,
-                selectedTabDocumentId = selectedTabDocumentId,
-                onDismiss = { tabsMenuExpanded = false },
-                onSelectTab = { id ->
-                    onSelectTab(id)
-                    tabsMenuExpanded = false
-                },
-                onCloseTab = onCloseTab,
-                onReorderTabs = onReorderTabs,
-            )
+        Box {
+            IconButton(onClick = { onMenuExpandedChange(true) }) {
+                Icon(
+                    imageVector = Icons.Filled.MoreVert,
+                    contentDescription = stringResource(R.string.markdown_notes_menu),
+                )
+            }
+            DropdownMenu(
+                expanded = menuExpanded,
+                onDismissRequest = { onMenuExpandedChange(false) },
+            ) {
+                DropdownMenuItem(
+                    text = {
+                        Text(stringResource(R.string.markdown_notes_settings))
+                    },
+                    onClick = {
+                        onMenuExpandedChange(false)
+                        onOpenSettings()
+                    },
+                )
+            }
         }
     }
 }
@@ -1510,42 +1465,93 @@ private fun NotesLazyListScrollbar(
 @Composable
 private fun NotesNavigationRow(
     onBack: () -> Unit,
-    segments: List<NotesPathSegment>,
-    lastIsNote: Boolean,
+    openTabs: List<OpenNoteTab>,
+    selectedTabDocumentId: String?,
+    onSelectTab: (String) -> Unit,
+    onCloseTab: (String) -> Unit,
+    onReorderTabs: (Int, Int) -> Unit,
     showCloseNote: Boolean,
     onCloseNote: () -> Unit,
-    onSegmentClick: (Int) -> Unit,
 ) {
-    Row(
-        modifier =
-        Modifier
-            .fillMaxWidth()
-            .padding(end = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(R.string.markdown_notes_back),
-            )
+    var tabsMenuExpanded by remember { mutableStateOf(false) }
+    LaunchedEffect(openTabs.isEmpty()) {
+        if (openTabs.isEmpty()) {
+            tabsMenuExpanded = false
         }
-        if (segments.isNotEmpty()) {
-            NotesBreadcrumbs(
-                segments = segments,
-                lastIsNote = lastIsNote,
-                onSegmentClick = onSegmentClick,
-                modifier = Modifier.weight(1f),
-            )
-        } else {
-            Spacer(modifier = Modifier.weight(1f))
-        }
-        if (showCloseNote) {
-            IconButton(onClick = onCloseNote) {
+    }
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = onBack) {
                 Icon(
-                    imageVector = Icons.Filled.Close,
-                    contentDescription = stringResource(R.string.markdown_notes_close_tab),
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(R.string.markdown_notes_back),
                 )
             }
+            if (openTabs.isNotEmpty()) {
+                val tabsScrollState = rememberScrollState()
+                LaunchedEffect(openTabs.size, selectedTabDocumentId, tabsScrollState.maxValue) {
+                    if (selectedTabDocumentId == openTabs.lastOrNull()?.documentId) {
+                        tabsScrollState.animateScrollTo(tabsScrollState.maxValue)
+                    }
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(tabsScrollState),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        openTabs.forEach { tab ->
+                            NotesTabChip(
+                                title = tab.title,
+                                selected = tab.documentId == selectedTabDocumentId,
+                                onSelect = { onSelectTab(tab.documentId) },
+                                onClose = { onCloseTab(tab.documentId) },
+                                onLongPress = { tabsMenuExpanded = true },
+                            )
+                        }
+                    }
+                    NotesHorizontalScrollbar(
+                        state = tabsScrollState,
+                        modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 2.dp),
+                    )
+                }
+            } else {
+                Spacer(modifier = Modifier.weight(1f))
+            }
+            if (showCloseNote) {
+                IconButton(onClick = onCloseNote) {
+                    Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = stringResource(R.string.markdown_notes_close_tab),
+                    )
+                }
+            }
+        }
+        if (tabsMenuExpanded && openTabs.isNotEmpty()) {
+            NotesOpenTabsPopup(
+                tabs = openTabs,
+                selectedTabDocumentId = selectedTabDocumentId,
+                onDismiss = { tabsMenuExpanded = false },
+                onSelectTab = { id ->
+                    onSelectTab(id)
+                    tabsMenuExpanded = false
+                },
+                onCloseTab = onCloseTab,
+                onReorderTabs = onReorderTabs,
+            )
         }
     }
 }
