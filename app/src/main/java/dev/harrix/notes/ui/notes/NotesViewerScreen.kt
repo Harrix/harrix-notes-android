@@ -1147,16 +1147,6 @@ fun NotesViewerScreen(
                             openFolderList(path.take(targetIndex + 1))
                         }
                     },
-                    showEditActions = selectedTab != null && !noteLoading && noteContent != null,
-                    isEditing = isEditing,
-                    isSaving = isSaving,
-                    onSave = { persistCurrentDraft() },
-                    onEdit = {
-                        isEditing = true
-                        draftText = noteContent.orEmpty()
-                        lastSavedText = noteContent
-                        saveFeedback = null
-                    },
                     menuExpanded = menuExpanded,
                     onMenuExpandedChange = { menuExpanded = it },
                     onOpenSettings = onOpenSettings,
@@ -1179,6 +1169,16 @@ fun NotesViewerScreen(
                         onSelectTab = { selectTab(it) },
                         onCloseTab = { closeTab(it) },
                         onReorderTabs = { from, to -> reorderTabs(from, to) },
+                        showEditActions = selectedTab != null && !noteLoading && noteContent != null,
+                        isEditing = isEditing,
+                        isSaving = isSaving,
+                        onSave = { persistCurrentDraft() },
+                        onEdit = {
+                            isEditing = true
+                            draftText = noteContent.orEmpty()
+                            lastSavedText = noteContent
+                            saveFeedback = null
+                        },
                         showCloseNote = selectedTab != null,
                         onCloseNote = {
                             selectedTab?.let { closeTab(it.documentId) }
@@ -1314,11 +1314,6 @@ private fun NotesTopChrome(
     breadcrumbSegments: List<NotesPathSegment>?,
     lastIsNote: Boolean,
     onSegmentClick: (Int) -> Unit,
-    showEditActions: Boolean,
-    isEditing: Boolean,
-    isSaving: Boolean,
-    onSave: () -> Unit,
-    onEdit: () -> Unit,
     menuExpanded: Boolean,
     onMenuExpandedChange: (Boolean) -> Unit,
     onOpenSettings: () -> Unit,
@@ -1357,26 +1352,6 @@ private fun NotesTopChrome(
             }
             else -> {
                 Spacer(modifier = Modifier.weight(1f))
-            }
-        }
-        if (showEditActions) {
-            if (isEditing) {
-                IconButton(
-                    onClick = onSave,
-                    enabled = !isSaving,
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Save,
-                        contentDescription = stringResource(R.string.markdown_notes_save),
-                    )
-                }
-            } else {
-                IconButton(onClick = onEdit) {
-                    Icon(
-                        imageVector = Icons.Filled.Edit,
-                        contentDescription = stringResource(R.string.markdown_notes_edit),
-                    )
-                }
             }
         }
         Box {
@@ -1695,6 +1670,11 @@ private fun NotesNavigationRow(
     onSelectTab: (String) -> Unit,
     onCloseTab: (String) -> Unit,
     onReorderTabs: (Int, Int) -> Unit,
+    showEditActions: Boolean,
+    isEditing: Boolean,
+    isSaving: Boolean,
+    onSave: () -> Unit,
+    onEdit: () -> Unit,
     showCloseNote: Boolean,
     onCloseNote: () -> Unit,
 ) {
@@ -1755,6 +1735,26 @@ private fun NotesNavigationRow(
                 }
             } else {
                 Spacer(modifier = Modifier.weight(1f))
+            }
+            if (showEditActions) {
+                if (isEditing) {
+                    IconButton(
+                        onClick = onSave,
+                        enabled = !isSaving,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Save,
+                            contentDescription = stringResource(R.string.markdown_notes_save),
+                        )
+                    }
+                } else {
+                    IconButton(onClick = onEdit) {
+                        Icon(
+                            imageVector = Icons.Filled.Edit,
+                            contentDescription = stringResource(R.string.markdown_notes_edit),
+                        )
+                    }
+                }
             }
             if (showCloseNote) {
                 IconButton(onClick = onCloseNote) {
