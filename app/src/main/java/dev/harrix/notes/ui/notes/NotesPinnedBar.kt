@@ -2,6 +2,7 @@ package dev.harrix.notes.ui.notes
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -22,12 +23,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -57,13 +60,15 @@ private const val PinnedLabelFontStepSp = 0.5f
 @Composable
 fun NotesPinnedBar(
     items: List<NotesPinnedItem>,
+    maxSlots: Int,
     onOpen: (NotesPinnedItem) -> Unit,
     onUnpin: (NotesPinnedItem) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (items.isEmpty()) {
-        return
-    }
+    val slots = maxSlots.coerceAtLeast(1)
+    val emptyCount = (slots - items.size).coerceAtLeast(0)
+    var showHowToPin by remember { mutableStateOf(false) }
+
     Column(
         modifier =
         modifier
@@ -88,7 +93,25 @@ fun NotesPinnedBar(
                     onUnpin = { onUnpin(item) },
                 )
             }
+            repeat(emptyCount) {
+                NotesPinnedEmptySlot(
+                    onClick = { showHowToPin = true },
+                )
+            }
         }
+    }
+
+    if (showHowToPin) {
+        AlertDialog(
+            onDismissRequest = { showHowToPin = false },
+            title = { Text(stringResource(R.string.markdown_notes_pin_how_title)) },
+            text = { Text(stringResource(R.string.markdown_notes_pin_how_message)) },
+            confirmButton = {
+                TextButton(onClick = { showHowToPin = false }) {
+                    Text(stringResource(R.string.markdown_notes_pin_how_ok))
+                }
+            },
+        )
     }
 }
 
@@ -105,7 +128,6 @@ private fun NotesPinnedBarItem(
             item.kind == NotesPinnedKind.Home || item.id == NotesPinnedItem.HOME_ID -> {
                 stringResource(R.string.nav_drawer_home)
             }
-
             else -> item.title.ifBlank { item.documentId }
         }
 
@@ -126,6 +148,7 @@ private fun NotesPinnedBarItem(
             Spacer(modifier = Modifier.height(4.dp))
             NotesPinnedAutoSizeLabel(
                 text = label,
+                muted = false,
                 modifier =
                 Modifier
                     .fillMaxWidth()
@@ -154,6 +177,34 @@ private fun NotesPinnedBarItem(
 }
 
 @Composable
+private fun NotesPinnedEmptySlot(onClick: () -> Unit) {
+    Column(
+        modifier =
+        Modifier
+            .width(PinnedItemWidth)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 2.dp, vertical = 2.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.PushPin,
+            contentDescription = stringResource(R.string.markdown_notes_pin_empty),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f),
+            modifier = Modifier.size(PinnedIconSize),
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        NotesPinnedAutoSizeLabel(
+            text = stringResource(R.string.markdown_notes_pin_empty),
+            muted = true,
+            modifier =
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = 28.dp, max = 36.dp),
+        )
+    }
+}
+
+@Composable
 private fun NotesPinnedGlyph(item: NotesPinnedItem) {
     when (item.kind) {
         NotesPinnedKind.Home -> {
@@ -164,7 +215,6 @@ private fun NotesPinnedGlyph(item: NotesPinnedItem) {
                 modifier = Modifier.size(PinnedIconSize),
             )
         }
-
         NotesPinnedKind.Folder -> {
             Icon(
                 imageVector = Icons.Filled.Folder,
@@ -173,7 +223,6 @@ private fun NotesPinnedGlyph(item: NotesPinnedItem) {
                 modifier = Modifier.size(PinnedIconSize),
             )
         }
-
         NotesPinnedKind.Note -> {
             NotesNoteGlyph(icon = item.icon, size = PinnedIconSize)
         }
@@ -183,11 +232,18 @@ private fun NotesPinnedGlyph(item: NotesPinnedItem) {
 @Composable
 private fun NotesPinnedAutoSizeLabel(
     text: String,
+    muted: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val baseStyle = MaterialTheme.typography.labelSmall
     val textMeasurer = rememberTextMeasurer()
     var fontSize by remember(text) { mutableStateOf(PinnedLabelMaxFont) }
+    val color =
+        if (muted) {
+            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)
+        } else {
+            MaterialTheme.colorScheme.onSurface
+        }
 
     BoxWithConstraints(modifier = modifier) {
         val maxWidthPx = constraints.maxWidth
@@ -224,6 +280,7 @@ private fun NotesPinnedAutoSizeLabel(
         Text(
             text = text,
             style = baseStyle.copy(fontSize = fontSize, lineHeight = fontSize * 1.15f),
+            color = color,
             textAlign = TextAlign.Center,
             maxLines = PinnedLabelMaxLines,
             overflow = TextOverflow.Ellipsis,
