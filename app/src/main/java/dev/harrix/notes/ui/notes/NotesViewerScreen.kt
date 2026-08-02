@@ -1207,8 +1207,15 @@ fun NotesViewerScreen(
     ModalNavigationDrawer(
         drawerState = drawerState,
         modifier = modifier,
-        // Allow dismiss by swipe/scrim when open; only block edge-swipe open on welcome.
-        gesturesEnabled = drawerState.isOpen || !notesTreeUri.isNullOrBlank(),
+        // Allow dismiss by swipe/scrim when open. Block edge-swipe open on welcome and in
+        // HTML preview: WebView touch events are not consumed by Compose the way the editor
+        // TextField is, so the drawer steals vertical/diagonal swipes meant for scrolling.
+        gesturesEnabled =
+            drawerState.isOpen ||
+                (
+                    !notesTreeUri.isNullOrBlank() &&
+                        (selectedTab == null || isEditing)
+                    ),
         drawerContent = {
             NotesTreeDrawerContent(
                 rows = treeRows,
