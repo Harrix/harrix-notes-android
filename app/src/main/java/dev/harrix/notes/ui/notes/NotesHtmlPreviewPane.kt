@@ -167,7 +167,7 @@ private fun buildRawPreHtml(
         </head>
         <body><pre>$escaped</pre></body>
         </html>
-        """.trimIndent()
+    """.trimIndent()
 }
 
 private fun escapeHtmlForPre(text: String): String {
@@ -181,12 +181,4 @@ private fun escapeHtmlForPre(text: String): String {
         }
     }
     return out.toString()
-}
-
-private fun Color.toCssHex(): String {
-    val argb = toArgb()
-    val r = (argb shr 16) and 0xFF
-    val g = (argb shr 8) and 0xFF
-    val b = argb and 0xFF
-    return "#%02X%02X%02X".format(r, g, b)
 }

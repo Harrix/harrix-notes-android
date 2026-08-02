@@ -7,6 +7,7 @@
     <string name="settings_title">Einstellungen</string>
     <string name="settings_back">Zurück</string>
     <string name="settings_appearance_title">Aussehen</string>
+    <string name="settings_appearance_summary">Design, Sprache, Schriftgröße</string>
     <string name="settings_language_title">Sprache</string>
     <string name="settings_language_system">System</string>
     <string name="settings_theme_title">Design</string>
@@ -17,7 +18,11 @@
     <string name="settings_font_size_hint">Von 10 bis 28 sp</string>
     <string name="settings_section_expand">Abschnitt aufklappen</string>
     <string name="settings_section_collapse">Abschnitt einklappen</string>
+    <string name="settings_category_main">Allgemein</string>
     <string name="settings_notes_title">Notizen</string>
+    <string name="settings_notes_summary">Ordner, Ansicht, Editor, Anheftungen</string>
+    <string name="settings_other_title">Sonstiges</string>
+    <string name="settings_other_summary">Auf Standardwerte zurücksetzen</string>
     <string name="settings_reset">Einstellungen zurücksetzen</string>
     <string name="settings_reset_hint">Stellt das Standard-Aussehen und die Notiz-Optionen wieder her. Der Notizordner bleibt erhalten.</string>
     <string name="settings_reset_done">Einstellungen zurückgesetzt</string>

@@ -7,14 +7,13 @@ enum class NotesOpenMode {
     /** Read-only HTML preview (`NotesHtmlPreviewPane`). */
     Preview,
 
-    /** Plain-text editor (`NotesPlainTextEditorPane`). */
+    /** CodeMirror editor (`NotesMarkdownEditorPane`). */
     Edit,
     ;
 
     companion object {
         val Default: NotesOpenMode = Preview
 
-        fun fromStorageKey(key: String?): NotesOpenMode =
-            entries.firstOrNull { it.name.equals(key, ignoreCase = true) } ?: Default
+        fun fromStorageKey(key: String?): NotesOpenMode = entries.firstOrNull { it.name.equals(key, ignoreCase = true) } ?: Default
     }
 }

@@ -7,6 +7,7 @@
     <string name="settings_title">Impostazioni</string>
     <string name="settings_back">Indietro</string>
     <string name="settings_appearance_title">Aspetto</string>
+    <string name="settings_appearance_summary">Tema, lingua, dimensione del carattere</string>
     <string name="settings_language_title">Lingua</string>
     <string name="settings_language_system">Sistema</string>
     <string name="settings_theme_title">Tema</string>
@@ -17,7 +18,11 @@
     <string name="settings_font_size_hint">Da 10 a 28 sp</string>
     <string name="settings_section_expand">Espandi sezione</string>
     <string name="settings_section_collapse">Comprimi sezione</string>
+    <string name="settings_category_main">Generale</string>
     <string name="settings_notes_title">Note</string>
+    <string name="settings_notes_summary">Cartella, esplorazione, editor, elementi fissati</string>
+    <string name="settings_other_title">Altro</string>
+    <string name="settings_other_summary">Ripristina i valori predefiniti</string>
     <string name="settings_reset">Ripristina impostazioni</string>
     <string name="settings_reset_hint">Ripristina l\'aspetto predefinito e le opzioni delle note. La cartella delle note viene conservata.</string>
     <string name="settings_reset_done">Impostazioni ripristinate</string>

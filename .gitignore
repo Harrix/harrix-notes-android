@@ -13,3 +13,4 @@
 app/build/
 **/build/
 .kotlin/
+web/node_modules/

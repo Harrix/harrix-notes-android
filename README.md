@@ -30,6 +30,16 @@ hsk android check D:\GitHub\harrix-notes-android
 hsk android build D:\GitHub\harrix-notes-android
 ```
 
+## Editor bundle
+
+The note editor is CodeMirror 6 running in a WebView, so multi-megabyte notes do not block the main thread. The bundle in `app\src\main\assets\editor\editor.js` is committed, so a normal Gradle build needs no Node. Rebuild it only after changing `web\src\editor.js` or upgrading CodeMirror:
+
+```powershell
+cd web
+npm install
+npm run build
+```
+
 ## Quality
 
 ```powershell

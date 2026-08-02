@@ -46,7 +46,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DragHandle
@@ -59,6 +58,7 @@ import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -74,8 +74,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -187,6 +185,7 @@ fun NotesViewerScreen(
     var treeChildrenByFolderId by viewModel.treeChildrenByFolderId
     var treeExpandedFolderIds by viewModel.treeExpandedFolderIds
     var treeLoadingRoot by viewModel.treeLoadingRoot
+    val editorController = remember { NotesMarkdownEditorController() }
 
     fun reloadPath() {
         notesTreeUri = preferences.loadNotesTreeUri()
@@ -523,12 +522,12 @@ fun NotesViewerScreen(
             after?.invoke()
             return
         }
-        if (draftText == lastSavedText) {
-            after?.invoke()
-            return
-        }
         scope.launch {
-            saveNoteText(tab.uri, draftText)
+            // The editor owns the text, so pull the newest edits before saving.
+            editorController.flush()
+            if (draftText != lastSavedText) {
+                saveNoteText(tab.uri, draftText)
+            }
             after?.invoke()
         }
     }
@@ -1171,6 +1170,7 @@ fun NotesViewerScreen(
                             autoEditDocumentId = null
                             true
                         }
+
                         else -> noteOpenMode == NotesOpenMode.Edit
                     }
                 isEditing = shouldEdit
@@ -1211,15 +1211,12 @@ fun NotesViewerScreen(
     ModalNavigationDrawer(
         drawerState = drawerState,
         modifier = modifier,
-        // Allow dismiss by swipe/scrim when open. Block edge-swipe open on welcome and in
-        // HTML preview: WebView touch events are not consumed by Compose the way the editor
-        // TextField is, so the drawer steals vertical/diagonal swipes meant for scrolling.
+        // Allow dismiss by swipe/scrim when open. Block edge-swipe open on welcome and while a
+        // note is open: both preview and editor are WebViews, whose touch events Compose does
+        // not consume, so the drawer would steal vertical/diagonal scroll swipes.
         gesturesEnabled =
-            drawerState.isOpen ||
-                (
-                    !notesTreeUri.isNullOrBlank() &&
-                        (selectedTab == null || isEditing)
-                    ),
+        drawerState.isOpen ||
+            (!notesTreeUri.isNullOrBlank() && selectedTab == null),
         drawerContent = {
             NotesTreeDrawerContent(
                 rows = treeRows,
@@ -1352,13 +1349,15 @@ fun NotesViewerScreen(
                         when {
                             selectedTab != null -> {
                                 if (isEditing) {
-                                    NotesPlainTextEditorPane(
+                                    NotesMarkdownEditorPane(
                                         isLoading = noteLoading,
-                                        draftText = draftText,
+                                        docKey = selectedTab.documentId,
+                                        text = draftText,
                                         errorMessage = statusMessage,
                                         hasContent = noteContent != null,
                                         fontSizeSp = editorFontSizeSp,
-                                        onDraftChange = { value ->
+                                        controller = editorController,
+                                        onTextChange = { value ->
                                             draftText = value
                                             scheduleAutosave()
                                         },
@@ -2599,62 +2598,6 @@ private fun NotesAutoSizeLabel(
 }
 
 private fun notesGridIconSize(density: NotesListDensity) = (density.iconSizeDp * 2).dp
-
-/**
- * Note **editor** mode (plain text with lightweight Markdown highlighting).
- * Separate from [NotesHtmlPreviewPane] — preview will later become real HTML rendering.
- */
-@Composable
-private fun NotesPlainTextEditorPane(
-    isLoading: Boolean,
-    draftText: String,
-    errorMessage: String?,
-    hasContent: Boolean,
-    fontSizeSp: Int,
-    onDraftChange: (String) -> Unit,
-) {
-    val highlightColors = rememberMarkdownHighlightColors()
-    val editTransformation =
-        remember(highlightColors) {
-            MarkdownSyntaxVisualTransformation(highlightColors)
-        }
-    val editorStyle =
-        MaterialTheme.typography.bodyMedium.copy(fontSize = fontSizeSp.sp)
-
-    when {
-        isLoading -> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        }
-
-        errorMessage != null && !hasContent -> {
-            Text(
-                text = errorMessage,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(24.dp),
-            )
-        }
-
-        else -> {
-            TextField(
-                value = draftText,
-                onValueChange = onDraftChange,
-                modifier = Modifier.fillMaxSize(),
-                textStyle = editorStyle,
-                visualTransformation = editTransformation,
-                colors =
-                TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                    disabledContainerColor = MaterialTheme.colorScheme.surface,
-                    focusedIndicatorColor = MaterialTheme.colorScheme.surface,
-                    unfocusedIndicatorColor = MaterialTheme.colorScheme.surface,
-                ),
-            )
-        }
-    }
-}
 
 @Composable
 private fun NotesPathWelcomeContent(

@@ -40,11 +40,10 @@ fun pinnedDisplayLabels(
 private fun basePinnedLabel(
     item: NotesPinnedItem,
     homeLabel: String,
-): String =
-    when {
-        item.kind == NotesPinnedKind.Home || item.id == NotesPinnedItem.HOME_ID -> homeLabel
-        else -> item.title.ifBlank { item.documentId }
-    }
+): String = when {
+    item.kind == NotesPinnedKind.Home || item.id == NotesPinnedItem.HOME_ID -> homeLabel
+    else -> item.title.ifBlank { item.documentId }
+}
 
 /**
  * Path segments including the leaf title.
@@ -58,6 +57,7 @@ internal fun pinnedPathSegments(
     val parents = item.folderPath.map { it.name }.filter { it.isNotBlank() }
     return when (item.kind) {
         NotesPinnedKind.Home -> listOf(leafTitle)
+
         NotesPinnedKind.Folder -> {
             if (parents.isEmpty()) {
                 listOf(leafTitle)
@@ -67,6 +67,7 @@ internal fun pinnedPathSegments(
                 parents + leafTitle
             }
         }
+
         NotesPinnedKind.Note -> parents + leafTitle
     }
 }

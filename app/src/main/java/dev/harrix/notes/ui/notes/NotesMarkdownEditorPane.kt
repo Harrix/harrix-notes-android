@@ -1,0 +1,442 @@
+package dev.harrix.notes.ui.notes
+
+import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import android.webkit.JavascriptInterface
+import android.webkit.WebView
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import dev.harrix.notes.AppPreferences
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.withTimeoutOrNull
+import org.json.JSONObject
+import java.util.Locale
+
+/**
+ * Notes longer than this are edited as plain text: Markdown parsing and
+ * highlighting are skipped so huge generated files stay responsive.
+ */
+private const val HIGHLIGHT_MAX_CHARS = 1024 * 1024
+
+private const val BRIDGE_NAME = "NotesEditorHost"
+private const val EDITOR_URL = "file:///android_asset/editor/editor.html"
+private const val FLUSH_TIMEOUT_MS = 2_000L
+private const val SELECTION_ALPHA = 0.3f
+
+/**
+ * Owns the WebView that hosts the CodeMirror editor and moves text between it
+ * and Compose.
+ *
+ * The document is never passed as a single string: it is pulled by JavaScript
+ * through [textChunk] and pushed back through [appendText], so a multi-megabyte
+ * note does not have to be escaped into a script call. Every
+ * `@JavascriptInterface` method runs on the WebView bridge thread, so results
+ * are handed to Compose through the main looper.
+ */
+class NotesMarkdownEditorController {
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val incoming = StringBuilder()
+
+    private var webView: WebView? = null
+    private var flushSignal: CompletableDeferred<Unit>? = null
+
+    @Volatile
+    private var stagedText: String = ""
+
+    @Volatile
+    private var stagedConfig: String = "{}"
+
+    @Volatile
+    private var ready: Boolean = false
+
+    internal var textListener: (String) -> Unit = {}
+    internal var readyListener: () -> Unit = {}
+
+    /**
+     * Sends the document to Compose immediately instead of waiting for the
+     * editor debounce, and returns once the text has arrived.
+     */
+    suspend fun flush() {
+        val target = webView ?: return
+        if (!ready) return
+        val signal = CompletableDeferred<Unit>()
+        flushSignal = signal
+        target.evaluateJavascript("window.notesEditor && window.notesEditor.flush();", null)
+        withTimeoutOrNull(FLUSH_TIMEOUT_MS) { signal.await() }
+        flushSignal = null
+    }
+
+    internal fun attach(target: WebView) {
+        webView = target
+    }
+
+    internal fun detach(target: WebView) {
+        if (webView === target) {
+            webView = null
+        }
+        ready = false
+        flushSignal?.complete(Unit)
+        flushSignal = null
+    }
+
+    /** Stages the document and settings picked up by the next editor load. */
+    internal fun stage(
+        text: String,
+        config: String,
+    ) {
+        stagedText = text
+        stagedConfig = config
+        ready = false
+    }
+
+    internal fun stageText(text: String) {
+        stagedText = text
+    }
+
+    internal fun applyConfig(config: String) {
+        stagedConfig = config
+        val target = webView ?: return
+        val literal = JSONObject.quote(config)
+        target.evaluateJavascript("window.notesEditor && window.notesEditor.applyConfig($literal);", null)
+    }
+
+    @JavascriptInterface
+    fun configJson(): String = stagedConfig
+
+    @JavascriptInterface
+    fun textLength(): Int = stagedText.length
+
+    @JavascriptInterface
+    fun textChunk(
+        from: Int,
+        to: Int,
+    ): String {
+        val text = stagedText
+        val start = from.coerceIn(0, text.length)
+        var end = to.coerceIn(start, text.length)
+        // Shorten rather than split a surrogate pair: a lone half would not
+        // survive the bridge. JavaScript advances by the returned length.
+        if (end in (start + 1) until text.length && text[end - 1].isHighSurrogate()) {
+            end--
+        }
+        return text.substring(start, end)
+    }
+
+    @JavascriptInterface
+    fun beginText(length: Int) {
+        incoming.setLength(0)
+        if (length > 0) {
+            incoming.ensureCapacity(length)
+        }
+    }
+
+    @JavascriptInterface
+    fun appendText(chunk: String) {
+        incoming.append(chunk)
+    }
+
+    @JavascriptInterface
+    fun commitText() {
+        val text = incoming.toString()
+        incoming.setLength(0)
+        mainHandler.post {
+            textListener(text)
+            flushSignal?.complete(Unit)
+        }
+    }
+
+    @JavascriptInterface
+    fun onReady() {
+        ready = true
+        mainHandler.post { readyListener() }
+    }
+}
+
+/** VS Code (Default Light / Dark Modern) Markdown token colors. */
+@Immutable
+data class MarkdownTokenColors(
+    val heading: Color,
+    val quote: Color,
+    val listMarker: Color,
+    val emphasis: Color,
+    val inlineCode: Color,
+    val codeBlock: Color,
+    val linkText: Color,
+    val linkUrl: Color,
+    val separator: Color,
+    val strikethrough: Color,
+) {
+    companion object {
+        val Light =
+            MarkdownTokenColors(
+                heading = Color(0xFF3861B2),
+                quote = Color(0xFF1CB978),
+                listMarker = Color(0xFFD07826),
+                emphasis = Color(0xFF1F2939),
+                inlineCode = Color(0xFFF13D3D),
+                codeBlock = Color(0xFF1CB978),
+                linkText = Color(0xFF4C43C2),
+                linkUrl = Color(0xFF1CB978),
+                separator = Color(0xFF3861B2),
+                strikethrough = Color(0xFFAD1C48),
+            )
+
+        val Dark =
+            MarkdownTokenColors(
+                heading = Color(0xFF7BA3E8),
+                quote = Color(0xFF3DDB9A),
+                listMarker = Color(0xFFE09A50),
+                emphasis = Color(0xFFE0E4DB),
+                inlineCode = Color(0xFFFF6B6B),
+                codeBlock = Color(0xFF3DDB9A),
+                linkText = Color(0xFF9B93E8),
+                linkUrl = Color(0xFF3DDB9A),
+                separator = Color(0xFF7BA3E8),
+                strikethrough = Color(0xFFFF8A9A),
+            )
+    }
+}
+
+/** Editor chrome colors plus the Markdown token palette for the current theme. */
+@Immutable
+data class NotesEditorPalette(
+    val dark: Boolean,
+    val background: Color,
+    val foreground: Color,
+    val caret: Color,
+    val selection: Color,
+    val tokens: MarkdownTokenColors,
+)
+
+@Composable
+fun rememberNotesEditorPalette(): NotesEditorPalette {
+    val scheme = MaterialTheme.colorScheme
+    val dark = scheme.background.luminance() < 0.5f
+    val background = scheme.surface
+    val foreground = scheme.onSurface
+    val caret = scheme.primary
+    val selection = scheme.primary.copy(alpha = SELECTION_ALPHA)
+    return remember(dark, background, foreground, caret, selection) {
+        NotesEditorPalette(
+            dark = dark,
+            background = background,
+            foreground = foreground,
+            caret = caret,
+            selection = selection,
+            tokens = if (dark) MarkdownTokenColors.Dark else MarkdownTokenColors.Light,
+        )
+    }
+}
+
+/**
+ * Note **editor** mode: CodeMirror 6 inside a WebView.
+ *
+ * Compose cannot lay out a multi-megabyte `TextField` without blocking the main
+ * thread, so editing runs in the WebView renderer instead — the same reason
+ * [NotesHtmlPreviewPane] opens huge notes quickly. A spinner covers the pane
+ * until the editor reports that the document is loaded.
+ */
+@Composable
+fun NotesMarkdownEditorPane(
+    isLoading: Boolean,
+    docKey: String,
+    text: String,
+    errorMessage: String?,
+    hasContent: Boolean,
+    fontSizeSp: Int,
+    controller: NotesMarkdownEditorController,
+    onTextChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val palette = rememberNotesEditorPalette()
+    val highlight = text.length <= HIGHLIGHT_MAX_CHARS
+    val config =
+        remember(palette, fontSizeSp, highlight) {
+            buildEditorConfig(palette, fontSizeSp, highlight)
+        }
+    var editorReady by remember { mutableStateOf(false) }
+    val latestText by rememberUpdatedState(text)
+    val latestOnTextChange by rememberUpdatedState(onTextChange)
+
+    DisposableEffect(controller) {
+        controller.textListener = { changed -> latestOnTextChange(changed) }
+        controller.readyListener = { editorReady = true }
+        onDispose {
+            controller.textListener = {}
+            controller.readyListener = {}
+        }
+    }
+
+    // clipToBounds: a WebView can paint outside its Compose bounds while loading.
+    Box(modifier = modifier.fillMaxSize().clipToBounds()) {
+        when {
+            isLoading -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            errorMessage != null && !hasContent -> {
+                Text(
+                    text = errorMessage,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(24.dp),
+                )
+            }
+
+            else -> {
+                val loaded = remember { EditorLoadState() }
+                // Pin the WebView to the Compose slot size — otherwise it measures
+                // by document height and overlays the tabs and breadcrumbs.
+                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                    AndroidView(
+                        factory = { context ->
+                            createEditorWebView(context, controller, palette).also { webView ->
+                                loaded.docKey = docKey
+                                loaded.config = config
+                                editorReady = false
+                                controller.stage(latestText, config)
+                                webView.loadUrl(EDITOR_URL)
+                            }
+                        },
+                        update = { webView ->
+                            webView.setBackgroundColor(palette.background.toArgb())
+                            controller.stageText(latestText)
+                            when {
+                                loaded.docKey != docKey -> {
+                                    loaded.docKey = docKey
+                                    loaded.config = config
+                                    editorReady = false
+                                    controller.stage(latestText, config)
+                                    webView.loadUrl(EDITOR_URL)
+                                }
+
+                                loaded.config != config -> {
+                                    loaded.config = config
+                                    controller.applyConfig(config)
+                                }
+                            }
+                        },
+                        onRelease = { webView ->
+                            controller.detach(webView)
+                            webView.destroy()
+                        },
+                        modifier =
+                        Modifier
+                            .width(maxWidth)
+                            .height(maxHeight),
+                    )
+                }
+                if (!editorReady) {
+                    Box(
+                        modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .background(palette.background),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** Tracks what the WebView currently shows, without triggering recomposition. */
+private class EditorLoadState {
+    var docKey: String? = null
+    var config: String? = null
+}
+
+private fun createEditorWebView(
+    context: Context,
+    controller: NotesMarkdownEditorController,
+    palette: NotesEditorPalette,
+): WebView = WebView(context).apply {
+    // Scripts are required: the editor itself is the bundled CodeMirror asset.
+    settings.javaScriptEnabled = true
+    settings.domStorageEnabled = false
+    // Font size comes from app settings, so ignore the system text scale.
+    settings.textZoom = 100
+    isFocusableInTouchMode = true
+    isVerticalScrollBarEnabled = false
+    setBackgroundColor(palette.background.toArgb())
+    addJavascriptInterface(controller, BRIDGE_NAME)
+    controller.attach(this)
+}
+
+private fun buildEditorConfig(
+    palette: NotesEditorPalette,
+    fontSizeSp: Int,
+    highlight: Boolean,
+): String {
+    val tokens = palette.tokens
+    val tokenJson =
+        JSONObject()
+            .put("heading", tokens.heading.toCssHex())
+            .put("quote", tokens.quote.toCssHex())
+            .put("listMarker", tokens.listMarker.toCssHex())
+            .put("emphasis", tokens.emphasis.toCssHex())
+            .put("inlineCode", tokens.inlineCode.toCssHex())
+            .put("codeBlock", tokens.codeBlock.toCssHex())
+            .put("linkText", tokens.linkText.toCssHex())
+            .put("linkUrl", tokens.linkUrl.toCssHex())
+            .put("separator", tokens.separator.toCssHex())
+            .put("strikethrough", tokens.strikethrough.toCssHex())
+    return JSONObject()
+        .put(
+            "fontSize",
+            fontSizeSp.coerceIn(AppPreferences.MIN_FONT_SIZE_SP, AppPreferences.MAX_FONT_SIZE_SP),
+        ).put("dark", palette.dark)
+        .put("highlight", highlight)
+        .put("background", palette.background.toCssHex())
+        .put("foreground", palette.foreground.toCssHex())
+        .put("caret", palette.caret.toCssHex())
+        .put("selection", palette.selection.toCssRgba())
+        .put("tokens", tokenJson)
+        .toString()
+}
+
+internal fun Color.toCssHex(): String {
+    val argb = toArgb()
+    val r = (argb shr 16) and 0xFF
+    val g = (argb shr 8) and 0xFF
+    val b = argb and 0xFF
+    return "#%02X%02X%02X".format(r, g, b)
+}
+
+private fun Color.toCssRgba(): String {
+    val argb = toArgb()
+    val r = (argb shr 16) and 0xFF
+    val g = (argb shr 8) and 0xFF
+    val b = argb and 0xFF
+    val a = ((argb shr 24) and 0xFF) / 255f
+    // Locale.ROOT: CSS needs a dot as the decimal separator.
+    return String.format(Locale.ROOT, "rgba(%d, %d, %d, %.2f)", r, g, b, a)
+}

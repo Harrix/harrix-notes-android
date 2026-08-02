@@ -17,10 +17,9 @@ class AppPreferences(
         prefs.edit().putString(KEY_THEME_MODE, mode.name).apply()
     }
 
-    fun loadUiFontSizeSp(): Int =
-        prefs
-            .getInt(KEY_UI_FONT_SIZE_SP, DEFAULT_UI_FONT_SIZE_SP)
-            .coerceIn(MIN_FONT_SIZE_SP, MAX_FONT_SIZE_SP)
+    fun loadUiFontSizeSp(): Int = prefs
+        .getInt(KEY_UI_FONT_SIZE_SP, DEFAULT_UI_FONT_SIZE_SP)
+        .coerceIn(MIN_FONT_SIZE_SP, MAX_FONT_SIZE_SP)
 
     fun saveUiFontSizeSp(value: Int) {
         prefs.edit().putInt(KEY_UI_FONT_SIZE_SP, value.coerceIn(MIN_FONT_SIZE_SP, MAX_FONT_SIZE_SP)).apply()

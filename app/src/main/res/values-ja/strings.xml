@@ -7,6 +7,7 @@
     <string name="settings_title">設定</string>
     <string name="settings_back">戻る</string>
     <string name="settings_appearance_title">外観</string>
+    <string name="settings_appearance_summary">テーマ、言語、文字サイズ</string>
     <string name="settings_language_title">言語</string>
     <string name="settings_language_system">システム</string>
     <string name="settings_theme_title">テーマ</string>
@@ -17,7 +18,11 @@
     <string name="settings_font_size_hint">10 から 28 sp まで</string>
     <string name="settings_section_expand">セクションを展開する</string>
     <string name="settings_section_collapse">セクションを折りたたむ</string>
+    <string name="settings_category_main">基本</string>
     <string name="settings_notes_title">ノート</string>
+    <string name="settings_notes_summary">フォルダー、表示、エディター、ピン留め</string>
+    <string name="settings_other_title">その他</string>
+    <string name="settings_other_summary">初期設定に戻す</string>
     <string name="settings_reset">設定をリセット</string>
     <string name="settings_reset_hint">デフォルトの外観とノートの設定を復元します。ノートフォルダは保持されます。</string>
     <string name="settings_reset_done">設定をリセットしました</string>

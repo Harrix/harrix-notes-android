@@ -7,6 +7,7 @@
     <string name="settings_title">设置</string>
     <string name="settings_back">返回</string>
     <string name="settings_appearance_title">外观</string>
+    <string name="settings_appearance_summary">主题、语言、字号</string>
     <string name="settings_language_title">语言</string>
     <string name="settings_language_system">系统</string>
     <string name="settings_theme_title">主题</string>
@@ -17,7 +18,11 @@
     <string name="settings_font_size_hint">从 10 到 28 sp</string>
     <string name="settings_section_expand">展开部分</string>
     <string name="settings_section_collapse">折叠部分</string>
+    <string name="settings_category_main">常规</string>
     <string name="settings_notes_title">笔记</string>
+    <string name="settings_notes_summary">文件夹、浏览、编辑器、置顶</string>
+    <string name="settings_other_title">其他</string>
+    <string name="settings_other_summary">恢复默认设置</string>
     <string name="settings_reset">重置设置</string>
     <string name="settings_reset_hint">恢复默认的外观和笔记选项。笔记文件夹保持不变。</string>
     <string name="settings_reset_done">设置已重置</string>

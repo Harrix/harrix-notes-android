@@ -37,11 +37,9 @@ fun notesTypography(uiFontSizeSp: Int): Typography {
     )
 }
 
-private fun TextStyle.scaled(scale: Float): TextStyle =
-    copy(
-        fontSize = fontSize.scaledSp(scale),
-        lineHeight = lineHeight.scaledSp(scale),
-    )
+private fun TextStyle.scaled(scale: Float): TextStyle = copy(
+    fontSize = fontSize.scaledSp(scale),
+    lineHeight = lineHeight.scaledSp(scale),
+)
 
-private fun TextUnit.scaledSp(scale: Float): TextUnit =
-    if (type == TextUnitType.Sp) (value * scale).sp else this
+private fun TextUnit.scaledSp(scale: Float): TextUnit = if (type == TextUnitType.Sp) (value * scale).sp else this

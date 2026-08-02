@@ -22,8 +22,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Folder
@@ -706,28 +706,31 @@ private fun NotesDensitySettingRow(
     selected: NotesListDensity,
     options: List<Pair<NotesListDensity, Int>>,
     onSelect: (NotesListDensity) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Text(
-        text = stringResource(labelRes),
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-        options.forEachIndexed { index, (density, optionLabelRes) ->
-            SegmentedButton(
-                selected = selected == density,
-                onClick = { onSelect(density) },
-                shape =
-                SegmentedButtonDefaults.itemShape(
-                    index = index,
-                    count = options.size,
-                ),
-            ) {
-                Text(
-                    text = stringResource(optionLabelRes),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = stringResource(labelRes),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            options.forEachIndexed { index, (density, optionLabelRes) ->
+                SegmentedButton(
+                    selected = selected == density,
+                    onClick = { onSelect(density) },
+                    shape =
+                    SegmentedButtonDefaults.itemShape(
+                        index = index,
+                        count = options.size,
+                    ),
+                ) {
+                    Text(
+                        text = stringResource(optionLabelRes),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
         }
     }

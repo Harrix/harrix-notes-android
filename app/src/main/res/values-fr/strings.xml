@@ -7,6 +7,7 @@
     <string name="settings_title">Paramètres</string>
     <string name="settings_back">Retour</string>
     <string name="settings_appearance_title">Apparence</string>
+    <string name="settings_appearance_summary">Thème, langue, taille de police</string>
     <string name="settings_language_title">Langue</string>
     <string name="settings_language_system">Système</string>
     <string name="settings_theme_title">Thème</string>
@@ -17,7 +18,11 @@
     <string name="settings_font_size_hint">De 10 à 28 sp</string>
     <string name="settings_section_expand">Développer la section</string>
     <string name="settings_section_collapse">Réduire la section</string>
+    <string name="settings_category_main">Général</string>
     <string name="settings_notes_title">Notes</string>
+    <string name="settings_notes_summary">Dossier, navigation, éditeur, épinglés</string>
+    <string name="settings_other_title">Autres</string>
+    <string name="settings_other_summary">Réinitialiser aux valeurs par défaut</string>
     <string name="settings_reset">Réinitialiser les paramètres</string>
     <string name="settings_reset_hint">Restaure l\'apparence et les options des notes par défaut. Le dossier des notes est conservé.</string>
     <string name="settings_reset_done">Paramètres réinitialisés</string>

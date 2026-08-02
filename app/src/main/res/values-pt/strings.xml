@@ -7,6 +7,7 @@
     <string name="settings_title">Definições</string>
     <string name="settings_back">Voltar</string>
     <string name="settings_appearance_title">Aparência</string>
+    <string name="settings_appearance_summary">Tema, idioma, tamanho da fonte</string>
     <string name="settings_language_title">Idioma</string>
     <string name="settings_language_system">Sistema</string>
     <string name="settings_theme_title">Tema</string>
@@ -17,7 +18,11 @@
     <string name="settings_font_size_hint">De 10 a 28 sp</string>
     <string name="settings_section_expand">Expandir secção</string>
     <string name="settings_section_collapse">Recolher secção</string>
+    <string name="settings_category_main">Geral</string>
     <string name="settings_notes_title">Notas</string>
+    <string name="settings_notes_summary">Pasta, navegação, editor, fixados</string>
+    <string name="settings_other_title">Outros</string>
+    <string name="settings_other_summary">Restaurar padrões</string>
     <string name="settings_reset">Repor definições</string>
     <string name="settings_reset_hint">Restaura a aparência padrão e as opções de notas. A pasta de notas é mantida.</string>
     <string name="settings_reset_done">Definições repostas</string>

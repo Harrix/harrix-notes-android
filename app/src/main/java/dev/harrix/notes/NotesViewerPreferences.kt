@@ -29,28 +29,25 @@ class NotesViewerPreferences(
 
     fun hasNotesPath(): Boolean = !loadNotesTreeUri().isNullOrBlank()
 
-    fun loadListDensity(): NotesListDensity =
-        NotesListDensity.fromStorageKey(prefs.getString(KEY_LIST_DENSITY, null))
+    fun loadListDensity(): NotesListDensity = NotesListDensity.fromStorageKey(prefs.getString(KEY_LIST_DENSITY, null))
 
     fun saveListDensity(density: NotesListDensity) {
         prefs.edit().putString(KEY_LIST_DENSITY, density.name).apply()
     }
 
     /** Drawer tree density; falls back to [loadListDensity] for older installs. */
-    fun loadTreeDensity(): NotesListDensity =
-        NotesListDensity.fromStorageKey(
-            prefs.getString(KEY_TREE_DENSITY, null) ?: prefs.getString(KEY_LIST_DENSITY, null),
-        )
+    fun loadTreeDensity(): NotesListDensity = NotesListDensity.fromStorageKey(
+        prefs.getString(KEY_TREE_DENSITY, null) ?: prefs.getString(KEY_LIST_DENSITY, null),
+    )
 
     fun saveTreeDensity(density: NotesListDensity) {
         prefs.edit().putString(KEY_TREE_DENSITY, density.name).apply()
     }
 
     /** Pinned bar density; falls back to [loadListDensity] for older installs. */
-    fun loadPinnedBarDensity(): NotesListDensity =
-        NotesListDensity.fromStorageKey(
-            prefs.getString(KEY_PINNED_BAR_DENSITY, null) ?: prefs.getString(KEY_LIST_DENSITY, null),
-        )
+    fun loadPinnedBarDensity(): NotesListDensity = NotesListDensity.fromStorageKey(
+        prefs.getString(KEY_PINNED_BAR_DENSITY, null) ?: prefs.getString(KEY_LIST_DENSITY, null),
+    )
 
     fun savePinnedBarDensity(density: NotesListDensity) {
         prefs.edit().putString(KEY_PINNED_BAR_DENSITY, density.name).apply()
@@ -74,10 +71,9 @@ class NotesViewerPreferences(
         prefs.edit().putString(KEY_NOTE_OPEN_MODE, mode.name).apply()
     }
 
-    fun loadPreviewFontSizeSp(): Int =
-        prefs
-            .getInt(KEY_PREVIEW_FONT_SIZE_SP, DEFAULT_PREVIEW_FONT_SIZE_SP)
-            .coerceIn(AppPreferences.MIN_FONT_SIZE_SP, AppPreferences.MAX_FONT_SIZE_SP)
+    fun loadPreviewFontSizeSp(): Int = prefs
+        .getInt(KEY_PREVIEW_FONT_SIZE_SP, DEFAULT_PREVIEW_FONT_SIZE_SP)
+        .coerceIn(AppPreferences.MIN_FONT_SIZE_SP, AppPreferences.MAX_FONT_SIZE_SP)
 
     fun savePreviewFontSizeSp(value: Int) {
         prefs
@@ -88,10 +84,9 @@ class NotesViewerPreferences(
             ).apply()
     }
 
-    fun loadEditorFontSizeSp(): Int =
-        prefs
-            .getInt(KEY_EDITOR_FONT_SIZE_SP, DEFAULT_EDITOR_FONT_SIZE_SP)
-            .coerceIn(AppPreferences.MIN_FONT_SIZE_SP, AppPreferences.MAX_FONT_SIZE_SP)
+    fun loadEditorFontSizeSp(): Int = prefs
+        .getInt(KEY_EDITOR_FONT_SIZE_SP, DEFAULT_EDITOR_FONT_SIZE_SP)
+        .coerceIn(AppPreferences.MIN_FONT_SIZE_SP, AppPreferences.MAX_FONT_SIZE_SP)
 
     fun saveEditorFontSizeSp(value: Int) {
         prefs
