@@ -92,6 +92,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
@@ -2602,10 +2603,15 @@ private fun NotesPlainTextPane(
     onScrollPositionChange: (Int, Int) -> Unit,
     onDraftChange: (String) -> Unit,
 ) {
-    var viewLines by remember { mutableStateOf<List<String>?>(null) }
+    val highlightColors = rememberMarkdownHighlightColors()
+    val editTransformation =
+        remember(highlightColors) {
+            MarkdownSyntaxVisualTransformation(highlightColors)
+        }
+    var viewLines by remember { mutableStateOf<List<AnnotatedString>?>(null) }
     var preparingView by remember { mutableStateOf(false) }
 
-    LaunchedEffect(content, isEditing) {
+    LaunchedEffect(content, isEditing, highlightColors) {
         if (isEditing || content == null) {
             viewLines = null
             preparingView = false
@@ -2614,7 +2620,7 @@ private fun NotesPlainTextPane(
         preparingView = true
         viewLines =
             withContext(Dispatchers.IO) {
-                content.lineSequence().toList()
+                highlightMarkdownLines(content.lineSequence().toList(), highlightColors)
             }
         preparingView = false
     }
@@ -2640,6 +2646,7 @@ private fun NotesPlainTextPane(
                 onValueChange = onDraftChange,
                 modifier = Modifier.fillMaxSize(),
                 textStyle = MaterialTheme.typography.bodyMedium,
+                visualTransformation = editTransformation,
                 colors =
                 TextFieldDefaults.colors(
                     focusedContainerColor = MaterialTheme.colorScheme.surface,
@@ -2682,7 +2689,7 @@ private fun NotesPlainTextPane(
                             key = { index -> index },
                         ) { index ->
                             Text(
-                                text = lines[index].ifEmpty { "\u00A0" },
+                                text = lines[index],
                                 style = MaterialTheme.typography.bodyMedium,
                             )
                         }
