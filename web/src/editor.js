@@ -4,6 +4,9 @@
 // and pushed to Kotlin in chunks, so multi-megabyte notes stay responsive.
 // Kotlin talks to this file through `window.notesEditor`, this file talks back
 // through the injected `NotesEditorHost` object.
+//
+// Bridge numbers travel as strings: WebView's Java↔JS glue is unreliable for
+// primitive ints on older Android System WebView builds.
 
 import { Compartment, EditorState } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
@@ -15,7 +18,6 @@ import { tags } from "@lezer/highlight";
 const CHUNK_SIZE = 1 << 18;
 const PUSH_DELAY_MS = 400;
 
-const host = window.NotesEditorHost;
 const themeConf = new Compartment();
 const languageConf = new Compartment();
 
@@ -24,7 +26,30 @@ let config = null;
 let pushTimer = null;
 let suppressPush = false;
 
+function host() {
+  const bridge = window.NotesEditorHost;
+  if (!bridge) {
+    throw new Error("NotesEditorHost bridge is missing");
+  }
+  return bridge;
+}
+
+function reportError(error) {
+  const message = error && error.message ? String(error.message) : String(error);
+  try {
+    host().onError(message);
+  } catch (_) {
+    // Bridge may itself be unavailable during early failures.
+  }
+  if (typeof console !== "undefined" && console.error) {
+    console.error("[notesEditor]", message);
+  }
+}
+
 function isHighSurrogate(text) {
+  if (!text) {
+    return false;
+  }
   const last = text.charCodeAt(text.length - 1);
   return last >= 0xd800 && last <= 0xdbff;
 }
@@ -32,15 +57,17 @@ function isHighSurrogate(text) {
 // Chunk sizes come back from the host: it shortens a chunk rather than split a
 // surrogate pair, which the bridge would turn into a replacement character.
 function readHostText() {
-  const length = host.textLength();
-  if (length <= 0) {
+  const bridge = host();
+  const length = Number(bridge.textLength());
+  if (!Number.isFinite(length) || length <= 0) {
     return "";
   }
   const parts = [];
   let from = 0;
   while (from < length) {
-    const chunk = host.textChunk(from, Math.min(length, from + CHUNK_SIZE));
-    if (!chunk) {
+    const to = Math.min(length, from + CHUNK_SIZE);
+    const chunk = bridge.textChunk(String(from), String(to));
+    if (chunk == null || chunk === "") {
       break;
     }
     parts.push(chunk);
@@ -51,9 +78,13 @@ function readHostText() {
 
 function pushText() {
   pushTimer = null;
+  if (!view) {
+    return;
+  }
+  const bridge = host();
   const doc = view.state.doc;
   const length = doc.length;
-  host.beginText(length);
+  bridge.beginText(String(length));
   let from = 0;
   while (from < length) {
     const to = Math.min(length, from + CHUNK_SIZE);
@@ -61,10 +92,13 @@ function pushText() {
     if (to < length && isHighSurrogate(chunk)) {
       chunk = chunk.slice(0, -1);
     }
-    host.appendText(chunk);
+    if (!chunk) {
+      break;
+    }
+    bridge.appendText(chunk);
     from += chunk.length;
   }
-  host.commitText();
+  bridge.commitText();
 }
 
 function cancelPush() {
@@ -79,9 +113,10 @@ function buildTheme() {
     {
       "&": {
         height: "100%",
+        width: "100%",
         backgroundColor: config.background,
         color: config.foreground,
-        fontSize: `${config.fontSize}px`,
+        fontSize: config.fontSize + "px",
       },
       "&.cm-focused": { outline: "none" },
       ".cm-scroller": {
@@ -91,16 +126,19 @@ function buildTheme() {
         WebkitOverflowScrolling: "touch",
       },
       // Bottom padding keeps the last lines reachable above the soft keyboard.
-      ".cm-content": { padding: "12px 12px 50vh", caretColor: config.caret },
+      ".cm-content": {
+        padding: "12px 12px 50vh",
+        caretColor: config.caret,
+      },
       ".cm-cursor, .cm-dropCursor": { borderLeftColor: config.caret },
       "::selection": { backgroundColor: config.selection },
     },
-    { dark: config.dark },
+    { dark: !!config.dark },
   );
 }
 
 function buildHighlightStyle() {
-  const tokens = config.tokens;
+  const tokens = config.tokens || {};
   return HighlightStyle.define([
     {
       tag: [
@@ -115,7 +153,10 @@ function buildHighlightStyle() {
       fontWeight: "bold",
     },
     { tag: tags.quote, color: tokens.quote },
-    { tag: [tags.list, tags.processingInstruction, tags.escape], color: tokens.listMarker },
+    {
+      tag: [tags.list, tags.processingInstruction, tags.escape],
+      color: tokens.listMarker,
+    },
     { tag: tags.strong, color: tokens.emphasis, fontWeight: "bold" },
     { tag: tags.emphasis, color: tokens.emphasis, fontStyle: "italic" },
     { tag: tags.monospace, color: tokens.inlineCode, fontStyle: "italic" },
@@ -157,7 +198,7 @@ function onUpdate(update) {
 function buildExtensions() {
   return [
     history(),
-    keymap.of([...defaultKeymap, ...historyKeymap]),
+    keymap.of(defaultKeymap.concat(historyKeymap)),
     EditorView.lineWrapping,
     EditorState.tabSize.of(4),
     EditorView.contentAttributes.of({
@@ -182,51 +223,67 @@ function withoutPush(action) {
 
 window.notesEditor = {
   /** Replaces the document with the text currently staged on the Kotlin side. */
-  reload() {
+  reload: function () {
     if (!view) {
       return;
     }
-    cancelPush();
-    const doc = readHostText();
-    withoutPush(() => {
-      view.setState(EditorState.create({ doc, extensions: buildExtensions() }));
-    });
-    host.onReady();
+    try {
+      cancelPush();
+      const doc = readHostText();
+      withoutPush(function () {
+        view.setState(EditorState.create({ doc: doc, extensions: buildExtensions() }));
+      });
+      host().onReady();
+    } catch (error) {
+      reportError(error);
+    }
   },
 
   /** Applies theme / font size / highlight changes without touching the document. */
-  applyConfig(json) {
+  applyConfig: function (json) {
     if (!view) {
       return;
     }
-    const highlight = config.highlight;
-    config = JSON.parse(json);
-    const effects = [themeConf.reconfigure(buildTheme())];
-    if (config.highlight !== highlight) {
-      effects.push(languageConf.reconfigure(buildLanguage()));
+    try {
+      const previousHighlight = config.highlight;
+      config = JSON.parse(json);
+      const effects = [themeConf.reconfigure(buildTheme())];
+      if (config.highlight !== previousHighlight) {
+        effects.push(languageConf.reconfigure(buildLanguage()));
+      }
+      view.dispatch({ effects: effects });
+    } catch (error) {
+      reportError(error);
     }
-    view.dispatch({ effects });
   },
 
   /** Sends the document to Kotlin right away, cancelling the pending debounce. */
-  flush() {
+  flush: function () {
     if (!view) {
       return;
     }
-    cancelPush();
-    pushText();
+    try {
+      cancelPush();
+      pushText();
+    } catch (error) {
+      reportError(error);
+    }
   },
 };
 
 function boot() {
-  config = JSON.parse(host.configJson());
-  const doc = readHostText();
-  view = new EditorView({
-    doc,
-    extensions: buildExtensions(),
-    parent: document.body,
-  });
-  host.onReady();
+  try {
+    config = JSON.parse(host().configJson());
+    const doc = readHostText();
+    view = new EditorView({
+      doc: doc,
+      extensions: buildExtensions(),
+      parent: document.body,
+    });
+    host().onReady();
+  } catch (error) {
+    reportError(error);
+  }
 }
 
 boot();

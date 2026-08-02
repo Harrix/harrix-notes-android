@@ -1,10 +1,16 @@
 package dev.harrix.notes.ui.notes
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
+import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -31,6 +37,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.webkit.WebViewAssetLoader
 import dev.harrix.notes.AppPreferences
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeoutOrNull
@@ -44,9 +51,11 @@ import java.util.Locale
 private const val HIGHLIGHT_MAX_CHARS = 1024 * 1024
 
 private const val BRIDGE_NAME = "NotesEditorHost"
-private const val EDITOR_URL = "file:///android_asset/editor/editor.html"
+private const val EDITOR_URL =
+    "https://appassets.androidplatform.net/assets/editor/editor.html"
 private const val FLUSH_TIMEOUT_MS = 2_000L
 private const val SELECTION_ALPHA = 0.3f
+private const val LOG_TAG = "NotesEditor"
 
 /**
  * Owns the WebView that hosts the CodeMirror editor and moves text between it
@@ -54,9 +63,10 @@ private const val SELECTION_ALPHA = 0.3f
  *
  * The document is never passed as a single string: it is pulled by JavaScript
  * through [textChunk] and pushed back through [appendText], so a multi-megabyte
- * note does not have to be escaped into a script call. Every
- * `@JavascriptInterface` method runs on the WebView bridge thread, so results
- * are handed to Compose through the main looper.
+ * note does not have to be escaped into a script call. Numeric bridge arguments
+ * travel as strings because older System WebView builds mishandle primitive ints.
+ * Every `@JavascriptInterface` method runs on the WebView bridge thread, so
+ * results are handed to Compose through the main looper.
  */
 class NotesMarkdownEditorController {
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -76,6 +86,7 @@ class NotesMarkdownEditorController {
 
     internal var textListener: (String) -> Unit = {}
     internal var readyListener: () -> Unit = {}
+    internal var errorListener: (String) -> Unit = {}
 
     /**
      * Sends the document to Compose immediately instead of waiting for the
@@ -121,6 +132,7 @@ class NotesMarkdownEditorController {
     internal fun applyConfig(config: String) {
         stagedConfig = config
         val target = webView ?: return
+        if (!ready) return
         val literal = JSONObject.quote(config)
         target.evaluateJavascript("window.notesEditor && window.notesEditor.applyConfig($literal);", null)
     }
@@ -129,14 +141,16 @@ class NotesMarkdownEditorController {
     fun configJson(): String = stagedConfig
 
     @JavascriptInterface
-    fun textLength(): Int = stagedText.length
+    fun textLength(): String = stagedText.length.toString()
 
     @JavascriptInterface
     fun textChunk(
-        from: Int,
-        to: Int,
+        fromStr: String,
+        toStr: String,
     ): String {
         val text = stagedText
+        val from = fromStr.toIntOrNull() ?: 0
+        val to = toStr.toIntOrNull() ?: 0
         val start = from.coerceIn(0, text.length)
         var end = to.coerceIn(start, text.length)
         // Shorten rather than split a surrogate pair: a lone half would not
@@ -148,8 +162,9 @@ class NotesMarkdownEditorController {
     }
 
     @JavascriptInterface
-    fun beginText(length: Int) {
+    fun beginText(lengthStr: String) {
         incoming.setLength(0)
+        val length = lengthStr.toIntOrNull() ?: 0
         if (length > 0) {
             incoming.ensureCapacity(length)
         }
@@ -174,6 +189,12 @@ class NotesMarkdownEditorController {
     fun onReady() {
         ready = true
         mainHandler.post { readyListener() }
+    }
+
+    @JavascriptInterface
+    fun onError(message: String) {
+        Log.e(LOG_TAG, "Editor JS error: $message")
+        mainHandler.post { errorListener(message) }
     }
 }
 
@@ -280,15 +301,24 @@ fun NotesMarkdownEditorPane(
             buildEditorConfig(palette, fontSizeSp, highlight)
         }
     var editorReady by remember { mutableStateOf(false) }
+    var editorError by remember { mutableStateOf<String?>(null) }
     val latestText by rememberUpdatedState(text)
     val latestOnTextChange by rememberUpdatedState(onTextChange)
 
     DisposableEffect(controller) {
         controller.textListener = { changed -> latestOnTextChange(changed) }
-        controller.readyListener = { editorReady = true }
+        controller.readyListener = {
+            editorError = null
+            editorReady = true
+        }
+        controller.errorListener = { message ->
+            editorError = message
+            editorReady = false
+        }
         onDispose {
             controller.textListener = {}
             controller.readyListener = {}
+            controller.errorListener = {}
         }
     }
 
@@ -320,6 +350,7 @@ fun NotesMarkdownEditorPane(
                                 loaded.docKey = docKey
                                 loaded.config = config
                                 editorReady = false
+                                editorError = null
                                 controller.stage(latestText, config)
                                 webView.loadUrl(EDITOR_URL)
                             }
@@ -332,6 +363,7 @@ fun NotesMarkdownEditorPane(
                                     loaded.docKey = docKey
                                     loaded.config = config
                                     editorReady = false
+                                    editorError = null
                                     controller.stage(latestText, config)
                                     webView.loadUrl(EDITOR_URL)
                                 }
@@ -352,15 +384,34 @@ fun NotesMarkdownEditorPane(
                             .height(maxHeight),
                     )
                 }
-                if (!editorReady) {
-                    Box(
-                        modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .background(palette.background),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator()
+                when {
+                    editorError != null -> {
+                        Box(
+                            modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .background(palette.background)
+                                .padding(24.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = editorError.orEmpty(),
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                    }
+
+                    !editorReady -> {
+                        Box(
+                            modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .background(palette.background),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator()
+                        }
                     }
                 }
             }
@@ -374,21 +425,53 @@ private class EditorLoadState {
     var config: String? = null
 }
 
+@SuppressLint("SetJavaScriptEnabled")
 private fun createEditorWebView(
     context: Context,
     controller: NotesMarkdownEditorController,
     palette: NotesEditorPalette,
-): WebView = WebView(context).apply {
-    // Scripts are required: the editor itself is the bundled CodeMirror asset.
-    settings.javaScriptEnabled = true
-    settings.domStorageEnabled = false
-    // Font size comes from app settings, so ignore the system text scale.
-    settings.textZoom = 100
-    isFocusableInTouchMode = true
-    isVerticalScrollBarEnabled = false
-    setBackgroundColor(palette.background.toArgb())
-    addJavascriptInterface(controller, BRIDGE_NAME)
-    controller.attach(this)
+): WebView {
+    val assetLoader =
+        WebViewAssetLoader
+            .Builder()
+            .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(context))
+            .build()
+    return WebView(context).apply {
+        // Scripts are required: the editor itself is the bundled CodeMirror asset.
+        settings.javaScriptEnabled = true
+        settings.domStorageEnabled = false
+        // Font size comes from app settings, so ignore the system text scale.
+        settings.textZoom = 100
+        isFocusableInTouchMode = true
+        isVerticalScrollBarEnabled = false
+        setBackgroundColor(palette.background.toArgb())
+        webViewClient =
+            object : WebViewClient() {
+                override fun shouldInterceptRequest(
+                    view: WebView,
+                    request: WebResourceRequest,
+                ) = assetLoader.shouldInterceptRequest(request.url)
+            }
+        webChromeClient =
+            object : WebChromeClient() {
+                override fun onConsoleMessage(consoleMessage: ConsoleMessage): Boolean {
+                    val level =
+                        when (consoleMessage.messageLevel()) {
+                            ConsoleMessage.MessageLevel.ERROR -> Log.ERROR
+                            ConsoleMessage.MessageLevel.WARNING -> Log.WARN
+                            else -> Log.DEBUG
+                        }
+                    Log.println(
+                        level,
+                        LOG_TAG,
+                        "${consoleMessage.sourceId()}:${consoleMessage.lineNumber()} ${consoleMessage.message()}",
+                    )
+                    return true
+                }
+            }
+        addJavascriptInterface(controller, BRIDGE_NAME)
+        controller.attach(this)
+    }
 }
 
 private fun buildEditorConfig(

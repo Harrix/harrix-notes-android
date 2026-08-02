@@ -6,8 +6,8 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "esbuild src/editor.js --bundle --minify --format=iife --target=chrome80 --legal-comments=none --outfile=../app/src/main/assets/editor/editor.js",
-    "watch": "esbuild src/editor.js --bundle --format=iife --target=chrome80 --outfile=../app/src/main/assets/editor/editor.js --watch"
+    "build": "esbuild src/editor.js --bundle --minify --format=iife --target=chrome64 --legal-comments=none --outfile=../app/src/main/assets/editor/editor.js",
+    "watch": "esbuild src/editor.js --bundle --format=iife --target=chrome64 --outfile=../app/src/main/assets/editor/editor.js --watch"
   },
   "dependencies": {
     "@codemirror/commands": "^6.10.4",
