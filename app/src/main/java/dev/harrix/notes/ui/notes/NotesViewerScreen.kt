@@ -51,6 +51,7 @@ import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.MoreVert
@@ -138,6 +139,7 @@ private val TopBarLogoSize = 28.dp
 fun NotesViewerScreen(
     onClose: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenAbout: () -> Unit,
     modifier: Modifier = Modifier,
     settingsRevision: Int = 0,
     viewModel: NotesViewerViewModel = viewModel(),
@@ -1279,6 +1281,7 @@ fun NotesViewerScreen(
                     menuExpanded = menuExpanded,
                     onMenuExpandedChange = { menuExpanded = it },
                     onOpenSettings = onOpenSettings,
+                    onOpenAbout = onOpenAbout,
                 )
                 if (notesTreeUri.isNullOrBlank()) {
                     Box(
@@ -1471,6 +1474,7 @@ private fun NotesTopChrome(
     menuExpanded: Boolean,
     onMenuExpandedChange: (Boolean) -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenAbout: () -> Unit,
 ) {
     Row(
         modifier =
@@ -1524,6 +1528,21 @@ private fun NotesTopChrome(
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.Settings,
+                            contentDescription = null,
+                        )
+                    },
+                )
+                DropdownMenuItem(
+                    text = {
+                        Text(stringResource(R.string.markdown_notes_about))
+                    },
+                    onClick = {
+                        onMenuExpandedChange(false)
+                        onOpenAbout()
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Info,
                             contentDescription = null,
                         )
                     },

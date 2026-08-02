@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import dev.harrix.notes.ui.about.AboutScreen
 import dev.harrix.notes.ui.notes.NotesViewerScreen
 import dev.harrix.notes.ui.settings.SettingsScreen
 import dev.harrix.notes.ui.theme.ThemeMode
@@ -22,12 +23,14 @@ fun MainScreen(
 ) {
     // Survive Activity recreation (e.g. landscape rotation).
     var showSettings by rememberSaveable { mutableStateOf(false) }
+    var showAbout by rememberSaveable { mutableStateOf(false) }
     var settingsRevision by rememberSaveable { mutableIntStateOf(0) }
 
     Box(modifier = modifier.fillMaxSize()) {
         NotesViewerScreen(
             onClose = onExitApp,
             onOpenSettings = { showSettings = true },
+            onOpenAbout = { showAbout = true },
             settingsRevision = settingsRevision,
             modifier = Modifier.fillMaxSize(),
         )
@@ -40,6 +43,13 @@ fun MainScreen(
                     showSettings = false
                     settingsRevision += 1
                 },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        if (showAbout) {
+            AboutScreen(
+                onClose = { showAbout = false },
                 modifier = Modifier.fillMaxSize(),
             )
         }
