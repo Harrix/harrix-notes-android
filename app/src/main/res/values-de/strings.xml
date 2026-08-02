@@ -35,6 +35,8 @@
     <string name="settings_markdown_notes_open_mode_edit">Editor</string>
     <string name="settings_markdown_notes_preview_font_size">Schriftgröße (Vorschau)</string>
     <string name="settings_markdown_notes_editor_font_size">Schriftgröße (Editor)</string>
+    <string name="settings_markdown_notes_highlight_max_mb">Grenze für Syntaxhervorhebung (MB)</string>
+    <string name="settings_markdown_notes_highlight_max_mb_hint">Größere Notizen werden ohne Hervorhebung bearbeitet; 0 deaktiviert die Hervorhebung; Standard ist 8</string>
     <string name="settings_markdown_notes_browse_layout">Ordneransicht</string>
     <string name="settings_markdown_notes_browse_layout_list">Liste</string>
     <string name="settings_markdown_notes_browse_layout_icons">Symbole</string>

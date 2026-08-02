@@ -35,6 +35,8 @@
     <string name="settings_markdown_notes_open_mode_edit">エディタ</string>
     <string name="settings_markdown_notes_preview_font_size">プレビューのフォントサイズ</string>
     <string name="settings_markdown_notes_editor_font_size">エディタのフォントサイズ</string>
+    <string name="settings_markdown_notes_highlight_max_mb">構文ハイライトの上限 (MB)</string>
+    <string name="settings_markdown_notes_highlight_max_mb_hint">これより大きいノートはハイライトなしで編集します。0 でハイライトを無効、既定値は 8</string>
     <string name="settings_markdown_notes_browse_layout">フォルダビュー</string>
     <string name="settings_markdown_notes_browse_layout_list">リスト</string>
     <string name="settings_markdown_notes_browse_layout_icons">アイコン</string>

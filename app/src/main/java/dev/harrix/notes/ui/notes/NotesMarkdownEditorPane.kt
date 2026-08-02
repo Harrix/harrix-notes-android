@@ -45,12 +45,6 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
 import java.util.Locale
 
-/**
- * Notes longer than this are edited as plain text: Markdown parsing and
- * highlighting are skipped so huge generated files stay responsive.
- */
-private const val HIGHLIGHT_MAX_CHARS = 1024 * 1024
-
 private const val BRIDGE_NAME = "NotesEditorHost"
 private const val ASSET_BASE_URL = "https://appassets.androidplatform.net/assets/editor/"
 private const val FLUSH_TIMEOUT_MS = 2_000L
@@ -404,12 +398,14 @@ fun NotesMarkdownEditorPane(
     errorMessage: String?,
     hasContent: Boolean,
     fontSizeSp: Int,
+    highlightMaxChars: Int,
     controller: NotesMarkdownEditorController,
     onTextChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val palette = rememberNotesEditorPalette()
-    val highlight = text.length <= HIGHLIGHT_MAX_CHARS
+    // 0 disables highlighting for every note; larger notes stay plain text.
+    val highlight = highlightMaxChars > 0 && text.length <= highlightMaxChars
     val config =
         remember(palette, fontSizeSp, highlight, text.length) {
             buildEditorConfig(palette, fontSizeSp, highlight, text.length)

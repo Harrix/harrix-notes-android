@@ -176,6 +176,7 @@ fun NotesViewerScreen(
     var noteOpenMode by viewModel.noteOpenMode
     var previewFontSizeSp by viewModel.previewFontSizeSp
     var editorFontSizeSp by viewModel.editorFontSizeSp
+    var highlightMaxMb by viewModel.highlightMaxMb
     var maxOpenTabs by viewModel.maxOpenTabs
     var pinnedBarEnabled by viewModel.pinnedBarEnabled
     var maxPinnedItems by viewModel.maxPinnedItems
@@ -197,6 +198,7 @@ fun NotesViewerScreen(
         noteOpenMode = preferences.loadNoteOpenMode()
         previewFontSizeSp = preferences.loadPreviewFontSizeSp()
         editorFontSizeSp = preferences.loadEditorFontSizeSp()
+        highlightMaxMb = preferences.loadHighlightMaxMb()
         maxOpenTabs = preferences.loadMaxOpenTabs()
         pinnedBarEnabled = preferences.loadPinnedBarEnabled()
         maxPinnedItems = preferences.loadMaxPinnedItems()
@@ -1356,6 +1358,8 @@ fun NotesViewerScreen(
                                         errorMessage = statusMessage,
                                         hasContent = noteContent != null,
                                         fontSizeSp = editorFontSizeSp,
+                                        highlightMaxChars =
+                                        NotesViewerPreferences.highlightMaxChars(highlightMaxMb),
                                         controller = editorController,
                                         onTextChange = { value ->
                                             draftText = value

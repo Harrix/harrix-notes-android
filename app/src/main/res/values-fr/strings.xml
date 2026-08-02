@@ -35,6 +35,8 @@
     <string name="settings_markdown_notes_open_mode_edit">Éditeur</string>
     <string name="settings_markdown_notes_preview_font_size">Taille de police de l\'aperçu</string>
     <string name="settings_markdown_notes_editor_font_size">Taille de police de l\'éditeur</string>
+    <string name="settings_markdown_notes_highlight_max_mb">Limite de coloration syntaxique (Mo)</string>
+    <string name="settings_markdown_notes_highlight_max_mb_hint">Les notes plus grandes s\'éditent sans coloration ; 0 désactive la coloration ; 8 par défaut</string>
     <string name="settings_markdown_notes_browse_layout">Vue du dossier</string>
     <string name="settings_markdown_notes_browse_layout_list">Liste</string>
     <string name="settings_markdown_notes_browse_layout_icons">Icônes</string>

@@ -47,6 +47,7 @@ class NotesViewerViewModel(
     val noteOpenMode = mutableStateOf(preferences.loadNoteOpenMode())
     val previewFontSizeSp = mutableIntStateOf(preferences.loadPreviewFontSizeSp())
     val editorFontSizeSp = mutableIntStateOf(preferences.loadEditorFontSizeSp())
+    val highlightMaxMb = mutableIntStateOf(preferences.loadHighlightMaxMb())
     val maxOpenTabs = mutableIntStateOf(preferences.loadMaxOpenTabs())
     val pinnedBarEnabled = mutableStateOf(preferences.loadPinnedBarEnabled())
     val maxPinnedItems = mutableIntStateOf(preferences.loadMaxPinnedItems())

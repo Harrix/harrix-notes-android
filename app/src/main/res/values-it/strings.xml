@@ -35,6 +35,8 @@
     <string name="settings_markdown_notes_open_mode_edit">Editor</string>
     <string name="settings_markdown_notes_preview_font_size">Dimensione carattere anteprima</string>
     <string name="settings_markdown_notes_editor_font_size">Dimensione carattere editor</string>
+    <string name="settings_markdown_notes_highlight_max_mb">Limite evidenziazione sintassi (MB)</string>
+    <string name="settings_markdown_notes_highlight_max_mb_hint">Le note più grandi si modificano senza evidenziazione; 0 disattiva l\'evidenziazione; predefinito 8</string>
     <string name="settings_markdown_notes_browse_layout">Visualizzazione cartella</string>
     <string name="settings_markdown_notes_browse_layout_list">Elenco</string>
     <string name="settings_markdown_notes_browse_layout_icons">Icone</string>

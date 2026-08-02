@@ -35,6 +35,8 @@
     <string name="settings_markdown_notes_open_mode_edit">Editor</string>
     <string name="settings_markdown_notes_preview_font_size">Tamaño de fuente de la vista previa</string>
     <string name="settings_markdown_notes_editor_font_size">Tamaño de fuente del editor</string>
+    <string name="settings_markdown_notes_highlight_max_mb">Límite de resaltado de sintaxis (MB)</string>
+    <string name="settings_markdown_notes_highlight_max_mb_hint">Las notas más grandes se editan sin resaltado; 0 desactiva el resaltado; el valor predeterminado es 8</string>
     <string name="settings_markdown_notes_browse_layout">Vista de carpeta</string>
     <string name="settings_markdown_notes_browse_layout_list">Lista</string>
     <string name="settings_markdown_notes_browse_layout_icons">Iconos</string>

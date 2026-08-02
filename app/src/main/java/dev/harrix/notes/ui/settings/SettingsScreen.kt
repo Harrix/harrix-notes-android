@@ -370,6 +370,9 @@ private fun NotesSettingsSection(
     var editorFontSizeText by remember {
         mutableStateOf(preferences.loadEditorFontSizeSp().toString())
     }
+    var highlightMaxMbText by remember {
+        mutableStateOf(preferences.loadHighlightMaxMb().toString())
+    }
     var maxOpenTabsText by remember {
         mutableStateOf(preferences.loadMaxOpenTabs().toString())
     }
@@ -459,6 +462,33 @@ private fun NotesSettingsSection(
             valueText = editorFontSizeText,
             onValueTextChange = { editorFontSizeText = it },
             onCommit = { preferences.saveEditorFontSizeSp(it) },
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.settings_markdown_notes_highlight_max_mb),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        OutlinedTextField(
+            value = highlightMaxMbText,
+            onValueChange = { raw ->
+                val digits = raw.filter { it.isDigit() }.take(2)
+                highlightMaxMbText = digits
+                val parsed = digits.toIntOrNull() ?: return@OutlinedTextField
+                val clamped =
+                    parsed.coerceIn(
+                        NotesViewerPreferences.MIN_HIGHLIGHT_MAX_MB,
+                        NotesViewerPreferences.MAX_HIGHLIGHT_MAX_MB,
+                    )
+                highlightMaxMbText = clamped.toString()
+                preferences.saveHighlightMaxMb(clamped)
+            },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            supportingText = {
+                Text(stringResource(R.string.settings_markdown_notes_highlight_max_mb_hint))
+            },
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(

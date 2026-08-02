@@ -35,6 +35,8 @@
     <string name="settings_markdown_notes_open_mode_edit">Editor</string>
     <string name="settings_markdown_notes_preview_font_size">Preview font size</string>
     <string name="settings_markdown_notes_editor_font_size">Editor font size</string>
+    <string name="settings_markdown_notes_highlight_max_mb">Syntax highlight limit (MB)</string>
+    <string name="settings_markdown_notes_highlight_max_mb_hint">Larger notes edit without highlighting; 0 disables highlighting; default is 8</string>
     <string name="settings_markdown_notes_browse_layout">Folder view</string>
     <string name="settings_markdown_notes_browse_layout_list">List</string>
     <string name="settings_markdown_notes_browse_layout_icons">Icons</string>

@@ -35,6 +35,8 @@
     <string name="settings_markdown_notes_open_mode_edit">Редактор</string>
     <string name="settings_markdown_notes_preview_font_size">Размер шрифта превью</string>
     <string name="settings_markdown_notes_editor_font_size">Размер шрифта редактора</string>
+    <string name="settings_markdown_notes_highlight_max_mb">Порог подсветки синтаксиса (МБ)</string>
+    <string name="settings_markdown_notes_highlight_max_mb_hint">Заметки больше этого размера редактируются без подсветки; 0 отключает подсветку; по умолчанию 8</string>
     <string name="settings_markdown_notes_browse_layout">Вид папки</string>
     <string name="settings_markdown_notes_browse_layout_list">Список</string>
     <string name="settings_markdown_notes_browse_layout_icons">Значки</string>

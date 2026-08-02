@@ -35,6 +35,8 @@
     <string name="settings_markdown_notes_open_mode_edit">Editor</string>
     <string name="settings_markdown_notes_preview_font_size">Tamanho da fonte da pré-visualização</string>
     <string name="settings_markdown_notes_editor_font_size">Tamanho da fonte do editor</string>
+    <string name="settings_markdown_notes_highlight_max_mb">Limite de realce de sintaxe (MB)</string>
+    <string name="settings_markdown_notes_highlight_max_mb_hint">Notas maiores editam sem realce; 0 desativa o realce; o padrão é 8</string>
     <string name="settings_markdown_notes_browse_layout">Vista de pasta</string>
     <string name="settings_markdown_notes_browse_layout_list">Lista</string>
     <string name="settings_markdown_notes_browse_layout_icons">Ícones</string>

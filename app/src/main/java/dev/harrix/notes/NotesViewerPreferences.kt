@@ -97,6 +97,21 @@ class NotesViewerPreferences(
             ).apply()
     }
 
+    /**
+     * Max note size (MiB) that still gets Markdown syntax highlighting in the
+     * editor. `0` disables highlighting for every note.
+     */
+    fun loadHighlightMaxMb(): Int = prefs
+        .getInt(KEY_HIGHLIGHT_MAX_MB, DEFAULT_HIGHLIGHT_MAX_MB)
+        .coerceIn(MIN_HIGHLIGHT_MAX_MB, MAX_HIGHLIGHT_MAX_MB)
+
+    fun saveHighlightMaxMb(value: Int) {
+        prefs
+            .edit()
+            .putInt(KEY_HIGHLIGHT_MAX_MB, value.coerceIn(MIN_HIGHLIGHT_MAX_MB, MAX_HIGHLIGHT_MAX_MB))
+            .apply()
+    }
+
     fun loadMaxOpenTabs(): Int = prefs.getInt(KEY_MAX_OPEN_TABS, DEFAULT_MAX_OPEN_TABS).coerceIn(MIN_OPEN_TABS, MAX_OPEN_TABS)
 
     fun saveMaxOpenTabs(value: Int) {
@@ -194,6 +209,7 @@ class NotesViewerPreferences(
             .remove(KEY_NOTE_OPEN_MODE)
             .remove(KEY_PREVIEW_FONT_SIZE_SP)
             .remove(KEY_EDITOR_FONT_SIZE_SP)
+            .remove(KEY_HIGHLIGHT_MAX_MB)
             .remove(KEY_MAX_OPEN_TABS)
             .remove(KEY_OPEN_TABS_SESSION)
             .remove(KEY_PINNED_BAR_ENABLED)
@@ -213,6 +229,7 @@ class NotesViewerPreferences(
         private const val KEY_NOTE_OPEN_MODE = "note_open_mode"
         private const val KEY_PREVIEW_FONT_SIZE_SP = "preview_font_size_sp"
         private const val KEY_EDITOR_FONT_SIZE_SP = "editor_font_size_sp"
+        private const val KEY_HIGHLIGHT_MAX_MB = "highlight_max_mb"
         private const val KEY_MAX_OPEN_TABS = "max_open_tabs"
         private const val KEY_OPEN_TABS_SESSION = "open_tabs_session"
         private const val KEY_PINNED_BAR_ENABLED = "pinned_bar_enabled"
@@ -230,6 +247,17 @@ class NotesViewerPreferences(
 
         const val DEFAULT_PREVIEW_FONT_SIZE_SP = 14
         const val DEFAULT_EDITOR_FONT_SIZE_SP = 14
+
+        const val DEFAULT_HIGHLIGHT_MAX_MB = 8
+        const val MIN_HIGHLIGHT_MAX_MB = 0
+        const val MAX_HIGHLIGHT_MAX_MB = 64
+        private const val BYTES_PER_MIB = 1024 * 1024
+
+        /** Character budget matching [loadHighlightMaxMb] for the editor bridge. */
+        fun highlightMaxChars(maxMb: Int): Int {
+            val mb = maxMb.coerceIn(MIN_HIGHLIGHT_MAX_MB, MAX_HIGHLIGHT_MAX_MB)
+            return mb * BYTES_PER_MIB
+        }
 
         private fun emptySession(treeUri: String) = NotesOpenTabsSession(
             treeUri = treeUri,

@@ -35,6 +35,8 @@
     <string name="settings_markdown_notes_open_mode_edit">编辑器</string>
     <string name="settings_markdown_notes_preview_font_size">预览字体大小</string>
     <string name="settings_markdown_notes_editor_font_size">编辑器字体大小</string>
+    <string name="settings_markdown_notes_highlight_max_mb">语法高亮上限（MB）</string>
+    <string name="settings_markdown_notes_highlight_max_mb_hint">超过此大小的笔记以无文本编辑；0 关闭高亮；默认为 8</string>
     <string name="settings_markdown_notes_browse_layout">文件夹视图</string>
     <string name="settings_markdown_notes_browse_layout_list">列表</string>
     <string name="settings_markdown_notes_browse_layout_icons">图标</string>
