@@ -2,8 +2,11 @@ package dev.harrix.notes.ui.notes
 
 import android.webkit.WebView
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -11,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
@@ -36,57 +40,67 @@ fun NotesHtmlPreviewPane(
     modifier: Modifier = Modifier,
     fontSizeSp: Int = NotesViewerPreferences.DEFAULT_PREVIEW_FONT_SIZE_SP,
 ) {
-    when {
-        isLoading -> {
-            Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+    // clipToBounds: WebView can paint outside Compose layout bounds while loading.
+    Box(modifier = modifier.fillMaxSize().clipToBounds()) {
+        when {
+            isLoading -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
             }
-        }
 
-        errorMessage != null && content == null -> {
-            Text(
-                text = errorMessage,
-                color = MaterialTheme.colorScheme.error,
-                modifier = modifier.padding(24.dp),
-            )
-        }
+            errorMessage != null && content == null -> {
+                Text(
+                    text = errorMessage,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(24.dp),
+                )
+            }
 
-        else -> {
-            val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
-            val colors =
-                remember(darkTheme) {
-                    if (darkTheme) PreviewHtmlColors.Dark else PreviewHtmlColors.Light
-                }
-            val html =
-                remember(content, colors, fontSizeSp) {
-                    buildRawPreHtml(content.orEmpty(), colors, fontSizeSp)
-                }
-            AndroidView(
-                factory = { context ->
-                    WebView(context).apply {
-                        // Preview only: no scripts, selection stays enabled for copy.
-                        settings.javaScriptEnabled = false
-                        settings.domStorageEnabled = false
-                        isVerticalScrollBarEnabled = true
-                        setBackgroundColor(colors.pageBackground.toArgb())
+            else -> {
+                val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
+                val colors =
+                    remember(darkTheme) {
+                        if (darkTheme) PreviewHtmlColors.Dark else PreviewHtmlColors.Light
                     }
-                },
-                update = { webView ->
-                    webView.setBackgroundColor(colors.pageBackground.toArgb())
-                    val tag = webView.tag as? String
-                    if (tag != html) {
-                        webView.tag = html
-                        webView.loadDataWithBaseURL(
-                            null,
-                            html,
-                            "text/html",
-                            Charsets.UTF_8.name(),
-                            null,
-                        )
+                val html =
+                    remember(content, colors, fontSizeSp) {
+                        buildRawPreHtml(content.orEmpty(), colors, fontSizeSp)
                     }
-                },
-                modifier = modifier.fillMaxSize(),
-            )
+                // Pin WebView to the Compose slot size — otherwise it measures by
+                // document height and overlays chrome (tabs / breadcrumbs).
+                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                    AndroidView(
+                        factory = { context ->
+                            WebView(context).apply {
+                                // Preview only: no scripts, selection stays enabled for copy.
+                                settings.javaScriptEnabled = false
+                                settings.domStorageEnabled = false
+                                isVerticalScrollBarEnabled = true
+                                setBackgroundColor(colors.pageBackground.toArgb())
+                            }
+                        },
+                        update = { webView ->
+                            webView.setBackgroundColor(colors.pageBackground.toArgb())
+                            val tag = webView.tag as? String
+                            if (tag != html) {
+                                webView.tag = html
+                                webView.loadDataWithBaseURL(
+                                    null,
+                                    html,
+                                    "text/html",
+                                    Charsets.UTF_8.name(),
+                                    null,
+                                )
+                            }
+                        },
+                        modifier =
+                        Modifier
+                            .width(maxWidth)
+                            .height(maxHeight),
+                    )
+                }
+            }
         }
     }
 }
@@ -136,6 +150,7 @@ private fun buildRawPreHtml(
             margin: 0;
             padding: 0;
             background: $bg;
+            height: 100%;
           }
           pre {
             margin: 0;
