@@ -226,15 +226,29 @@ function destroyView() {
   booted = false;
 }
 
-function boot() {
+function boot(viewportHeight) {
   try {
     if (booted && view) {
       host().onReady();
       return;
     }
     destroyView();
+    if (Number(viewportHeight) > 0) {
+      const height = String(viewportHeight) + "px";
+      document.documentElement.style.height = height;
+      document.body.style.height = height;
+    }
     config = JSON.parse(host().configJson());
     const doc = readHostText();
+    if (doc.length !== Number(config.expectedLength)) {
+      throw new Error(
+        "Editor received " +
+          String(doc.length) +
+          " of " +
+          String(config.expectedLength) +
+          " characters",
+      );
+    }
     view = new EditorView({
       doc: doc,
       extensions: buildExtensions(),

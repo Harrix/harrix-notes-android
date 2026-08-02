@@ -189,7 +189,12 @@ class NotesMarkdownEditorController {
     }
 
     internal fun syncVisibility(ready: Boolean) {
-        webView?.visibility = if (ready) View.VISIBLE else View.INVISIBLE
+        webView?.apply {
+            // Keep the view laid out while hidden. CodeMirror sees a zero-sized
+            // viewport when Android visibility is INVISIBLE.
+            visibility = View.VISIBLE
+            alpha = if (ready) 1f else 0f
+        }
     }
 
     private fun scheduleBootTimeout() {
@@ -203,7 +208,10 @@ class NotesMarkdownEditorController {
 
     private fun tryBoot() {
         val target = webView ?: return
-        if (ready || bootRequested || !pageFinished || !scriptLoaded) {
+        if (ready || bootRequested) {
+            return
+        }
+        if (!pageFinished || !scriptLoaded) {
             return
         }
         target.post {
@@ -215,9 +223,12 @@ class NotesMarkdownEditorController {
                 return@post
             }
             bootRequested = true
+            target.visibility = View.VISIBLE
+            target.alpha = 0f
+            val viewportHeight = target.height / target.resources.displayMetrics.density
             Log.d(LOG_TAG, "Booting editor ${target.width}x${target.height}")
             target.evaluateJavascript(
-                "window.notesEditorBoot && window.notesEditorBoot();",
+                "window.notesEditorBoot && window.notesEditorBoot($viewportHeight);",
                 null,
             )
         }
@@ -382,9 +393,8 @@ fun rememberNotesEditorPalette(): NotesEditorPalette {
  * thread, so editing runs in the WebView renderer instead — the same reason
  * [NotesHtmlPreviewPane] opens huge notes quickly.
  *
- * The WebView stays [View.INVISIBLE] until CodeMirror reports ready. Native views
- * paint above Compose siblings, so a visible blank WebView would cover the
- * spinner and look like a permanent white screen.
+ * The WebView stays transparent until CodeMirror reports ready. It must remain
+ * [View.VISIBLE] during boot so the browser gives CodeMirror a real viewport.
  */
 @Composable
 fun NotesMarkdownEditorPane(
@@ -401,8 +411,8 @@ fun NotesMarkdownEditorPane(
     val palette = rememberNotesEditorPalette()
     val highlight = text.length <= HIGHLIGHT_MAX_CHARS
     val config =
-        remember(palette, fontSizeSp, highlight) {
-            buildEditorConfig(palette, fontSizeSp, highlight)
+        remember(palette, fontSizeSp, highlight, text.length) {
+            buildEditorConfig(palette, fontSizeSp, highlight, text.length)
         }
     var editorReady by remember { mutableStateOf(false) }
     var editorError by remember { mutableStateOf<String?>(null) }
@@ -457,19 +467,16 @@ fun NotesMarkdownEditorPane(
                                 loaded.config = config
                                 editorReady = false
                                 editorError = null
-                                webView.visibility = View.INVISIBLE
+                                webView.visibility = View.VISIBLE
+                                webView.alpha = 0f
                                 controller.stage(latestText, config)
                                 loadEditorShell(webView)
                             }
                         },
                         update = { webView ->
                             webView.setBackgroundColor(palette.background.toArgb())
-                            webView.visibility =
-                                if (editorReady && editorError == null) {
-                                    View.VISIBLE
-                                } else {
-                                    View.INVISIBLE
-                                }
+                            webView.visibility = View.VISIBLE
+                            webView.alpha = if (editorReady && editorError == null) 1f else 0f
                             controller.stageText(latestText)
                             when {
                                 loaded.docKey != docKey -> {
@@ -477,7 +484,7 @@ fun NotesMarkdownEditorPane(
                                     loaded.config = config
                                     editorReady = false
                                     editorError = null
-                                    webView.visibility = View.INVISIBLE
+                                    webView.alpha = 0f
                                     controller.stage(latestText, config)
                                     loadEditorShell(webView)
                                 }
@@ -570,7 +577,8 @@ private fun createEditorWebView(
         settings.textZoom = 100
         isFocusableInTouchMode = true
         isVerticalScrollBarEnabled = false
-        visibility = View.INVISIBLE
+        visibility = View.VISIBLE
+        alpha = 0f
         setBackgroundColor(palette.background.toArgb())
         webViewClient =
             object : WebViewClient() {
@@ -613,6 +621,7 @@ private fun buildEditorConfig(
     palette: NotesEditorPalette,
     fontSizeSp: Int,
     highlight: Boolean,
+    expectedLength: Int,
 ): String {
     val tokens = palette.tokens
     val tokenJson =
@@ -633,6 +642,7 @@ private fun buildEditorConfig(
             fontSizeSp.coerceIn(AppPreferences.MIN_FONT_SIZE_SP, AppPreferences.MAX_FONT_SIZE_SP),
         ).put("dark", palette.dark)
         .put("highlight", highlight)
+        .put("expectedLength", expectedLength)
         .put("background", palette.background.toCssHex())
         .put("foreground", palette.foreground.toCssHex())
         .put("caret", palette.caret.toCssHex())
