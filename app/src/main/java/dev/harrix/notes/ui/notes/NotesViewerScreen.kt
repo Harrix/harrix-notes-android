@@ -58,7 +58,6 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.Button
@@ -1319,7 +1318,6 @@ fun NotesViewerScreen(
                         showEditActions = selectedTab != null && !noteLoading && noteContent != null,
                         isEditing = isEditing,
                         isSaving = isSaving,
-                        onSave = { persistCurrentDraft() },
                         onPreview = {
                             persistCurrentDraft {
                                 isEditing = false
@@ -1859,7 +1857,6 @@ private fun NotesNavigationRow(
     showEditActions: Boolean,
     isEditing: Boolean,
     isSaving: Boolean,
-    onSave: () -> Unit,
     onPreview: () -> Unit,
     onEdit: () -> Unit,
     showCloseNote: Boolean,
@@ -1925,15 +1922,6 @@ private fun NotesNavigationRow(
             }
             if (showEditActions) {
                 if (isEditing) {
-                    IconButton(
-                        onClick = onSave,
-                        enabled = !isSaving,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Save,
-                            contentDescription = stringResource(R.string.markdown_notes_save),
-                        )
-                    }
                     IconButton(
                         onClick = onPreview,
                         enabled = !isSaving,
