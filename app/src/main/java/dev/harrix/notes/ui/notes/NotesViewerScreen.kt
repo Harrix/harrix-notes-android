@@ -46,6 +46,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DragHandle
@@ -93,7 +94,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
@@ -1302,6 +1302,13 @@ fun NotesViewerScreen(
                         isEditing = isEditing,
                         isSaving = isSaving,
                         onSave = { persistCurrentDraft() },
+                        onPreview = {
+                            persistCurrentDraft {
+                                isEditing = false
+                                draftText = noteContent.orEmpty()
+                                lastSavedText = noteContent
+                            }
+                        },
                         onEdit = {
                             isEditing = true
                             draftText = noteContent.orEmpty()
@@ -1322,24 +1329,25 @@ fun NotesViewerScreen(
                     ) {
                         when {
                             selectedTab != null -> {
-                                NotesPlainTextPane(
-                                    isLoading = noteLoading,
-                                    content = noteContent,
-                                    draftText = draftText,
-                                    isEditing = isEditing,
-                                    errorMessage = statusMessage,
-                                    initialFirstVisibleItemIndex = viewModel.noteListFirstVisibleIndex,
-                                    initialFirstVisibleItemScrollOffset =
-                                    viewModel.noteListFirstVisibleOffset,
-                                    onScrollPositionChange = { index, offset ->
-                                        viewModel.noteListFirstVisibleIndex = index
-                                        viewModel.noteListFirstVisibleOffset = offset
-                                    },
-                                    onDraftChange = { value ->
-                                        draftText = value
-                                        scheduleAutosave()
-                                    },
-                                )
+                                if (isEditing) {
+                                    NotesPlainTextEditorPane(
+                                        isLoading = noteLoading,
+                                        draftText = draftText,
+                                        errorMessage = statusMessage,
+                                        hasContent = noteContent != null,
+                                        onDraftChange = { value ->
+                                            draftText = value
+                                            scheduleAutosave()
+                                        },
+                                    )
+                                } else {
+                                    // Preview mode (temporary HTML <pre> viewer).
+                                    NotesHtmlPreviewPane(
+                                        isLoading = noteLoading,
+                                        content = noteContent,
+                                        errorMessage = statusMessage,
+                                    )
+                                }
                             }
 
                             isLoading -> {
@@ -1832,6 +1840,7 @@ private fun NotesNavigationRow(
     isEditing: Boolean,
     isSaving: Boolean,
     onSave: () -> Unit,
+    onPreview: () -> Unit,
     onEdit: () -> Unit,
     showCloseNote: Boolean,
     onCloseNote: () -> Unit,
@@ -1903,6 +1912,15 @@ private fun NotesNavigationRow(
                         Icon(
                             imageVector = Icons.Filled.Save,
                             contentDescription = stringResource(R.string.markdown_notes_save),
+                        )
+                    }
+                    IconButton(
+                        onClick = onPreview,
+                        enabled = !isSaving,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Visibility,
+                            contentDescription = stringResource(R.string.markdown_notes_preview),
                         )
                     }
                 } else {
@@ -2568,16 +2586,16 @@ private fun NotesAutoSizeLabel(
 
 private fun notesGridIconSize(density: NotesListDensity) = (density.iconSizeDp * 2).dp
 
+/**
+ * Note **editor** mode (plain text with lightweight Markdown highlighting).
+ * Separate from [NotesHtmlPreviewPane] — preview will later become real HTML rendering.
+ */
 @Composable
-private fun NotesPlainTextPane(
+private fun NotesPlainTextEditorPane(
     isLoading: Boolean,
-    content: String?,
     draftText: String,
-    isEditing: Boolean,
     errorMessage: String?,
-    initialFirstVisibleItemIndex: Int,
-    initialFirstVisibleItemScrollOffset: Int,
-    onScrollPositionChange: (Int, Int) -> Unit,
+    hasContent: Boolean,
     onDraftChange: (String) -> Unit,
 ) {
     val highlightColors = rememberMarkdownHighlightColors()
@@ -2585,31 +2603,15 @@ private fun NotesPlainTextPane(
         remember(highlightColors) {
             MarkdownSyntaxVisualTransformation(highlightColors)
         }
-    var viewLines by remember { mutableStateOf<List<AnnotatedString>?>(null) }
-    var preparingView by remember { mutableStateOf(false) }
-
-    LaunchedEffect(content, isEditing, highlightColors) {
-        if (isEditing || content == null) {
-            viewLines = null
-            preparingView = false
-            return@LaunchedEffect
-        }
-        preparingView = true
-        viewLines =
-            withContext(Dispatchers.IO) {
-                highlightMarkdownLines(content.lineSequence().toList(), highlightColors)
-            }
-        preparingView = false
-    }
 
     when {
-        isLoading || preparingView -> {
+        isLoading -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
         }
 
-        errorMessage != null && content == null -> {
+        errorMessage != null && !hasContent -> {
             Text(
                 text = errorMessage,
                 color = MaterialTheme.colorScheme.error,
@@ -2617,7 +2619,7 @@ private fun NotesPlainTextPane(
             )
         }
 
-        isEditing -> {
+        else -> {
             TextField(
                 value = draftText,
                 onValueChange = onDraftChange,
@@ -2634,108 +2636,6 @@ private fun NotesPlainTextPane(
                 ),
             )
         }
-
-        else -> {
-            val lines = viewLines.orEmpty()
-            val listState =
-                rememberLazyListState(
-                    initialFirstVisibleItemIndex = initialFirstVisibleItemIndex,
-                    initialFirstVisibleItemScrollOffset = initialFirstVisibleItemScrollOffset,
-                )
-            val onScrollPositionChangeState = rememberUpdatedState(onScrollPositionChange)
-            LaunchedEffect(listState) {
-                snapshotFlow {
-                    listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
-                }.distinctUntilChanged()
-                    .collect { (index, offset) ->
-                        onScrollPositionChangeState.value(index, offset)
-                    }
-            }
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.surface,
-            ) {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                    ) {
-                        items(
-                            count = lines.size,
-                            key = { index -> index },
-                        ) { index ->
-                            Text(
-                                text = lines[index],
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                        }
-                    }
-                    NotesVerticalScrollbar(
-                        state = listState,
-                        modifier =
-                        Modifier
-                            .align(Alignment.CenterEnd)
-                            .padding(end = 2.dp, top = 8.dp, bottom = 8.dp),
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun NotesVerticalScrollbar(
-    state: LazyListState,
-    modifier: Modifier = Modifier,
-) {
-    val layoutInfo = state.layoutInfo
-    val visibleItems = layoutInfo.visibleItemsInfo
-    val totalItems = layoutInfo.totalItemsCount
-    val viewportHeight = layoutInfo.viewportSize.height.toFloat()
-    val canShow =
-        visibleItems.isNotEmpty() &&
-            totalItems > 0 &&
-            viewportHeight > 0f
-
-    if (!canShow) {
-        return
-    }
-
-    val averageItemSize = visibleItems.sumOf { it.size }.toFloat() / visibleItems.size
-    val estimatedContentHeight = averageItemSize * totalItems
-    if (estimatedContentHeight <= viewportHeight + 1f) {
-        return
-    }
-
-    val scrollOffset =
-        visibleItems.first().index * averageItemSize + state.firstVisibleItemScrollOffset
-    val maxScroll = (estimatedContentHeight - viewportHeight).coerceAtLeast(1f)
-    val scrollFraction = (scrollOffset / maxScroll).coerceIn(0f, 1f)
-    val thumbHeightPx =
-        (viewportHeight * (viewportHeight / estimatedContentHeight))
-            .coerceIn(viewportHeight * 0.08f, viewportHeight)
-    val thumbOffsetPx = scrollFraction * (viewportHeight - thumbHeightPx)
-    val density = LocalDensity.current
-
-    Box(
-        modifier =
-        modifier
-            .fillMaxHeight()
-            .width(4.dp),
-    ) {
-        Box(
-            modifier =
-            Modifier
-                .align(Alignment.TopCenter)
-                .offset { IntOffset(0, thumbOffsetPx.roundToInt()) }
-                .width(3.dp)
-                .height(with(density) { thumbHeightPx.toDp() })
-                .background(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                    shape = RoundedCornerShape(2.dp),
-                ),
-        )
     }
 }
 
