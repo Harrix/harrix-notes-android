@@ -56,8 +56,8 @@
     <string name="markdown_notes_title">Harrix Notes</string>
     <string name="markdown_notes_menu">Ещё</string>
     <string name="markdown_notes_settings">Настройки</string>
-    <string name="markdown_notes_about">О приложении</string>
-    <string name="about_title">О приложении</string>
+    <string name="markdown_notes_about">О программе</string>
+    <string name="about_title">О программе</string>
     <string name="about_back">Назад</string>
     <string name="about_version">Версия %1$s</string>
     <string name="about_description">Просмотр и редактирование Markdown-заметок из папки на устройстве.\nИспользует те же соглашения о папках и заголовках, что и Harrix Notes Explorer.</string>
