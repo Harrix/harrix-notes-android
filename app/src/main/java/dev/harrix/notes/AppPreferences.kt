@@ -16,12 +16,30 @@ class AppPreferences(
         prefs.edit().putString(KEY_THEME_MODE, mode.name).apply()
     }
 
-    fun resetThemeToDefault() {
-        prefs.edit().remove(KEY_THEME_MODE).apply()
+    fun loadUiFontSizeSp(): Int =
+        prefs
+            .getInt(KEY_UI_FONT_SIZE_SP, DEFAULT_UI_FONT_SIZE_SP)
+            .coerceIn(MIN_FONT_SIZE_SP, MAX_FONT_SIZE_SP)
+
+    fun saveUiFontSizeSp(value: Int) {
+        prefs.edit().putInt(KEY_UI_FONT_SIZE_SP, value.coerceIn(MIN_FONT_SIZE_SP, MAX_FONT_SIZE_SP)).apply()
+    }
+
+    fun resetAppearanceToDefaults() {
+        prefs
+            .edit()
+            .remove(KEY_THEME_MODE)
+            .remove(KEY_UI_FONT_SIZE_SP)
+            .apply()
     }
 
     companion object {
         private const val PREFS_NAME = "app_preferences"
         private const val KEY_THEME_MODE = "theme_mode"
+        private const val KEY_UI_FONT_SIZE_SP = "ui_font_size_sp"
+
+        const val DEFAULT_UI_FONT_SIZE_SP = 14
+        const val MIN_FONT_SIZE_SP = 10
+        const val MAX_FONT_SIZE_SP = 28
     }
 }

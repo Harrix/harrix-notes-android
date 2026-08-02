@@ -16,6 +16,8 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import dev.harrix.notes.AppPreferences
+import dev.harrix.notes.NotesViewerPreferences
 
 /**
  * Temporary note **preview** mode (not the editor).
@@ -32,6 +34,7 @@ fun NotesHtmlPreviewPane(
     content: String?,
     errorMessage: String?,
     modifier: Modifier = Modifier,
+    fontSizeSp: Int = NotesViewerPreferences.DEFAULT_PREVIEW_FONT_SIZE_SP,
 ) {
     when {
         isLoading -> {
@@ -55,8 +58,8 @@ fun NotesHtmlPreviewPane(
                     if (darkTheme) PreviewHtmlColors.Dark else PreviewHtmlColors.Light
                 }
             val html =
-                remember(content, colors) {
-                    buildRawPreHtml(content.orEmpty(), colors)
+                remember(content, colors, fontSizeSp) {
+                    buildRawPreHtml(content.orEmpty(), colors, fontSizeSp)
                 }
             AndroidView(
                 factory = { context ->
@@ -115,10 +118,13 @@ private data class PreviewHtmlColors(
 private fun buildRawPreHtml(
     source: String,
     colors: PreviewHtmlColors,
+    fontSizeSp: Int,
 ): String {
     val escaped = escapeHtmlForPre(source)
     val bg = colors.pageBackground.toCssHex()
     val fg = colors.text.toCssHex()
+    val size =
+        fontSizeSp.coerceIn(AppPreferences.MIN_FONT_SIZE_SP, AppPreferences.MAX_FONT_SIZE_SP)
     return """
         <!DOCTYPE html>
         <html>
@@ -137,7 +143,7 @@ private fun buildRawPreHtml(
             white-space: pre-wrap;
             word-wrap: break-word;
             font-family: monospace;
-            font-size: 14px;
+            font-size: ${size}px;
             line-height: 1.45;
             color: $fg;
             background: $bg;

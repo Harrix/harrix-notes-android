@@ -66,6 +66,7 @@ import androidx.compose.ui.unit.dp
 import dev.harrix.notes.AppPreferences
 import dev.harrix.notes.NotesBrowseLayout
 import dev.harrix.notes.NotesListDensity
+import dev.harrix.notes.NotesOpenMode
 import dev.harrix.notes.NotesPinnedItem
 import dev.harrix.notes.NotesPinnedKind
 import dev.harrix.notes.NotesTitleSource
@@ -84,6 +85,8 @@ import kotlin.math.roundToInt
 fun SettingsScreen(
     themeMode: ThemeMode,
     onThemeModeChange: (ThemeMode) -> Unit,
+    uiFontSizeSp: Int,
+    onUiFontSizeChange: (Int) -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -133,6 +136,8 @@ fun SettingsScreen(
                 AppearanceSettingsSection(
                     themeMode = themeMode,
                     onThemeModeChange = onThemeModeChange,
+                    uiFontSizeSp = uiFontSizeSp,
+                    onUiFontSizeChange = onUiFontSizeChange,
                 )
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 NotesSettingsSection(showSectionTitle = true)
@@ -145,9 +150,10 @@ fun SettingsScreen(
             )
             SettingsFullWidthOutlinedButton(
                 onClick = {
-                    appPreferences.resetThemeToDefault()
+                    appPreferences.resetAppearanceToDefaults()
                     notesPreferences.resetSettingsToDefaults()
                     onThemeModeChange(ThemeMode.System)
+                    onUiFontSizeChange(AppPreferences.DEFAULT_UI_FONT_SIZE_SP)
                     settingsEpoch += 1
                     resetMessage = context.getString(R.string.settings_reset_done)
                 },
@@ -251,6 +257,13 @@ private fun NotesSettingsSection(
     var browseLayout by remember { mutableStateOf(preferences.loadBrowseLayout()) }
     var listDensity by remember { mutableStateOf(preferences.loadListDensity()) }
     var titleSource by remember { mutableStateOf(preferences.loadTitleSource()) }
+    var noteOpenMode by remember { mutableStateOf(preferences.loadNoteOpenMode()) }
+    var previewFontSizeText by remember {
+        mutableStateOf(preferences.loadPreviewFontSizeSp().toString())
+    }
+    var editorFontSizeText by remember {
+        mutableStateOf(preferences.loadEditorFontSizeSp().toString())
+    }
     var maxOpenTabsText by remember {
         mutableStateOf(preferences.loadMaxOpenTabs().toString())
     }
@@ -278,6 +291,11 @@ private fun NotesSettingsSection(
             NotesTitleSource.Content to R.string.settings_markdown_notes_title_source_content,
             NotesTitleSource.FileName to R.string.settings_markdown_notes_title_source_file_name,
         )
+    val openModeOptions =
+        listOf(
+            NotesOpenMode.Preview to R.string.settings_markdown_notes_open_mode_preview,
+            NotesOpenMode.Edit to R.string.settings_markdown_notes_open_mode_edit,
+        )
 
     fun persistPinned(items: List<NotesPinnedItem>) {
         val uri = treeUri ?: return
@@ -293,6 +311,48 @@ private fun NotesSettingsSection(
                 treeUri = it
                 pinnedItems = loadPinnedItemsForSettings(preferences, repository, it)
             },
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.settings_markdown_notes_open_mode),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            openModeOptions.forEachIndexed { index, (mode, labelRes) ->
+                SegmentedButton(
+                    selected = noteOpenMode == mode,
+                    onClick = {
+                        noteOpenMode = mode
+                        preferences.saveNoteOpenMode(mode)
+                    },
+                    shape =
+                    SegmentedButtonDefaults.itemShape(
+                        index = index,
+                        count = openModeOptions.size,
+                    ),
+                ) {
+                    Text(
+                        text = stringResource(labelRes),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        FontSizeField(
+            label = stringResource(R.string.settings_markdown_notes_preview_font_size),
+            valueText = previewFontSizeText,
+            onValueTextChange = { previewFontSizeText = it },
+            onCommit = { preferences.savePreviewFontSizeSp(it) },
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        FontSizeField(
+            label = stringResource(R.string.settings_markdown_notes_editor_font_size),
+            valueText = editorFontSizeText,
+            onValueTextChange = { editorFontSizeText = it },
+            onCommit = { preferences.saveEditorFontSizeSp(it) },
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
@@ -632,6 +692,8 @@ private fun SettingsPinnedItemRow(
 private fun AppearanceSettingsSection(
     themeMode: ThemeMode,
     onThemeModeChange: (ThemeMode) -> Unit,
+    uiFontSizeSp: Int,
+    onUiFontSizeChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val options =
@@ -640,6 +702,7 @@ private fun AppearanceSettingsSection(
             ThemeMode.Light to R.string.settings_theme_light,
             ThemeMode.Dark to R.string.settings_theme_dark,
         )
+    var uiFontSizeText by remember(uiFontSizeSp) { mutableStateOf(uiFontSizeSp.toString()) }
 
     CollapsibleSettingsSection(
         title = stringResource(R.string.settings_appearance_title),
@@ -669,5 +732,55 @@ private fun AppearanceSettingsSection(
                 }
             }
         }
+        Spacer(modifier = Modifier.height(8.dp))
+        FontSizeField(
+            label = stringResource(R.string.settings_ui_font_size),
+            valueText = uiFontSizeText,
+            onValueTextChange = { uiFontSizeText = it },
+            onCommit = onUiFontSizeChange,
+        )
+    }
+}
+
+@Composable
+private fun FontSizeField(
+    label: String,
+    valueText: String,
+    onValueTextChange: (String) -> Unit,
+    onCommit: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        OutlinedTextField(
+            value = valueText,
+            onValueChange = { raw ->
+                val digits = raw.filter { it.isDigit() }.take(2)
+                onValueTextChange(digits)
+                val parsed = digits.toIntOrNull() ?: return@OutlinedTextField
+                val clamped =
+                    parsed.coerceIn(
+                        AppPreferences.MIN_FONT_SIZE_SP,
+                        AppPreferences.MAX_FONT_SIZE_SP,
+                    )
+                onCommit(clamped)
+                if (parsed != clamped) {
+                    onValueTextChange(clamped.toString())
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            supportingText = {
+                Text(stringResource(R.string.settings_font_size_hint))
+            },
+        )
     }
 }

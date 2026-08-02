@@ -11,6 +11,8 @@
     <string name="settings_theme_system">System</string>
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
+    <string name="settings_ui_font_size">Interface font size</string>
+    <string name="settings_font_size_hint">From 10 to 28 sp</string>
     <string name="settings_section_expand">Expand section</string>
     <string name="settings_section_collapse">Collapse section</string>
     <string name="settings_notes_title">Notes</string>
@@ -21,6 +23,11 @@
     <string name="settings_markdown_notes_path">Notes folder</string>
     <string name="settings_markdown_notes_path_none">Not set</string>
     <string name="settings_markdown_notes_path_clear">Clear notes folder</string>
+    <string name="settings_markdown_notes_open_mode">Open notes in</string>
+    <string name="settings_markdown_notes_open_mode_preview">Preview</string>
+    <string name="settings_markdown_notes_open_mode_edit">Editor</string>
+    <string name="settings_markdown_notes_preview_font_size">Preview font size</string>
+    <string name="settings_markdown_notes_editor_font_size">Editor font size</string>
     <string name="settings_markdown_notes_browse_layout">Folder view</string>
     <string name="settings_markdown_notes_browse_layout_list">List</string>
     <string name="settings_markdown_notes_browse_layout_icons">Icons</string>

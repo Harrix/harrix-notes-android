@@ -18,6 +18,8 @@ import dev.harrix.notes.ui.theme.ThemeMode
 fun MainScreen(
     themeMode: ThemeMode,
     onThemeModeChange: (ThemeMode) -> Unit,
+    uiFontSizeSp: Int,
+    onUiFontSizeChange: (Int) -> Unit,
     onExitApp: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -39,6 +41,8 @@ fun MainScreen(
             SettingsScreen(
                 themeMode = themeMode,
                 onThemeModeChange = onThemeModeChange,
+                uiFontSizeSp = uiFontSizeSp,
+                onUiFontSizeChange = onUiFontSizeChange,
                 onClose = {
                     showSettings = false
                     settingsRevision += 1

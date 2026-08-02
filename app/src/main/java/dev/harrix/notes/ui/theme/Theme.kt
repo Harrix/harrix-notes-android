@@ -5,8 +5,10 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import dev.harrix.notes.AppPreferences
 
 enum class ThemeMode {
     System,
@@ -28,9 +30,11 @@ enum class ThemeMode {
 @Composable
 fun HarrixNotesTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    uiFontSizeSp: Int = AppPreferences.DEFAULT_UI_FONT_SIZE_SP,
     content: @Composable () -> Unit,
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val typography = remember(uiFontSizeSp) { notesTypography(uiFontSizeSp) }
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
@@ -43,7 +47,7 @@ fun HarrixNotesTheme(
     }
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = NotesTypography,
+        typography = typography,
         shapes = NotesShapes,
         content = content,
     )

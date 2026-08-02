@@ -47,6 +47,40 @@ class NotesViewerPreferences(
         prefs.edit().putString(KEY_TITLE_SOURCE, source.name).apply()
     }
 
+    fun loadNoteOpenMode(): NotesOpenMode = NotesOpenMode.fromStorageKey(prefs.getString(KEY_NOTE_OPEN_MODE, null))
+
+    fun saveNoteOpenMode(mode: NotesOpenMode) {
+        prefs.edit().putString(KEY_NOTE_OPEN_MODE, mode.name).apply()
+    }
+
+    fun loadPreviewFontSizeSp(): Int =
+        prefs
+            .getInt(KEY_PREVIEW_FONT_SIZE_SP, DEFAULT_PREVIEW_FONT_SIZE_SP)
+            .coerceIn(AppPreferences.MIN_FONT_SIZE_SP, AppPreferences.MAX_FONT_SIZE_SP)
+
+    fun savePreviewFontSizeSp(value: Int) {
+        prefs
+            .edit()
+            .putInt(
+                KEY_PREVIEW_FONT_SIZE_SP,
+                value.coerceIn(AppPreferences.MIN_FONT_SIZE_SP, AppPreferences.MAX_FONT_SIZE_SP),
+            ).apply()
+    }
+
+    fun loadEditorFontSizeSp(): Int =
+        prefs
+            .getInt(KEY_EDITOR_FONT_SIZE_SP, DEFAULT_EDITOR_FONT_SIZE_SP)
+            .coerceIn(AppPreferences.MIN_FONT_SIZE_SP, AppPreferences.MAX_FONT_SIZE_SP)
+
+    fun saveEditorFontSizeSp(value: Int) {
+        prefs
+            .edit()
+            .putInt(
+                KEY_EDITOR_FONT_SIZE_SP,
+                value.coerceIn(AppPreferences.MIN_FONT_SIZE_SP, AppPreferences.MAX_FONT_SIZE_SP),
+            ).apply()
+    }
+
     fun loadMaxOpenTabs(): Int = prefs.getInt(KEY_MAX_OPEN_TABS, DEFAULT_MAX_OPEN_TABS).coerceIn(MIN_OPEN_TABS, MAX_OPEN_TABS)
 
     fun saveMaxOpenTabs(value: Int) {
@@ -139,6 +173,9 @@ class NotesViewerPreferences(
             .remove(KEY_LIST_DENSITY)
             .remove(KEY_BROWSE_LAYOUT)
             .remove(KEY_TITLE_SOURCE)
+            .remove(KEY_NOTE_OPEN_MODE)
+            .remove(KEY_PREVIEW_FONT_SIZE_SP)
+            .remove(KEY_EDITOR_FONT_SIZE_SP)
             .remove(KEY_MAX_OPEN_TABS)
             .remove(KEY_OPEN_TABS_SESSION)
             .remove(KEY_PINNED_BAR_ENABLED)
@@ -153,6 +190,9 @@ class NotesViewerPreferences(
         private const val KEY_LIST_DENSITY = "list_density"
         private const val KEY_BROWSE_LAYOUT = "browse_layout"
         private const val KEY_TITLE_SOURCE = "title_source"
+        private const val KEY_NOTE_OPEN_MODE = "note_open_mode"
+        private const val KEY_PREVIEW_FONT_SIZE_SP = "preview_font_size_sp"
+        private const val KEY_EDITOR_FONT_SIZE_SP = "editor_font_size_sp"
         private const val KEY_MAX_OPEN_TABS = "max_open_tabs"
         private const val KEY_OPEN_TABS_SESSION = "open_tabs_session"
         private const val KEY_PINNED_BAR_ENABLED = "pinned_bar_enabled"
@@ -167,6 +207,9 @@ class NotesViewerPreferences(
         const val DEFAULT_MAX_PINNED_ITEMS = 5
         const val MIN_PINNED_ITEMS = 1
         const val MAX_PINNED_ITEMS = 20
+
+        const val DEFAULT_PREVIEW_FONT_SIZE_SP = 14
+        const val DEFAULT_EDITOR_FONT_SIZE_SP = 14
 
         private fun emptySession(treeUri: String) = NotesOpenTabsSession(
             treeUri = treeUri,

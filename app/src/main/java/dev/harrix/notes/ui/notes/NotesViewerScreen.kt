@@ -109,6 +109,7 @@ import dev.harrix.notes.NoteMetaUpdates
 import dev.harrix.notes.NotesBrowseLayout
 import dev.harrix.notes.NotesEntry
 import dev.harrix.notes.NotesListDensity
+import dev.harrix.notes.NotesOpenMode
 import dev.harrix.notes.NotesPathSegment
 import dev.harrix.notes.NotesPinnedItem
 import dev.harrix.notes.NotesPinnedKind
@@ -172,6 +173,9 @@ fun NotesViewerScreen(
     var listDensity by viewModel.listDensity
     var browseLayout by viewModel.browseLayout
     var titleSource by viewModel.titleSource
+    var noteOpenMode by viewModel.noteOpenMode
+    var previewFontSizeSp by viewModel.previewFontSizeSp
+    var editorFontSizeSp by viewModel.editorFontSizeSp
     var maxOpenTabs by viewModel.maxOpenTabs
     var pinnedBarEnabled by viewModel.pinnedBarEnabled
     var maxPinnedItems by viewModel.maxPinnedItems
@@ -187,6 +191,9 @@ fun NotesViewerScreen(
         listDensity = preferences.loadListDensity()
         browseLayout = preferences.loadBrowseLayout()
         titleSource = preferences.loadTitleSource()
+        noteOpenMode = preferences.loadNoteOpenMode()
+        previewFontSizeSp = preferences.loadPreviewFontSizeSp()
+        editorFontSizeSp = preferences.loadEditorFontSizeSp()
         maxOpenTabs = preferences.loadMaxOpenTabs()
         pinnedBarEnabled = preferences.loadPinnedBarEnabled()
         maxPinnedItems = preferences.loadMaxPinnedItems()
@@ -1154,10 +1161,14 @@ fun NotesViewerScreen(
                 noteContent = loaded
                 draftText = loaded
                 lastSavedText = loaded
-                val shouldEdit = autoEditDocumentId == tab.documentId
-                if (shouldEdit) {
-                    autoEditDocumentId = null
-                }
+                val shouldEdit =
+                    when {
+                        autoEditDocumentId == tab.documentId -> {
+                            autoEditDocumentId = null
+                            true
+                        }
+                        else -> noteOpenMode == NotesOpenMode.Edit
+                    }
                 isEditing = shouldEdit
                 statusMessage = null
                 viewModel.markNoteLoaded(tab.documentId, tabUri)
@@ -1335,6 +1346,7 @@ fun NotesViewerScreen(
                                         draftText = draftText,
                                         errorMessage = statusMessage,
                                         hasContent = noteContent != null,
+                                        fontSizeSp = editorFontSizeSp,
                                         onDraftChange = { value ->
                                             draftText = value
                                             scheduleAutosave()
@@ -1346,6 +1358,7 @@ fun NotesViewerScreen(
                                         isLoading = noteLoading,
                                         content = noteContent,
                                         errorMessage = statusMessage,
+                                        fontSizeSp = previewFontSizeSp,
                                     )
                                 }
                             }
@@ -2596,6 +2609,7 @@ private fun NotesPlainTextEditorPane(
     draftText: String,
     errorMessage: String?,
     hasContent: Boolean,
+    fontSizeSp: Int,
     onDraftChange: (String) -> Unit,
 ) {
     val highlightColors = rememberMarkdownHighlightColors()
@@ -2603,6 +2617,8 @@ private fun NotesPlainTextEditorPane(
         remember(highlightColors) {
             MarkdownSyntaxVisualTransformation(highlightColors)
         }
+    val editorStyle =
+        MaterialTheme.typography.bodyMedium.copy(fontSize = fontSizeSp.sp)
 
     when {
         isLoading -> {
@@ -2624,7 +2640,7 @@ private fun NotesPlainTextEditorPane(
                 value = draftText,
                 onValueChange = onDraftChange,
                 modifier = Modifier.fillMaxSize(),
-                textStyle = MaterialTheme.typography.bodyMedium,
+                textStyle = editorStyle,
                 visualTransformation = editTransformation,
                 colors =
                 TextFieldDefaults.colors(

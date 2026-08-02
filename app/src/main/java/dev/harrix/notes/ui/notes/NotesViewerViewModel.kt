@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import dev.harrix.notes.NotesEntry
+import dev.harrix.notes.NotesOpenMode
 import dev.harrix.notes.NotesPathSegment
 import dev.harrix.notes.NotesPinnedItem
 import dev.harrix.notes.NotesTreeRepository
@@ -41,6 +42,9 @@ class NotesViewerViewModel(
     val listDensity = mutableStateOf(preferences.loadListDensity())
     val browseLayout = mutableStateOf(preferences.loadBrowseLayout())
     val titleSource = mutableStateOf(preferences.loadTitleSource())
+    val noteOpenMode = mutableStateOf(preferences.loadNoteOpenMode())
+    val previewFontSizeSp = mutableIntStateOf(preferences.loadPreviewFontSizeSp())
+    val editorFontSizeSp = mutableIntStateOf(preferences.loadEditorFontSizeSp())
     val maxOpenTabs = mutableIntStateOf(preferences.loadMaxOpenTabs())
     val pinnedBarEnabled = mutableStateOf(preferences.loadPinnedBarEnabled())
     val maxPinnedItems = mutableIntStateOf(preferences.loadMaxPinnedItems())
