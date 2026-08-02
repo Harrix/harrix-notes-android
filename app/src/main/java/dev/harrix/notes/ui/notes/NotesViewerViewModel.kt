@@ -36,7 +36,6 @@ class NotesViewerViewModel(
     val draftText = mutableStateOf("")
     val lastSavedText = mutableStateOf<String?>(null)
     val isSaving = mutableStateOf(false)
-    val saveFeedback = mutableStateOf<String?>(null)
     val autosaveJob = mutableStateOf<Job?>(null)
     val folderListRequestId = mutableIntStateOf(0)
     val listDensity = mutableStateOf(preferences.loadListDensity())

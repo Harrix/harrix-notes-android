@@ -1,6 +1,7 @@
 ﻿package dev.harrix.notes.ui.notes
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -166,7 +167,6 @@ fun NotesViewerScreen(
     var draftText by viewModel.draftText
     var lastSavedText by viewModel.lastSavedText
     var isSaving by viewModel.isSaving
-    var saveFeedback by viewModel.saveFeedback
     var autosaveJob by viewModel.autosaveJob
     var folderListRequestId by viewModel.folderListRequestId
     var listDensity by viewModel.listDensity
@@ -424,7 +424,6 @@ fun NotesViewerScreen(
         isEditing = false
         draftText = ""
         lastSavedText = null
-        saveFeedback = null
         autosaveJob?.cancel()
         autosaveJob = null
         viewModel.clearLoadedNote()
@@ -444,8 +443,10 @@ fun NotesViewerScreen(
             .onSuccess {
                 lastSavedText = text
                 noteContent = text
-                saveFeedback = context.getString(R.string.markdown_notes_saved)
                 statusMessage = null
+                Toast
+                    .makeText(context, R.string.markdown_notes_saved, Toast.LENGTH_SHORT)
+                    .show()
                 val tab = openTabs.firstOrNull { it.documentId == selectedTabDocumentId }
                 if (tab != null) {
                     val (contentTitle, contentIcon) =
@@ -502,7 +503,6 @@ fun NotesViewerScreen(
             }.onFailure { error ->
                 statusMessage =
                     error.message ?: context.getString(R.string.markdown_notes_save_failed)
-                saveFeedback = null
             }.isSuccess
     }
 
@@ -1143,7 +1143,6 @@ fun NotesViewerScreen(
         }
         noteLoading = true
         statusMessage = null
-        saveFeedback = null
         noteContent = null
         viewModel.clearLoadedNote()
         val result =
@@ -1175,13 +1174,6 @@ fun NotesViewerScreen(
                 viewModel.clearLoadedNote()
             }
         noteLoading = false
-    }
-
-    LaunchedEffect(saveFeedback) {
-        if (saveFeedback != null) {
-            delay(SaveFeedbackVisibleMs)
-            saveFeedback = null
-        }
     }
 
     BackHandler {
@@ -1314,26 +1306,12 @@ fun NotesViewerScreen(
                             isEditing = true
                             draftText = noteContent.orEmpty()
                             lastSavedText = noteContent
-                            saveFeedback = null
                         },
                         showCloseNote = selectedTab != null,
                         onCloseNote = {
                             selectedTab?.let { closeTab(it.documentId) }
                         },
                     )
-                    if (isEditing && (isSaving || saveFeedback != null)) {
-                        Text(
-                            text =
-                            if (isSaving) {
-                                stringResource(R.string.markdown_notes_save)
-                            } else {
-                                saveFeedback.orEmpty()
-                            },
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
-                        )
-                    }
                     HorizontalDivider()
                     Box(
                         modifier =
@@ -1447,7 +1425,6 @@ fun NotesViewerScreen(
 }
 
 private const val AutosaveDelayMs = 800L
-private const val SaveFeedbackVisibleMs = 1500L
 private val NotesTabMaxWidth = 128.dp
 private val NotesOpenTabsMenuMaxHeight = 360.dp
 private val NotesTabSwipeCloseThreshold = 40.dp
