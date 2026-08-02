@@ -37,6 +37,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -78,11 +79,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
@@ -99,6 +101,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.harrix.notes.NoteMetaUpdates
 import dev.harrix.notes.NotesBrowseLayout
 import dev.harrix.notes.NotesEntry
@@ -117,8 +120,8 @@ import dev.harrix.notes.ui.adaptiveContentWidth
 import dev.harrix.notes.ui.isCompactHeight
 import dev.harrix.notes.ui.notesIconsGridColumnCount
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.abs
@@ -137,45 +140,44 @@ fun NotesViewerScreen(
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
     settingsRevision: Int = 0,
+    viewModel: NotesViewerViewModel = viewModel(),
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val preferences = remember { NotesViewerPreferences(context.applicationContext) }
-    val repository = remember { NotesTreeRepository(context.applicationContext) }
+    val preferences = viewModel.preferences
+    val repository = viewModel.repository
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    var notesTreeUri by remember { mutableStateOf(preferences.loadNotesTreeUri()) }
+    var notesTreeUri by viewModel.notesTreeUri
     var menuExpanded by remember { mutableStateOf(false) }
-    var folderPath by remember { mutableStateOf<List<NotesPathSegment>>(emptyList()) }
-    var entries by remember { mutableStateOf<List<NotesEntry>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(false) }
-    var statusMessage by remember { mutableStateOf<String?>(null) }
-    var openTabs by remember { mutableStateOf<List<OpenNoteTab>>(emptyList()) }
-    var selectedTabDocumentId by remember { mutableStateOf<String?>(null) }
-    var sessionRestoredForTree by remember { mutableStateOf<String?>(null) }
-    var noteContent by remember { mutableStateOf<String?>(null) }
-    var noteLoading by remember { mutableStateOf(false) }
-    var isEditing by remember { mutableStateOf(false) }
-    var autoEditDocumentId by remember { mutableStateOf<String?>(null) }
-    var draftText by remember { mutableStateOf("") }
-    var lastSavedText by remember { mutableStateOf<String?>(null) }
-    var isSaving by remember { mutableStateOf(false) }
-    var saveFeedback by remember { mutableStateOf<String?>(null) }
-    var autosaveJob by remember { mutableStateOf<Job?>(null) }
-    var folderListRequestId by remember { mutableIntStateOf(0) }
-    var listDensity by remember { mutableStateOf(preferences.loadListDensity()) }
-    var browseLayout by remember { mutableStateOf(preferences.loadBrowseLayout()) }
-    var titleSource by remember { mutableStateOf(preferences.loadTitleSource()) }
-    var maxOpenTabs by remember { mutableIntStateOf(preferences.loadMaxOpenTabs()) }
-    var pinnedBarEnabled by remember { mutableStateOf(preferences.loadPinnedBarEnabled()) }
-    var maxPinnedItems by remember { mutableIntStateOf(preferences.loadMaxPinnedItems()) }
-    var pinnedItems by remember { mutableStateOf<List<NotesPinnedItem>>(emptyList()) }
-    var pinnedRestoredForTree by remember { mutableStateOf<String?>(null) }
-    var treeRoot by remember { mutableStateOf<NotesPathSegment?>(null) }
-    var treeChildrenByFolderId by remember {
-        mutableStateOf<Map<String, List<NotesEntry>>>(emptyMap())
-    }
-    var treeExpandedFolderIds by remember { mutableStateOf<Set<String>>(emptySet()) }
-    var treeLoadingRoot by remember { mutableStateOf(false) }
+    var folderPath by viewModel.folderPath
+    var entries by viewModel.entries
+    var isLoading by viewModel.isLoading
+    var statusMessage by viewModel.statusMessage
+    var openTabs by viewModel.openTabs
+    var selectedTabDocumentId by viewModel.selectedTabDocumentId
+    var sessionRestoredForTree by viewModel.sessionRestoredForTree
+    var noteContent by viewModel.noteContent
+    var noteLoading by viewModel.noteLoading
+    var isEditing by viewModel.isEditing
+    var autoEditDocumentId by viewModel.autoEditDocumentId
+    var draftText by viewModel.draftText
+    var lastSavedText by viewModel.lastSavedText
+    var isSaving by viewModel.isSaving
+    var saveFeedback by viewModel.saveFeedback
+    var autosaveJob by viewModel.autosaveJob
+    var folderListRequestId by viewModel.folderListRequestId
+    var listDensity by viewModel.listDensity
+    var browseLayout by viewModel.browseLayout
+    var titleSource by viewModel.titleSource
+    var maxOpenTabs by viewModel.maxOpenTabs
+    var pinnedBarEnabled by viewModel.pinnedBarEnabled
+    var maxPinnedItems by viewModel.maxPinnedItems
+    var pinnedItems by viewModel.pinnedItems
+    var pinnedRestoredForTree by viewModel.pinnedRestoredForTree
+    var treeRoot by viewModel.treeRoot
+    var treeChildrenByFolderId by viewModel.treeChildrenByFolderId
+    var treeExpandedFolderIds by viewModel.treeExpandedFolderIds
+    var treeLoadingRoot by viewModel.treeLoadingRoot
 
     fun reloadPath() {
         notesTreeUri = preferences.loadNotesTreeUri()
@@ -363,6 +365,7 @@ fun NotesViewerScreen(
         val treeUri = Uri.parse(tree)
         val root = treeRoot ?: repository.rootSegment(treeUri).also { treeRoot = it }
         treeExpandedFolderIds = tab.folderPath.map { it.documentId }.toSet()
+        viewModel.treeExpandedForTabId = tab.documentId
         val segmentsToLoad =
             if (tab.folderPath.isEmpty()) {
                 listOf(root)
@@ -373,6 +376,24 @@ fun NotesViewerScreen(
             loadTreeFolder(treeUri, segment)
         }
         // Also ensure root is loaded when path starts deeper.
+        if (tab.folderPath.isNotEmpty()) {
+            loadTreeFolder(treeUri, root)
+        }
+    }
+
+    fun ensurePathFoldersLoaded(tab: OpenNoteTab) {
+        val tree = notesTreeUri ?: return
+        val treeUri = Uri.parse(tree)
+        val root = treeRoot ?: repository.rootSegment(treeUri).also { treeRoot = it }
+        val segmentsToLoad =
+            if (tab.folderPath.isEmpty()) {
+                listOf(root)
+            } else {
+                tab.folderPath
+            }
+        segmentsToLoad.forEach { segment ->
+            loadTreeFolder(treeUri, segment)
+        }
         if (tab.folderPath.isNotEmpty()) {
             loadTreeFolder(treeUri, root)
         }
@@ -403,6 +424,7 @@ fun NotesViewerScreen(
         saveFeedback = null
         autosaveJob?.cancel()
         autosaveJob = null
+        viewModel.clearLoadedNote()
     }
 
     suspend fun saveNoteText(
@@ -640,6 +662,12 @@ fun NotesViewerScreen(
                 selectedTabDocumentId = null
                 noteContent = null
                 resetEditorState()
+                viewModel.treeExpandedForTabId = null
+            }
+            val pathChanged =
+                folderPath.map { it.documentId } != path.map { it.documentId }
+            if (pathChanged) {
+                viewModel.resetFolderScroll()
             }
 
             folderListRequestId += 1
@@ -943,10 +971,15 @@ fun NotesViewerScreen(
         }
 
     LaunchedEffect(settingsRevision) {
+        if (viewModel.appliedSettingsRevision == settingsRevision) {
+            return@LaunchedEffect
+        }
         val previousTitleSource = titleSource
         val previousMaxOpenTabs = maxOpenTabs
         val previousMaxPinned = maxPinnedItems
+        val hadSession = viewModel.appliedSettingsRevision >= 0
         reloadPath()
+        viewModel.appliedSettingsRevision = settingsRevision
         if (previousTitleSource != titleSource) {
             applyTitleSourceToVisibleLists()
         }
@@ -956,24 +989,30 @@ fun NotesViewerScreen(
         val tree = notesTreeUri
         val root = ensureRootPath()?.firstOrNull()
         if (tree != null && root != null) {
-            pinnedItems = preferences.loadPinnedItems(tree, root)
-            pinnedRestoredForTree = tree
+            if (hadSession || pinnedRestoredForTree != tree) {
+                pinnedItems = preferences.loadPinnedItems(tree, root)
+                pinnedRestoredForTree = tree
+            }
             if (previousMaxPinned != maxPinnedItems) {
                 ensureMaxPinnedItems()
             }
-        } else {
+        } else if (hadSession) {
             pinnedItems = emptyList()
             pinnedRestoredForTree = null
         }
     }
 
     LaunchedEffect(notesTreeUri) {
-        clearTreeState()
         repository.prepareForTree(notesTreeUri)
         val treeUriValue = notesTreeUri
         val root = ensureRootPath()
         if (root != null && treeUriValue != null) {
-            if (sessionRestoredForTree != treeUriValue) {
+            val alreadyRestored = sessionRestoredForTree == treeUriValue
+            if (!alreadyRestored) {
+                clearTreeState()
+                viewModel.treeExpandedForTabId = null
+                viewModel.clearLoadedNote()
+                viewModel.resetFolderScroll()
                 val session = preferences.loadOpenTabsSession(treeUriValue)
                 openTabs =
                     session.tabs.map { tab ->
@@ -990,6 +1029,17 @@ fun NotesViewerScreen(
                     resetEditorState()
                 }
                 sessionRestoredForTree = treeUriValue
+                val restoredTab = openTabs.firstOrNull { it.documentId == selectedTabDocumentId }
+                if (restoredTab != null) {
+                    val path = restoredTab.folderPath.ifEmpty { root }
+                    openFolderList(path, clearSelection = false)
+                } else {
+                    openFolderList(root)
+                }
+            } else if (folderPath.isEmpty()) {
+                openFolderList(root, clearSelection = false)
+            } else if (entries.isEmpty()) {
+                openFolderList(folderPath, clearSelection = false)
             }
             if (pinnedRestoredForTree != treeUriValue) {
                 val loaded = preferences.loadPinnedItems(treeUriValue, root.first())
@@ -1014,17 +1064,14 @@ fun NotesViewerScreen(
                     }
                 }
             }
-            val restoredTab = openTabs.firstOrNull { it.documentId == selectedTabDocumentId }
-            if (restoredTab != null) {
-                val path = restoredTab.folderPath.ifEmpty { root }
-                openFolderList(path, clearSelection = false)
-            } else {
-                openFolderList(root)
-            }
             ensureTreeRootLoaded()
         } else {
+            clearTreeState()
             sessionRestoredForTree = null
             pinnedRestoredForTree = null
+            viewModel.treeExpandedForTabId = null
+            viewModel.clearLoadedNote()
+            viewModel.resetFolderScroll()
             folderPath = emptyList()
             entries = emptyList()
             openTabs = emptyList()
@@ -1057,8 +1104,14 @@ fun NotesViewerScreen(
     LaunchedEffect(selectedTabDocumentId, selectedTab?.folderPath) {
         val tab = selectedTab
         if (tab == null) {
-            treeExpandedFolderIds = emptySet()
+            if (viewModel.treeExpandedForTabId != null) {
+                treeExpandedFolderIds = emptySet()
+                viewModel.treeExpandedForTabId = null
+            }
             ensureTreeRootLoaded()
+        } else if (viewModel.treeExpandedForTabId == tab.documentId) {
+            ensureTreeRootLoaded()
+            ensurePathFoldersLoaded(tab)
         } else {
             expandPathToNote(tab)
         }
@@ -1078,10 +1131,18 @@ fun NotesViewerScreen(
             resetEditorState()
             return@LaunchedEffect
         }
+        val tabUri = tab.uri.toString()
+        val alreadyLoaded =
+            viewModel.loadedNoteDocumentId == tab.documentId &&
+                viewModel.loadedNoteUri == tabUri
+        if (alreadyLoaded && noteContent != null && !noteLoading) {
+            return@LaunchedEffect
+        }
         noteLoading = true
         statusMessage = null
         saveFeedback = null
         noteContent = null
+        viewModel.clearLoadedNote()
         val result =
             withContext(Dispatchers.IO) {
                 runCatching { repository.readText(tab.uri) }
@@ -1097,6 +1158,7 @@ fun NotesViewerScreen(
                 }
                 isEditing = shouldEdit
                 statusMessage = null
+                viewModel.markNoteLoaded(tab.documentId, tabUri)
             }.onFailure { error ->
                 noteContent = null
                 draftText = ""
@@ -1107,6 +1169,7 @@ fun NotesViewerScreen(
                 isEditing = false
                 statusMessage =
                     error.message ?: context.getString(R.string.markdown_notes_load_failed)
+                viewModel.clearLoadedNote()
             }
         noteLoading = false
     }
@@ -1283,6 +1346,13 @@ fun NotesViewerScreen(
                                     draftText = draftText,
                                     isEditing = isEditing,
                                     errorMessage = statusMessage,
+                                    initialFirstVisibleItemIndex = viewModel.noteListFirstVisibleIndex,
+                                    initialFirstVisibleItemScrollOffset =
+                                    viewModel.noteListFirstVisibleOffset,
+                                    onScrollPositionChange = { index, offset ->
+                                        viewModel.noteListFirstVisibleIndex = index
+                                        viewModel.noteListFirstVisibleOffset = offset
+                                    },
                                     onDraftChange = { value ->
                                         draftText = value
                                         scheduleAutosave()
@@ -1305,6 +1375,18 @@ fun NotesViewerScreen(
                                         .filter { it.kind != NotesPinnedKind.Home }
                                         .map { it.documentId }
                                         .toSet(),
+                                    listFirstVisibleIndex = viewModel.folderListFirstVisibleIndex,
+                                    listFirstVisibleOffset = viewModel.folderListFirstVisibleOffset,
+                                    gridFirstVisibleIndex = viewModel.folderGridFirstVisibleIndex,
+                                    gridFirstVisibleOffset = viewModel.folderGridFirstVisibleOffset,
+                                    onListScrollPositionChange = { index, offset ->
+                                        viewModel.folderListFirstVisibleIndex = index
+                                        viewModel.folderListFirstVisibleOffset = offset
+                                    },
+                                    onGridScrollPositionChange = { index, offset ->
+                                        viewModel.folderGridFirstVisibleIndex = index
+                                        viewModel.folderGridFirstVisibleOffset = offset
+                                    },
                                     onOpenFolder = { folder ->
                                         openFolderList(
                                             folderPath +
@@ -1958,6 +2040,12 @@ private fun NotesFolderList(
     density: NotesListDensity,
     layout: NotesBrowseLayout,
     pinnedDocumentIds: Set<String>,
+    listFirstVisibleIndex: Int,
+    listFirstVisibleOffset: Int,
+    gridFirstVisibleIndex: Int,
+    gridFirstVisibleOffset: Int,
+    onListScrollPositionChange: (Int, Int) -> Unit,
+    onGridScrollPositionChange: (Int, Int) -> Unit,
     onOpenFolder: (NotesEntry.Folder) -> Unit,
     onOpenNote: (NotesEntry.Note) -> Unit,
     onShowMergedNote: (NotesEntry.Folder) -> Unit,
@@ -1985,8 +2073,24 @@ private fun NotesFolderList(
         }
 
         layout == NotesBrowseLayout.Icons -> {
+            val gridState =
+                rememberLazyGridState(
+                    initialFirstVisibleItemIndex = gridFirstVisibleIndex,
+                    initialFirstVisibleItemScrollOffset = gridFirstVisibleOffset,
+                )
+            val onGridScrollPositionChangeState =
+                rememberUpdatedState(onGridScrollPositionChange)
+            LaunchedEffect(gridState) {
+                snapshotFlow {
+                    gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset
+                }.distinctUntilChanged()
+                    .collect { (index, offset) ->
+                        onGridScrollPositionChangeState.value(index, offset)
+                    }
+            }
             LazyVerticalGrid(
                 columns = GridCells.Fixed(notesIconsGridColumnCount()),
+                state = gridState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -2022,7 +2126,23 @@ private fun NotesFolderList(
         }
 
         else -> {
+            val listState =
+                rememberLazyListState(
+                    initialFirstVisibleItemIndex = listFirstVisibleIndex,
+                    initialFirstVisibleItemScrollOffset = listFirstVisibleOffset,
+                )
+            val onListScrollPositionChangeState =
+                rememberUpdatedState(onListScrollPositionChange)
+            LaunchedEffect(listState) {
+                snapshotFlow {
+                    listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
+                }.distinctUntilChanged()
+                    .collect { (index, offset) ->
+                        onListScrollPositionChangeState.value(index, offset)
+                    }
+            }
             LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(vertical = 4.dp),
             ) {
@@ -2458,6 +2578,9 @@ private fun NotesPlainTextPane(
     draftText: String,
     isEditing: Boolean,
     errorMessage: String?,
+    initialFirstVisibleItemIndex: Int,
+    initialFirstVisibleItemScrollOffset: Int,
+    onScrollPositionChange: (Int, Int) -> Unit,
     onDraftChange: (String) -> Unit,
 ) {
     var viewLines by remember { mutableStateOf<List<String>?>(null) }
@@ -2511,7 +2634,20 @@ private fun NotesPlainTextPane(
 
         else -> {
             val lines = viewLines.orEmpty()
-            val listState = rememberLazyListState()
+            val listState =
+                rememberLazyListState(
+                    initialFirstVisibleItemIndex = initialFirstVisibleItemIndex,
+                    initialFirstVisibleItemScrollOffset = initialFirstVisibleItemScrollOffset,
+                )
+            val onScrollPositionChangeState = rememberUpdatedState(onScrollPositionChange)
+            LaunchedEffect(listState) {
+                snapshotFlow {
+                    listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
+                }.distinctUntilChanged()
+                    .collect { (index, offset) ->
+                        onScrollPositionChangeState.value(index, offset)
+                    }
+            }
             Surface(
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colorScheme.surface,

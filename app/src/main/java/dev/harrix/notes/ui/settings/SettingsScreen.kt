@@ -49,6 +49,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -89,8 +90,9 @@ fun SettingsScreen(
     val context = LocalContext.current
     val appPreferences = remember { AppPreferences(context.applicationContext) }
     val notesPreferences = remember { NotesViewerPreferences(context.applicationContext) }
-    var settingsEpoch by remember { mutableIntStateOf(0) }
-    var resetMessage by remember { mutableStateOf<String?>(null) }
+    var settingsEpoch by rememberSaveable { mutableIntStateOf(0) }
+    var resetMessage by rememberSaveable { mutableStateOf<String?>(null) }
+    val scrollState = rememberScrollState()
 
     BackHandler(onBack = onClose)
 
@@ -122,7 +124,7 @@ fun SettingsScreen(
             Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .adaptiveContentWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -191,7 +193,7 @@ private fun CollapsibleSettingsSection(
     initiallyExpanded: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    var expanded by remember { mutableStateOf(initiallyExpanded) }
+    var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
