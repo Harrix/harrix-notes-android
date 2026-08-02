@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import dev.harrix.notes.ui.about.AboutScreen
 import dev.harrix.notes.ui.notes.NotesViewerScreen
 import dev.harrix.notes.ui.settings.SettingsScreen
+import dev.harrix.notes.ui.theme.AppLanguage
 import dev.harrix.notes.ui.theme.ThemeMode
 
 @Composable
@@ -20,6 +21,8 @@ fun MainScreen(
     onThemeModeChange: (ThemeMode) -> Unit,
     uiFontSizeSp: Int,
     onUiFontSizeChange: (Int) -> Unit,
+    appLanguage: AppLanguage,
+    onAppLanguageChange: (AppLanguage) -> Unit,
     onExitApp: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -43,6 +46,8 @@ fun MainScreen(
                 onThemeModeChange = onThemeModeChange,
                 uiFontSizeSp = uiFontSizeSp,
                 onUiFontSizeChange = onUiFontSizeChange,
+                appLanguage = appLanguage,
+                onAppLanguageChange = onAppLanguageChange,
                 onClose = {
                     showSettings = false
                     settingsRevision += 1

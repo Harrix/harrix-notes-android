@@ -28,7 +28,10 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,6 +45,7 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -77,6 +81,7 @@ import dev.harrix.notes.pinnedDisplayLabels
 import dev.harrix.notes.ui.adaptiveContentWidth
 import dev.harrix.notes.ui.notes.NotesFolderPathControls
 import dev.harrix.notes.ui.notes.NotesNoteGlyph
+import dev.harrix.notes.ui.theme.AppLanguage
 import dev.harrix.notes.ui.theme.ThemeMode
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -88,6 +93,8 @@ fun SettingsScreen(
     onThemeModeChange: (ThemeMode) -> Unit,
     uiFontSizeSp: Int,
     onUiFontSizeChange: (Int) -> Unit,
+    appLanguage: AppLanguage,
+    onAppLanguageChange: (AppLanguage) -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -139,6 +146,8 @@ fun SettingsScreen(
                     onThemeModeChange = onThemeModeChange,
                     uiFontSizeSp = uiFontSizeSp,
                     onUiFontSizeChange = onUiFontSizeChange,
+                    appLanguage = appLanguage,
+                    onAppLanguageChange = onAppLanguageChange,
                 )
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 NotesSettingsSection(showSectionTitle = true)
@@ -155,6 +164,7 @@ fun SettingsScreen(
                     notesPreferences.resetSettingsToDefaults()
                     onThemeModeChange(ThemeMode.System)
                     onUiFontSizeChange(AppPreferences.DEFAULT_UI_FONT_SIZE_SP)
+                    onAppLanguageChange(AppLanguage.System)
                     settingsEpoch += 1
                     resetMessage = context.getString(R.string.settings_reset_done)
                 },
@@ -687,12 +697,15 @@ private fun SettingsPinnedItemRow(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppearanceSettingsSection(
     themeMode: ThemeMode,
     onThemeModeChange: (ThemeMode) -> Unit,
     uiFontSizeSp: Int,
     onUiFontSizeChange: (Int) -> Unit,
+    appLanguage: AppLanguage,
+    onAppLanguageChange: (AppLanguage) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val options =
@@ -702,11 +715,69 @@ private fun AppearanceSettingsSection(
             ThemeMode.Dark to R.string.settings_theme_dark,
         )
     var uiFontSizeText by remember(uiFontSizeSp) { mutableStateOf(uiFontSizeSp.toString()) }
+    var languageMenuExpanded by remember { mutableStateOf(false) }
+    val systemLanguageLabel = stringResource(R.string.settings_language_system)
+    val languageLabel =
+        if (appLanguage == AppLanguage.System) {
+            systemLanguageLabel
+        } else {
+            appLanguage.nativeLabel
+        }
 
     CollapsibleSettingsSection(
         title = stringResource(R.string.settings_appearance_title),
         modifier = modifier,
     ) {
+        Text(
+            text = stringResource(R.string.settings_language_title),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        ExposedDropdownMenuBox(
+            expanded = languageMenuExpanded,
+            onExpandedChange = { languageMenuExpanded = it },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            OutlinedTextField(
+                value = languageLabel,
+                onValueChange = {},
+                readOnly = true,
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = languageMenuExpanded) },
+                modifier =
+                Modifier
+                    .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                    .fillMaxWidth(),
+            )
+            ExposedDropdownMenu(
+                expanded = languageMenuExpanded,
+                onDismissRequest = { languageMenuExpanded = false },
+            ) {
+                AppLanguage.entries.forEach { language ->
+                    val optionLabel =
+                        if (language == AppLanguage.System) {
+                            systemLanguageLabel
+                        } else {
+                            language.nativeLabel
+                        }
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = optionLabel,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        },
+                        onClick = {
+                            languageMenuExpanded = false
+                            if (language != appLanguage) {
+                                onAppLanguageChange(language)
+                            }
+                        },
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = stringResource(R.string.settings_theme_title),
             style = MaterialTheme.typography.labelLarge,

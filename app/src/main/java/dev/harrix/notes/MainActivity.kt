@@ -17,12 +17,14 @@ import dev.harrix.notes.ui.theme.HarrixNotesTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        val preferences = AppPreferences(this)
+        preferences.loadAppLanguage().apply()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val preferences = remember { AppPreferences(this) }
             var themeMode by remember { mutableStateOf(preferences.loadThemeMode()) }
             var uiFontSizeSp by remember { mutableIntStateOf(preferences.loadUiFontSizeSp()) }
+            var appLanguage by remember { mutableStateOf(preferences.loadAppLanguage()) }
             val darkTheme = themeMode.resolveDarkTheme(isSystemInDarkTheme())
             HarrixNotesTheme(
                 darkTheme = darkTheme,
@@ -38,6 +40,12 @@ class MainActivity : ComponentActivity() {
                     onUiFontSizeChange = { size ->
                         preferences.saveUiFontSizeSp(size)
                         uiFontSizeSp = size
+                    },
+                    appLanguage = appLanguage,
+                    onAppLanguageChange = { language ->
+                        preferences.saveAppLanguage(language)
+                        appLanguage = language
+                        language.apply()
                     },
                     onExitApp = { finish() },
                     modifier = Modifier.fillMaxSize(),
