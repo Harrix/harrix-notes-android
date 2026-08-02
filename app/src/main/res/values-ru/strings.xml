@@ -7,6 +7,7 @@
     <string name="settings_title">Настройки</string>
     <string name="settings_back">Назад</string>
     <string name="settings_appearance_title">Оформление</string>
+    <string name="settings_appearance_summary">Тема, язык, размер шрифта</string>
     <string name="settings_language_title">Язык</string>
     <string name="settings_language_system">Системный</string>
     <string name="settings_theme_title">Тема</string>
@@ -17,7 +18,11 @@
     <string name="settings_font_size_hint">От 10 до 28 sp</string>
     <string name="settings_section_expand">Развернуть раздел</string>
     <string name="settings_section_collapse">Свернуть раздел</string>
+    <string name="settings_category_main">Основное</string>
     <string name="settings_notes_title">Заметки</string>
+    <string name="settings_notes_summary">Папка, просмотр, редактор, закрепления</string>
+    <string name="settings_other_title">Другое</string>
+    <string name="settings_other_summary">Сброс настроек</string>
     <string name="settings_reset">Сбросить настройки</string>
     <string name="settings_reset_hint">Восстановить оформление и параметры заметок по умолчанию. Папка заметок сохраняется.</string>
     <string name="settings_reset_done">Настройки сброшены</string>

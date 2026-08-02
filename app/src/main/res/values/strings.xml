@@ -7,6 +7,7 @@
     <string name="settings_title">Settings</string>
     <string name="settings_back">Back</string>
     <string name="settings_appearance_title">Appearance</string>
+    <string name="settings_appearance_summary">Theme, language, font size</string>
     <string name="settings_language_title">Language</string>
     <string name="settings_language_system">System</string>
     <string name="settings_theme_title">Theme</string>
@@ -17,7 +18,11 @@
     <string name="settings_font_size_hint">From 10 to 28 sp</string>
     <string name="settings_section_expand">Expand section</string>
     <string name="settings_section_collapse">Collapse section</string>
+    <string name="settings_category_main">Main</string>
     <string name="settings_notes_title">Notes</string>
+    <string name="settings_notes_summary">Folder, browsing, editor, pins</string>
+    <string name="settings_other_title">Other</string>
+    <string name="settings_other_summary">Reset to defaults</string>
     <string name="settings_reset">Reset settings</string>
     <string name="settings_reset_hint">Restore appearance and notes options to defaults. The notes folder is kept.</string>
     <string name="settings_reset_done">Settings restored to defaults</string>

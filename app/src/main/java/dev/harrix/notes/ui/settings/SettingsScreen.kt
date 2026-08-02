@@ -2,11 +2,9 @@ package dev.harrix.notes.ui.settings
 
 import android.net.Uri
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -20,9 +18,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -30,20 +26,19 @@ import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DragHandle
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.RestartAlt
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
@@ -96,6 +91,13 @@ import dev.harrix.notes.ui.theme.ThemeMode
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
+private enum class NotesSettingsPage {
+    Hub,
+    Appearance,
+    Notes,
+    Other,
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -113,9 +115,23 @@ fun SettingsScreen(
     val notesPreferences = remember { NotesViewerPreferences(context.applicationContext) }
     var settingsEpoch by rememberSaveable { mutableIntStateOf(0) }
     var resetMessage by rememberSaveable { mutableStateOf<String?>(null) }
-    val scrollState = rememberScrollState()
+    var page by rememberSaveable { mutableStateOf(NotesSettingsPage.Hub) }
 
-    BackHandler(onBack = onClose)
+    val pageTitle =
+        when (page) {
+            NotesSettingsPage.Hub -> stringResource(R.string.settings_title)
+            NotesSettingsPage.Appearance -> stringResource(R.string.settings_appearance_title)
+            NotesSettingsPage.Notes -> stringResource(R.string.settings_notes_title)
+            NotesSettingsPage.Other -> stringResource(R.string.settings_other_title)
+        }
+
+    BackHandler {
+        if (page == NotesSettingsPage.Hub) {
+            onClose()
+        } else {
+            page = NotesSettingsPage.Hub
+        }
+    }
 
     Scaffold(
         modifier = modifier,
@@ -124,13 +140,21 @@ fun SettingsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = stringResource(R.string.settings_title),
+                        text = pageTitle,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onClose) {
+                    IconButton(
+                        onClick = {
+                            if (page == NotesSettingsPage.Hub) {
+                                onClose()
+                            } else {
+                                page = NotesSettingsPage.Hub
+                            }
+                        },
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.settings_back),
@@ -140,59 +164,168 @@ fun SettingsScreen(
             )
         },
     ) { innerPadding ->
-        Column(
-            modifier =
-            Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-                .adaptiveContentWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            key(settingsEpoch) {
-                AppearanceSettingsSection(
-                    themeMode = themeMode,
-                    onThemeModeChange = onThemeModeChange,
-                    uiFontSizeSp = uiFontSizeSp,
-                    onUiFontSizeChange = onUiFontSizeChange,
-                    appLanguage = appLanguage,
-                    onAppLanguageChange = onAppLanguageChange,
-                )
-                NotesSettingsSection(showSectionTitle = true)
+        when (page) {
+            NotesSettingsPage.Hub -> {
+                Column(
+                    modifier =
+                    Modifier
+                        .padding(innerPadding)
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .adaptiveContentWidth(),
+                ) {
+                    SettingsHubRow(
+                        title = stringResource(R.string.settings_appearance_title),
+                        summary = stringResource(R.string.settings_appearance_summary),
+                        icon = Icons.Filled.Palette,
+                        onClick = { page = NotesSettingsPage.Appearance },
+                    )
+                    HorizontalDivider()
+                    SettingsHubRow(
+                        title = stringResource(R.string.settings_notes_title),
+                        summary = stringResource(R.string.settings_notes_summary),
+                        icon = Icons.AutoMirrored.Filled.Article,
+                        onClick = { page = NotesSettingsPage.Notes },
+                    )
+                    SettingsCategoryHeader(text = stringResource(R.string.settings_category_main))
+                    SettingsHubRow(
+                        title = stringResource(R.string.settings_other_title),
+                        summary = stringResource(R.string.settings_other_summary),
+                        icon = Icons.Filled.MoreHoriz,
+                        onClick = { page = NotesSettingsPage.Other },
+                    )
+                }
             }
-            SettingsCategoryCard(
-                title = stringResource(R.string.settings_reset),
-                icon = Icons.Filled.RestartAlt,
-                initiallyExpanded = false,
-            ) {
-                Text(
-                    text = stringResource(R.string.settings_reset_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                SettingsFullWidthOutlinedButton(
-                    onClick = {
-                        appPreferences.resetAppearanceToDefaults()
-                        notesPreferences.resetSettingsToDefaults()
-                        onThemeModeChange(ThemeMode.System)
-                        onUiFontSizeChange(AppPreferences.DEFAULT_UI_FONT_SIZE_SP)
-                        onAppLanguageChange(AppLanguage.System)
-                        settingsEpoch += 1
-                        resetMessage = context.getString(R.string.settings_reset_done)
-                    },
-                    label = stringResource(R.string.settings_reset),
-                )
-                resetMessage?.let { message ->
+
+            NotesSettingsPage.Appearance -> {
+                SettingsDetailPane(innerPadding = innerPadding) {
+                    key(settingsEpoch) {
+                        AppearanceSettingsSection(
+                            themeMode = themeMode,
+                            onThemeModeChange = onThemeModeChange,
+                            uiFontSizeSp = uiFontSizeSp,
+                            onUiFontSizeChange = onUiFontSizeChange,
+                            appLanguage = appLanguage,
+                            onAppLanguageChange = onAppLanguageChange,
+                        )
+                    }
+                }
+            }
+
+            NotesSettingsPage.Notes -> {
+                SettingsDetailPane(innerPadding = innerPadding) {
+                    key(settingsEpoch) {
+                        NotesSettingsSection()
+                    }
+                }
+            }
+
+            NotesSettingsPage.Other -> {
+                SettingsDetailPane(innerPadding = innerPadding) {
                     Text(
-                        text = message,
+                        text = stringResource(R.string.settings_reset_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    SettingsFullWidthOutlinedButton(
+                        onClick = {
+                            appPreferences.resetAppearanceToDefaults()
+                            notesPreferences.resetSettingsToDefaults()
+                            onThemeModeChange(ThemeMode.System)
+                            onUiFontSizeChange(AppPreferences.DEFAULT_UI_FONT_SIZE_SP)
+                            onAppLanguageChange(AppLanguage.System)
+                            settingsEpoch += 1
+                            resetMessage = context.getString(R.string.settings_reset_done)
+                        },
+                        label = stringResource(R.string.settings_reset),
+                    )
+                    resetMessage?.let { message ->
+                        Text(
+                            text = message,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun SettingsDetailPane(
+    innerPadding: PaddingValues,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        modifier =
+        Modifier
+            .padding(innerPadding)
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .adaptiveContentWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        content = content,
+    )
+}
+
+@Composable
+private fun SettingsCategoryHeader(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        modifier =
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+    )
+}
+
+@Composable
+private fun SettingsHubRow(
+    title: String,
+    summary: String,
+    icon: ImageVector,
+    onClick: () -> Unit,
+) {
+    ListItem(
+        headlineContent = {
+            Text(
+                text = title,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        supportingContent = {
+            Text(
+                text = summary,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        leadingContent = {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        },
+        colors =
+        ListItemDefaults.colors(
+            containerColor = MaterialTheme.colorScheme.surface,
+        ),
+        modifier =
+        Modifier
+            .fillMaxWidth()
+            .clickable(
+                role = Role.Button,
+                onClick = onClick,
+            ),
+    )
 }
 
 @Composable
@@ -218,88 +351,7 @@ private fun SettingsFullWidthOutlinedButton(
 }
 
 @Composable
-private fun SettingsCategoryCard(
-    title: String,
-    icon: ImageVector,
-    modifier: Modifier = Modifier,
-    initiallyExpanded: Boolean = true,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    var expanded by rememberSaveable(title) { mutableStateOf(initiallyExpanded) }
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors =
-        CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Row(
-                modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .clickable(
-                        role = Role.Button,
-                        onClick = { expanded = !expanded },
-                    )
-                    .padding(vertical = 2.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    modifier =
-                    Modifier
-                        .size(40.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            shape = CircleShape,
-                        ),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(22.dp),
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
-                Icon(
-                    imageVector =
-                    if (expanded) {
-                        Icons.Filled.ExpandLess
-                    } else {
-                        Icons.Filled.ExpandMore
-                    },
-                    contentDescription =
-                    stringResource(
-                        if (expanded) {
-                            R.string.settings_section_collapse
-                        } else {
-                            R.string.settings_section_expand
-                        },
-                    ),
-                )
-            }
-            if (expanded) {
-                content()
-            }
-        }
-    }
-}
-
-@Composable
 private fun NotesSettingsSection(
-    showSectionTitle: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -626,20 +678,11 @@ private fun NotesSettingsSection(
         }
     }
 
-    if (showSectionTitle) {
-        SettingsCategoryCard(
-            title = stringResource(R.string.settings_notes_title),
-            icon = Icons.AutoMirrored.Filled.Article,
-            modifier = modifier,
-            content = body,
-        )
-    } else {
-        Column(
-            modifier = modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            content = body,
-        )
-    }
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        content = body,
+    )
 }
 
 private fun loadPinnedItemsForSettings(
@@ -804,10 +847,9 @@ private fun AppearanceSettingsSection(
             appLanguage.nativeLabel
         }
 
-    SettingsCategoryCard(
-        title = stringResource(R.string.settings_appearance_title),
-        icon = Icons.Filled.Palette,
-        modifier = modifier,
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
             text = stringResource(R.string.settings_language_title),
