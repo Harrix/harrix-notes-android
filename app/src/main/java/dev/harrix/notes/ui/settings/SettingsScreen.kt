@@ -73,6 +73,7 @@ import dev.harrix.notes.NotesTitleSource
 import dev.harrix.notes.NotesTreeRepository
 import dev.harrix.notes.NotesViewerPreferences
 import dev.harrix.notes.R
+import dev.harrix.notes.pinnedDisplayLabels
 import dev.harrix.notes.ui.adaptiveContentWidth
 import dev.harrix.notes.ui.notes.NotesFolderPathControls
 import dev.harrix.notes.ui.notes.NotesNoteGlyph
@@ -541,9 +542,14 @@ private fun NotesSettingsSection(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         } else {
+            val homeLabel = stringResource(R.string.nav_drawer_home)
+            val displayLabels = remember(pinnedItems, homeLabel) {
+                pinnedDisplayLabels(pinnedItems, homeLabel)
+            }
             pinnedItems.forEachIndexed { index, item ->
                 SettingsPinnedItemRow(
                     item = item,
+                    label = displayLabels[item.id].orEmpty().ifBlank { item.title },
                     onRemove = {
                         persistPinned(pinnedItems.filterNot { it.id == item.id })
                     },
@@ -599,20 +605,13 @@ private val SettingsPinnedReorderStepHeight = 48.dp
 @Composable
 private fun SettingsPinnedItemRow(
     item: NotesPinnedItem,
+    label: String,
     onRemove: () -> Unit,
     onReorderBySteps: (Int) -> Unit,
 ) {
     val density = LocalDensity.current
     val reorderStepPx = with(density) { SettingsPinnedReorderStepHeight.toPx() }
     var dragOffsetY by remember { mutableFloatStateOf(0f) }
-    val label =
-        when {
-            item.kind == NotesPinnedKind.Home || item.id == NotesPinnedItem.HOME_ID -> {
-                stringResource(R.string.nav_drawer_home)
-            }
-
-            else -> item.title.ifBlank { item.documentId }
-        }
 
     Row(
         modifier =

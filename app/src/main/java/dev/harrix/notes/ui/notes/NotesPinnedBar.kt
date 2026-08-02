@@ -59,6 +59,7 @@ import dev.harrix.notes.NotesListDensity
 import dev.harrix.notes.NotesPinnedItem
 import dev.harrix.notes.NotesPinnedKind
 import dev.harrix.notes.R
+import dev.harrix.notes.pinnedDisplayLabels
 import dev.harrix.notes.ui.isCompactHeight
 
 private const val PinnedLabelMaxLines = 2
@@ -78,6 +79,11 @@ fun NotesPinnedBar(
     val slots = maxSlots.coerceAtLeast(1)
     val emptyCount = (slots - items.size).coerceAtLeast(0)
     var showHowToPin by remember { mutableStateOf(false) }
+    val homeLabel = stringResource(R.string.nav_drawer_home)
+    val displayLabels =
+        remember(items, homeLabel) {
+            pinnedDisplayLabels(items, homeLabel)
+        }
     val minItemWidth = density.pinnedItemWidthDp.dp
     val iconSize = density.pinnedIconSizeDp.dp
     val labelMinFont = density.pinnedLabelMinSp.sp
@@ -115,6 +121,7 @@ fun NotesPinnedBar(
                     ) {
                         NotesPinnedBarSlots(
                             items = items,
+                            displayLabels = displayLabels,
                             emptyCount = emptyCount,
                             slotModifier = { Modifier.width(minItemWidth) },
                             iconSize = iconSize,
@@ -143,6 +150,7 @@ fun NotesPinnedBar(
                     ) {
                         NotesPinnedBarSlots(
                             items = items,
+                            displayLabels = displayLabels,
                             emptyCount = emptyCount,
                             slotModifier = { Modifier.weight(1f) },
                             iconSize = iconSize,
@@ -185,6 +193,7 @@ fun NotesPinnedBar(
 @Composable
 private fun RowScope.NotesPinnedBarSlots(
     items: List<NotesPinnedItem>,
+    displayLabels: Map<String, String>,
     emptyCount: Int,
     slotModifier: RowScope.() -> Modifier,
     iconSize: Dp,
@@ -198,6 +207,7 @@ private fun RowScope.NotesPinnedBarSlots(
     items.forEach { item ->
         NotesPinnedBarItem(
             item = item,
+            label = displayLabels[item.id].orEmpty().ifBlank { item.title },
             iconSize = iconSize,
             labelMinFont = labelMinFont,
             labelMaxFont = labelMaxFont,
@@ -223,6 +233,7 @@ private fun RowScope.NotesPinnedBarSlots(
 @Composable
 private fun NotesPinnedBarItem(
     item: NotesPinnedItem,
+    label: String,
     iconSize: Dp,
     labelMinFont: TextUnit,
     labelMaxFont: TextUnit,
@@ -232,14 +243,6 @@ private fun NotesPinnedBarItem(
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
-    val label =
-        when {
-            item.kind == NotesPinnedKind.Home || item.id == NotesPinnedItem.HOME_ID -> {
-                stringResource(R.string.nav_drawer_home)
-            }
-
-            else -> item.title.ifBlank { item.documentId }
-        }
 
     Box(modifier = modifier) {
         Column(
