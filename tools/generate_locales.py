@@ -110,7 +110,7 @@ BASE_ORDER = [
 EN = {
     "app_name": "Harrix Notes",
     "markdown_notes_title": "Harrix Notes",
-    "about_author": "Anton Revyenko (Harrix)",
+    "about_author": "Anton Sergienko (Harrix)",
     "about_license": "MIT License",
     "about_github_label": "GitHub",
 }

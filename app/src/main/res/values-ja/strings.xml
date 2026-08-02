@@ -60,7 +60,7 @@
     <string name="about_version">バージョン %1$s</string>
     <string name="about_description">デバイスのフォルダから Markdown ノートを閲覧および編集します。\nHarrix Notes Explorer と同じフォルダおよびタイトルの規約を使用します。</string>
     <string name="about_author_label">著者</string>
-    <string name="about_author">Anton Revyenko (Harrix)</string>
+    <string name="about_author">Anton Sergienko (Harrix)</string>
     <string name="about_license_label">ライセンス</string>
     <string name="about_license">MIT License</string>
     <string name="about_github_label">GitHub</string>
