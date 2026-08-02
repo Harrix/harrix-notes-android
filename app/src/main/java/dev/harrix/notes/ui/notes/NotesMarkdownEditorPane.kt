@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.View
 import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
@@ -51,29 +52,66 @@ import java.util.Locale
 private const val HIGHLIGHT_MAX_CHARS = 1024 * 1024
 
 private const val BRIDGE_NAME = "NotesEditorHost"
-private const val EDITOR_URL =
-    "https://appassets.androidplatform.net/assets/editor/editor.html"
+private const val ASSET_BASE_URL = "https://appassets.androidplatform.net/assets/editor/"
 private const val FLUSH_TIMEOUT_MS = 2_000L
+private const val BOOT_TIMEOUT_MS = 8_000L
 private const val SELECTION_ALPHA = 0.3f
 private const val LOG_TAG = "NotesEditor"
+
+/** Minimal shell; `editor.js` is still served by [WebViewAssetLoader]. */
+private val EDITOR_SHELL_HTML =
+    """
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+        <style>
+          html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:transparent; }
+          .cm-editor { height:100%; width:100%; }
+        </style>
+      </head>
+      <body>
+        <script>
+          window.onerror = function (message, source, line) {
+            try {
+              if (window.NotesEditorHost) {
+                window.NotesEditorHost.onError(String(message) + ' @' + String(source) + ':' + String(line));
+              }
+            } catch (e) {}
+            return false;
+          };
+        </script>
+        <script src="editor.js"></script>
+      </body>
+    </html>
+    """.trimIndent()
 
 /**
  * Owns the WebView that hosts the CodeMirror editor and moves text between it
  * and Compose.
  *
  * The document is never passed as a single string: it is pulled by JavaScript
- * through [textChunk] and pushed back through [appendText], so a multi-megabyte
- * note does not have to be escaped into a script call. Numeric bridge arguments
- * travel as strings because older System WebView builds mishandle primitive ints.
- * Every `@JavascriptInterface` method runs on the WebView bridge thread, so
- * results are handed to Compose through the main looper.
+ * through [textChunk] and pushed back through [appendText]. Numeric bridge
+ * arguments travel as strings because older System WebView builds mishandle
+ * primitive ints. Boot is started from Kotlin only after the WebView has a
+ * non-zero size — creating CodeMirror at 0×0 leaves a permanently blank pane.
  */
 class NotesMarkdownEditorController {
     private val mainHandler = Handler(Looper.getMainLooper())
     private val incoming = StringBuilder()
+    private val bootTimeout =
+        Runnable {
+            if (!ready) {
+                errorListener("Editor failed to start (timeout)")
+            }
+        }
 
     private var webView: WebView? = null
     private var flushSignal: CompletableDeferred<Unit>? = null
+    private var pageFinished = false
+    private var scriptLoaded = false
+    private var bootRequested = false
 
     @Volatile
     private var stagedText: String = ""
@@ -110,7 +148,11 @@ class NotesMarkdownEditorController {
         if (webView === target) {
             webView = null
         }
+        cancelBootTimeout()
         ready = false
+        pageFinished = false
+        scriptLoaded = false
+        bootRequested = false
         flushSignal?.complete(Unit)
         flushSignal = null
     }
@@ -123,6 +165,10 @@ class NotesMarkdownEditorController {
         stagedText = text
         stagedConfig = config
         ready = false
+        pageFinished = false
+        scriptLoaded = false
+        bootRequested = false
+        scheduleBootTimeout()
     }
 
     internal fun stageText(text: String) {
@@ -135,6 +181,46 @@ class NotesMarkdownEditorController {
         if (!ready) return
         val literal = JSONObject.quote(config)
         target.evaluateJavascript("window.notesEditor && window.notesEditor.applyConfig($literal);", null)
+    }
+
+    internal fun onPageFinished() {
+        pageFinished = true
+        tryBoot()
+    }
+
+    internal fun syncVisibility(ready: Boolean) {
+        webView?.visibility = if (ready) View.VISIBLE else View.INVISIBLE
+    }
+
+    private fun scheduleBootTimeout() {
+        cancelBootTimeout()
+        mainHandler.postDelayed(bootTimeout, BOOT_TIMEOUT_MS)
+    }
+
+    private fun cancelBootTimeout() {
+        mainHandler.removeCallbacks(bootTimeout)
+    }
+
+    private fun tryBoot() {
+        val target = webView ?: return
+        if (ready || bootRequested || !pageFinished || !scriptLoaded) {
+            return
+        }
+        target.post {
+            if (target.width <= 0 || target.height <= 0) {
+                target.post { tryBoot() }
+                return@post
+            }
+            if (bootRequested || ready) {
+                return@post
+            }
+            bootRequested = true
+            Log.d(LOG_TAG, "Booting editor ${target.width}x${target.height}")
+            target.evaluateJavascript(
+                "window.notesEditorBoot && window.notesEditorBoot();",
+                null,
+            )
+        }
     }
 
     @JavascriptInterface
@@ -186,15 +272,30 @@ class NotesMarkdownEditorController {
     }
 
     @JavascriptInterface
+    fun onScriptLoaded() {
+        mainHandler.post {
+            Log.d(LOG_TAG, "Editor script loaded")
+            scriptLoaded = true
+            tryBoot()
+        }
+    }
+
+    @JavascriptInterface
     fun onReady() {
         ready = true
-        mainHandler.post { readyListener() }
+        mainHandler.post {
+            cancelBootTimeout()
+            readyListener()
+        }
     }
 
     @JavascriptInterface
     fun onError(message: String) {
         Log.e(LOG_TAG, "Editor JS error: $message")
-        mainHandler.post { errorListener(message) }
+        mainHandler.post {
+            cancelBootTimeout()
+            errorListener(message)
+        }
     }
 }
 
@@ -279,8 +380,11 @@ fun rememberNotesEditorPalette(): NotesEditorPalette {
  *
  * Compose cannot lay out a multi-megabyte `TextField` without blocking the main
  * thread, so editing runs in the WebView renderer instead — the same reason
- * [NotesHtmlPreviewPane] opens huge notes quickly. A spinner covers the pane
- * until the editor reports that the document is loaded.
+ * [NotesHtmlPreviewPane] opens huge notes quickly.
+ *
+ * The WebView stays [View.INVISIBLE] until CodeMirror reports ready. Native views
+ * paint above Compose siblings, so a visible blank WebView would cover the
+ * spinner and look like a permanent white screen.
  */
 @Composable
 fun NotesMarkdownEditorPane(
@@ -310,10 +414,12 @@ fun NotesMarkdownEditorPane(
         controller.readyListener = {
             editorError = null
             editorReady = true
+            controller.syncVisibility(true)
         }
         controller.errorListener = { message ->
             editorError = message
             editorReady = false
+            controller.syncVisibility(false)
         }
         onDispose {
             controller.textListener = {}
@@ -351,12 +457,19 @@ fun NotesMarkdownEditorPane(
                                 loaded.config = config
                                 editorReady = false
                                 editorError = null
+                                webView.visibility = View.INVISIBLE
                                 controller.stage(latestText, config)
-                                webView.loadUrl(EDITOR_URL)
+                                loadEditorShell(webView)
                             }
                         },
                         update = { webView ->
                             webView.setBackgroundColor(palette.background.toArgb())
+                            webView.visibility =
+                                if (editorReady && editorError == null) {
+                                    View.VISIBLE
+                                } else {
+                                    View.INVISIBLE
+                                }
                             controller.stageText(latestText)
                             when {
                                 loaded.docKey != docKey -> {
@@ -364,8 +477,9 @@ fun NotesMarkdownEditorPane(
                                     loaded.config = config
                                     editorReady = false
                                     editorError = null
+                                    webView.visibility = View.INVISIBLE
                                     controller.stage(latestText, config)
-                                    webView.loadUrl(EDITOR_URL)
+                                    loadEditorShell(webView)
                                 }
 
                                 loaded.config != config -> {
@@ -425,6 +539,18 @@ private class EditorLoadState {
     var config: String? = null
 }
 
+private fun loadEditorShell(webView: WebView) {
+    // Prefer loadDataWithBaseURL so the HTML shell never depends on intercepting
+    // the document request itself; only editor.js is fetched via the asset loader.
+    webView.loadDataWithBaseURL(
+        ASSET_BASE_URL,
+        EDITOR_SHELL_HTML,
+        "text/html",
+        Charsets.UTF_8.name(),
+        null,
+    )
+}
+
 @SuppressLint("SetJavaScriptEnabled")
 private fun createEditorWebView(
     context: Context,
@@ -444,6 +570,7 @@ private fun createEditorWebView(
         settings.textZoom = 100
         isFocusableInTouchMode = true
         isVerticalScrollBarEnabled = false
+        visibility = View.INVISIBLE
         setBackgroundColor(palette.background.toArgb())
         webViewClient =
             object : WebViewClient() {
@@ -451,6 +578,14 @@ private fun createEditorWebView(
                     view: WebView,
                     request: WebResourceRequest,
                 ) = assetLoader.shouldInterceptRequest(request.url)
+
+                override fun onPageFinished(
+                    view: WebView,
+                    url: String?,
+                ) {
+                    Log.d(LOG_TAG, "Page finished: $url")
+                    controller.onPageFinished()
+                }
             }
         webChromeClient =
             object : WebChromeClient() {

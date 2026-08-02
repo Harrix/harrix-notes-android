@@ -1,12 +1,11 @@
 // CodeMirror 6 Markdown editor for the Android WebView editor pane.
 //
-// The document never crosses the bridge as a single string: it is pulled from
-// and pushed to Kotlin in chunks, so multi-megabyte notes stay responsive.
-// Kotlin talks to this file through `window.notesEditor`, this file talks back
-// through the injected `NotesEditorHost` object.
+// Boot is deferred: Kotlin calls `window.notesEditorBoot()` after the WebView has
+// a non-zero size. Creating EditorView at 0×0 leaves a permanently blank pane.
 //
-// Bridge numbers travel as strings: WebView's Java↔JS glue is unreliable for
-// primitive ints on older Android System WebView builds.
+// The document never crosses the bridge as a single string: it is pulled from
+// and pushed to Kotlin in chunks. Numeric bridge arguments travel as strings —
+// older System WebView builds mishandle primitive ints.
 
 import { Compartment, EditorState } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
@@ -25,6 +24,7 @@ let view = null;
 let config = null;
 let pushTimer = null;
 let suppressPush = false;
+let booted = false;
 
 function host() {
   const bridge = window.NotesEditorHost;
@@ -54,12 +54,10 @@ function isHighSurrogate(text) {
   return last >= 0xd800 && last <= 0xdbff;
 }
 
-// Chunk sizes come back from the host: it shortens a chunk rather than split a
-// surrogate pair, which the bridge would turn into a replacement character.
 function readHostText() {
   const bridge = host();
   const length = Number(bridge.textLength());
-  if (!Number.isFinite(length) || length <= 0) {
+  if (!isFinite(length) || length <= 0) {
     return "";
   }
   const parts = [];
@@ -125,7 +123,6 @@ function buildTheme() {
         overflow: "auto",
         WebkitOverflowScrolling: "touch",
       },
-      // Bottom padding keeps the last lines reachable above the soft keyboard.
       ".cm-content": {
         padding: "12px 12px 50vh",
         caretColor: config.caret,
@@ -176,7 +173,6 @@ function buildHighlightStyle() {
   ]);
 }
 
-// Large notes drop Markdown parsing entirely and stay plain text.
 function buildLanguage() {
   if (!config.highlight) {
     return [];
@@ -221,10 +217,45 @@ function withoutPush(action) {
   }
 }
 
+function destroyView() {
+  cancelPush();
+  if (view) {
+    view.destroy();
+    view = null;
+  }
+  booted = false;
+}
+
+function boot() {
+  try {
+    if (booted && view) {
+      host().onReady();
+      return;
+    }
+    destroyView();
+    config = JSON.parse(host().configJson());
+    const doc = readHostText();
+    view = new EditorView({
+      doc: doc,
+      extensions: buildExtensions(),
+      parent: document.body,
+    });
+    // Force a measure after the WebView reports a real size.
+    view.requestMeasure();
+    booted = true;
+    host().onReady();
+  } catch (error) {
+    destroyView();
+    reportError(error);
+  }
+}
+
+window.notesEditorBoot = boot;
+
 window.notesEditor = {
-  /** Replaces the document with the text currently staged on the Kotlin side. */
   reload: function () {
     if (!view) {
+      boot();
       return;
     }
     try {
@@ -233,13 +264,13 @@ window.notesEditor = {
       withoutPush(function () {
         view.setState(EditorState.create({ doc: doc, extensions: buildExtensions() }));
       });
+      view.requestMeasure();
       host().onReady();
     } catch (error) {
       reportError(error);
     }
   },
 
-  /** Applies theme / font size / highlight changes without touching the document. */
   applyConfig: function (json) {
     if (!view) {
       return;
@@ -252,12 +283,12 @@ window.notesEditor = {
         effects.push(languageConf.reconfigure(buildLanguage()));
       }
       view.dispatch({ effects: effects });
+      view.requestMeasure();
     } catch (error) {
       reportError(error);
     }
   },
 
-  /** Sends the document to Kotlin right away, cancelling the pending debounce. */
   flush: function () {
     if (!view) {
       return;
@@ -271,19 +302,9 @@ window.notesEditor = {
   },
 };
 
-function boot() {
-  try {
-    config = JSON.parse(host().configJson());
-    const doc = readHostText();
-    view = new EditorView({
-      doc: doc,
-      extensions: buildExtensions(),
-      parent: document.body,
-    });
-    host().onReady();
-  } catch (error) {
-    reportError(error);
-  }
+// Signal that the script parsed and the bridge entry points exist.
+try {
+  host().onScriptLoaded();
+} catch (_) {
+  // Kotlin may not expose onScriptLoaded on older builds; boot still works.
 }
-
-boot();

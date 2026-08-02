@@ -23,6 +23,18 @@
     </style>
   </head>
   <body>
+    <script>
+      window.onerror = function (message, source, line, column, error) {
+        try {
+          if (window.NotesEditorHost) {
+            window.NotesEditorHost.onError(
+              String(message) + " @" + String(source) + ":" + String(line),
+            );
+          }
+        } catch (e) {}
+        return false;
+      };
+    </script>
     <script src="editor.js"></script>
   </body>
 </html>
