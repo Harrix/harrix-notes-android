@@ -29,10 +29,31 @@ class NotesViewerPreferences(
 
     fun hasNotesPath(): Boolean = !loadNotesTreeUri().isNullOrBlank()
 
-    fun loadListDensity(): NotesListDensity = NotesListDensity.fromStorageKey(prefs.getString(KEY_LIST_DENSITY, null))
+    fun loadListDensity(): NotesListDensity =
+        NotesListDensity.fromStorageKey(prefs.getString(KEY_LIST_DENSITY, null))
 
     fun saveListDensity(density: NotesListDensity) {
         prefs.edit().putString(KEY_LIST_DENSITY, density.name).apply()
+    }
+
+    /** Drawer tree density; falls back to [loadListDensity] for older installs. */
+    fun loadTreeDensity(): NotesListDensity =
+        NotesListDensity.fromStorageKey(
+            prefs.getString(KEY_TREE_DENSITY, null) ?: prefs.getString(KEY_LIST_DENSITY, null),
+        )
+
+    fun saveTreeDensity(density: NotesListDensity) {
+        prefs.edit().putString(KEY_TREE_DENSITY, density.name).apply()
+    }
+
+    /** Pinned bar density; falls back to [loadListDensity] for older installs. */
+    fun loadPinnedBarDensity(): NotesListDensity =
+        NotesListDensity.fromStorageKey(
+            prefs.getString(KEY_PINNED_BAR_DENSITY, null) ?: prefs.getString(KEY_LIST_DENSITY, null),
+        )
+
+    fun savePinnedBarDensity(density: NotesListDensity) {
+        prefs.edit().putString(KEY_PINNED_BAR_DENSITY, density.name).apply()
     }
 
     fun loadBrowseLayout(): NotesBrowseLayout = NotesBrowseLayout.fromStorageKey(prefs.getString(KEY_BROWSE_LAYOUT, null))
@@ -171,6 +192,8 @@ class NotesViewerPreferences(
         prefs
             .edit()
             .remove(KEY_LIST_DENSITY)
+            .remove(KEY_TREE_DENSITY)
+            .remove(KEY_PINNED_BAR_DENSITY)
             .remove(KEY_BROWSE_LAYOUT)
             .remove(KEY_TITLE_SOURCE)
             .remove(KEY_NOTE_OPEN_MODE)
@@ -188,6 +211,8 @@ class NotesViewerPreferences(
         private const val PREFS_NAME = "notes_viewer"
         private const val KEY_NOTES_TREE_URI = "notes_tree_uri"
         private const val KEY_LIST_DENSITY = "list_density"
+        private const val KEY_TREE_DENSITY = "tree_density"
+        private const val KEY_PINNED_BAR_DENSITY = "pinned_bar_density"
         private const val KEY_BROWSE_LAYOUT = "browse_layout"
         private const val KEY_TITLE_SOURCE = "title_source"
         private const val KEY_NOTE_OPEN_MODE = "note_open_mode"

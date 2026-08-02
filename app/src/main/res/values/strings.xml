@@ -33,10 +33,12 @@
     <string name="settings_markdown_notes_browse_layout">Folder view</string>
     <string name="settings_markdown_notes_browse_layout_list">List</string>
     <string name="settings_markdown_notes_browse_layout_icons">Icons</string>
-    <string name="settings_markdown_notes_list_density">List row density</string>
+    <string name="settings_markdown_notes_list_density">Folder list density</string>
     <string name="settings_markdown_notes_list_density_compact">Compact</string>
     <string name="settings_markdown_notes_list_density_comfortable">Comfortable</string>
     <string name="settings_markdown_notes_list_density_spacious">Spacious</string>
+    <string name="settings_markdown_notes_tree_density">Drawer tree density</string>
+    <string name="settings_markdown_notes_pinned_bar_density">Pinned bar density</string>
     <string name="settings_markdown_notes_title_source">Note titles</string>
     <string name="settings_markdown_notes_title_source_content">From content</string>
     <string name="settings_markdown_notes_title_source_file_name">File name</string>

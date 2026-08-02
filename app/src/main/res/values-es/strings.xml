@@ -33,10 +33,12 @@
     <string name="settings_markdown_notes_browse_layout">Vista de carpeta</string>
     <string name="settings_markdown_notes_browse_layout_list">Lista</string>
     <string name="settings_markdown_notes_browse_layout_icons">Iconos</string>
-    <string name="settings_markdown_notes_list_density">Densidad de la lista</string>
+    <string name="settings_markdown_notes_list_density">Densidad de la lista de carpetas</string>
     <string name="settings_markdown_notes_list_density_compact">Compacta</string>
     <string name="settings_markdown_notes_list_density_comfortable">Cómoda</string>
     <string name="settings_markdown_notes_list_density_spacious">Amplia</string>
+    <string name="settings_markdown_notes_tree_density">Densidad del árbol del menú</string>
+    <string name="settings_markdown_notes_pinned_bar_density">Densidad de la barra de fijados</string>
     <string name="settings_markdown_notes_title_source">Títulos de notas</string>
     <string name="settings_markdown_notes_title_source_content">Del contenido</string>
     <string name="settings_markdown_notes_title_source_file_name">Nombre de archivo</string>

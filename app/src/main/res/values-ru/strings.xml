@@ -33,10 +33,12 @@
     <string name="settings_markdown_notes_browse_layout">Вид папки</string>
     <string name="settings_markdown_notes_browse_layout_list">Список</string>
     <string name="settings_markdown_notes_browse_layout_icons">Значки</string>
-    <string name="settings_markdown_notes_list_density">Плотность списка</string>
+    <string name="settings_markdown_notes_list_density">Плотность списка папок</string>
     <string name="settings_markdown_notes_list_density_compact">Компактный</string>
     <string name="settings_markdown_notes_list_density_comfortable">Обычный</string>
     <string name="settings_markdown_notes_list_density_spacious">Просторный</string>
+    <string name="settings_markdown_notes_tree_density">Плотность дерева в меню</string>
+    <string name="settings_markdown_notes_pinned_bar_density">Плотность панели закреплений</string>
     <string name="settings_markdown_notes_title_source">Заголовки заметок</string>
     <string name="settings_markdown_notes_title_source_content">Из содержимого</string>
     <string name="settings_markdown_notes_title_source_file_name">Имя файла</string>

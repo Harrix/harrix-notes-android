@@ -267,6 +267,8 @@ private fun NotesSettingsSection(
     var treeUri by remember { mutableStateOf(preferences.loadNotesTreeUri()) }
     var browseLayout by remember { mutableStateOf(preferences.loadBrowseLayout()) }
     var listDensity by remember { mutableStateOf(preferences.loadListDensity()) }
+    var treeDensity by remember { mutableStateOf(preferences.loadTreeDensity()) }
+    var pinnedBarDensity by remember { mutableStateOf(preferences.loadPinnedBarDensity()) }
     var titleSource by remember { mutableStateOf(preferences.loadTitleSource()) }
     var noteOpenMode by remember { mutableStateOf(preferences.loadNoteOpenMode()) }
     var previewFontSizeText by remember {
@@ -451,33 +453,35 @@ private fun NotesSettingsSection(
             },
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = stringResource(R.string.settings_markdown_notes_list_density),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        NotesDensitySettingRow(
+            labelRes = R.string.settings_markdown_notes_list_density,
+            selected = listDensity,
+            options = densityOptions,
+            onSelect = { density ->
+                listDensity = density
+                preferences.saveListDensity(density)
+            },
         )
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            densityOptions.forEachIndexed { index, (density, labelRes) ->
-                SegmentedButton(
-                    selected = listDensity == density,
-                    onClick = {
-                        listDensity = density
-                        preferences.saveListDensity(density)
-                    },
-                    shape =
-                    SegmentedButtonDefaults.itemShape(
-                        index = index,
-                        count = densityOptions.size,
-                    ),
-                ) {
-                    Text(
-                        text = stringResource(labelRes),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
-        }
+        Spacer(modifier = Modifier.height(8.dp))
+        NotesDensitySettingRow(
+            labelRes = R.string.settings_markdown_notes_tree_density,
+            selected = treeDensity,
+            options = densityOptions,
+            onSelect = { density ->
+                treeDensity = density
+                preferences.saveTreeDensity(density)
+            },
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        NotesDensitySettingRow(
+            labelRes = R.string.settings_markdown_notes_pinned_bar_density,
+            selected = pinnedBarDensity,
+            options = densityOptions,
+            onSelect = { density ->
+                pinnedBarDensity = density
+                preferences.savePinnedBarDensity(density)
+            },
+        )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = stringResource(R.string.settings_markdown_notes_pinned_bar),
@@ -608,6 +612,40 @@ private fun loadPinnedItemsForSettings(
         runCatching { repository.rootSegment(Uri.parse(treeUri)) }.getOrNull()
             ?: return emptyList()
     return preferences.loadPinnedItems(treeUri, root)
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NotesDensitySettingRow(
+    labelRes: Int,
+    selected: NotesListDensity,
+    options: List<Pair<NotesListDensity, Int>>,
+    onSelect: (NotesListDensity) -> Unit,
+) {
+    Text(
+        text = stringResource(labelRes),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+        options.forEachIndexed { index, (density, optionLabelRes) ->
+            SegmentedButton(
+                selected = selected == density,
+                onClick = { onSelect(density) },
+                shape =
+                SegmentedButtonDefaults.itemShape(
+                    index = index,
+                    count = options.size,
+                ),
+            ) {
+                Text(
+                    text = stringResource(optionLabelRes),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
 }
 
 private val SettingsPinnedReorderStepHeight = 48.dp

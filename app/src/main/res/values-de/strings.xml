@@ -33,10 +33,12 @@
     <string name="settings_markdown_notes_browse_layout">Ordneransicht</string>
     <string name="settings_markdown_notes_browse_layout_list">Liste</string>
     <string name="settings_markdown_notes_browse_layout_icons">Symbole</string>
-    <string name="settings_markdown_notes_list_density">Listendichte</string>
+    <string name="settings_markdown_notes_list_density">Listendichte (Ordner)</string>
     <string name="settings_markdown_notes_list_density_compact">Kompakt</string>
     <string name="settings_markdown_notes_list_density_comfortable">Bequem</string>
     <string name="settings_markdown_notes_list_density_spacious">Geräumig</string>
+    <string name="settings_markdown_notes_tree_density">Dichte des Drawer-Baums</string>
+    <string name="settings_markdown_notes_pinned_bar_density">Dichte der Angepinnten-Leiste</string>
     <string name="settings_markdown_notes_title_source">Notiztitel</string>
     <string name="settings_markdown_notes_title_source_content">Aus Inhalt</string>
     <string name="settings_markdown_notes_title_source_file_name">Dateiname</string>

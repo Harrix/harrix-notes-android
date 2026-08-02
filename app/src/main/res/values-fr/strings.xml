@@ -33,10 +33,12 @@
     <string name="settings_markdown_notes_browse_layout">Vue du dossier</string>
     <string name="settings_markdown_notes_browse_layout_list">Liste</string>
     <string name="settings_markdown_notes_browse_layout_icons">Icônes</string>
-    <string name="settings_markdown_notes_list_density">Densité de la liste</string>
+    <string name="settings_markdown_notes_list_density">Densité de la liste des dossiers</string>
     <string name="settings_markdown_notes_list_density_compact">Compacte</string>
     <string name="settings_markdown_notes_list_density_comfortable">Confortable</string>
     <string name="settings_markdown_notes_list_density_spacious">Spacieuse</string>
+    <string name="settings_markdown_notes_tree_density">Densité de l\'arbre du tiroir</string>
+    <string name="settings_markdown_notes_pinned_bar_density">Densité de la barre épinglée</string>
     <string name="settings_markdown_notes_title_source">Titres des notes</string>
     <string name="settings_markdown_notes_title_source_content">À partir du contenu</string>
     <string name="settings_markdown_notes_title_source_file_name">Nom de fichier</string>

@@ -170,6 +170,8 @@ fun NotesViewerScreen(
     var autosaveJob by viewModel.autosaveJob
     var folderListRequestId by viewModel.folderListRequestId
     var listDensity by viewModel.listDensity
+    var treeDensity by viewModel.treeDensity
+    var pinnedBarDensity by viewModel.pinnedBarDensity
     var browseLayout by viewModel.browseLayout
     var titleSource by viewModel.titleSource
     var noteOpenMode by viewModel.noteOpenMode
@@ -188,6 +190,8 @@ fun NotesViewerScreen(
     fun reloadPath() {
         notesTreeUri = preferences.loadNotesTreeUri()
         listDensity = preferences.loadListDensity()
+        treeDensity = preferences.loadTreeDensity()
+        pinnedBarDensity = preferences.loadPinnedBarDensity()
         browseLayout = preferences.loadBrowseLayout()
         titleSource = preferences.loadTitleSource()
         noteOpenMode = preferences.loadNoteOpenMode()
@@ -1221,7 +1225,7 @@ fun NotesViewerScreen(
                 expandedFolderIds = treeExpandedFolderIds,
                 selectedNoteDocumentId = selectedTabDocumentId,
                 isLoadingRoot = treeLoadingRoot,
-                density = listDensity,
+                density = treeDensity,
                 onToggleFolder = { toggleTreeFolder(it) },
                 onOpenFolder = { folder, parentPath ->
                     scope.launch { drawerState.close() }
@@ -1439,7 +1443,7 @@ fun NotesViewerScreen(
                         NotesPinnedBar(
                             items = pinnedItems,
                             maxSlots = maxPinnedItems,
-                            density = listDensity,
+                            density = pinnedBarDensity,
                             onOpen = { openPinnedItem(it) },
                             onUnpin = { unpinItem(it.id) },
                         )

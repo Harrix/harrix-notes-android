@@ -33,10 +33,12 @@
     <string name="settings_markdown_notes_browse_layout">フォルダビュー</string>
     <string name="settings_markdown_notes_browse_layout_list">リスト</string>
     <string name="settings_markdown_notes_browse_layout_icons">アイコン</string>
-    <string name="settings_markdown_notes_list_density">リストの密度</string>
+    <string name="settings_markdown_notes_list_density">フォルダ一覧の密度</string>
     <string name="settings_markdown_notes_list_density_compact">コンパクト</string>
     <string name="settings_markdown_notes_list_density_comfortable">快適</string>
     <string name="settings_markdown_notes_list_density_spacious">ゆったり</string>
+    <string name="settings_markdown_notes_tree_density">ドロワーツリーの密度</string>
+    <string name="settings_markdown_notes_pinned_bar_density">ピン留めバーの密度</string>
     <string name="settings_markdown_notes_title_source">ノートのタイトル</string>
     <string name="settings_markdown_notes_title_source_content">内容から</string>
     <string name="settings_markdown_notes_title_source_file_name">ファイル名</string>

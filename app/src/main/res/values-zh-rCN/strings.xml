@@ -33,10 +33,12 @@
     <string name="settings_markdown_notes_browse_layout">文件夹视图</string>
     <string name="settings_markdown_notes_browse_layout_list">列表</string>
     <string name="settings_markdown_notes_browse_layout_icons">图标</string>
-    <string name="settings_markdown_notes_list_density">列表密度</string>
+    <string name="settings_markdown_notes_list_density">文件夹列表密度</string>
     <string name="settings_markdown_notes_list_density_compact">紧凑</string>
     <string name="settings_markdown_notes_list_density_comfortable">舒适</string>
     <string name="settings_markdown_notes_list_density_spacious">宽敞</string>
+    <string name="settings_markdown_notes_tree_density">抽屉树密度</string>
+    <string name="settings_markdown_notes_pinned_bar_density">固定栏密度</string>
     <string name="settings_markdown_notes_title_source">笔记标题</string>
     <string name="settings_markdown_notes_title_source_content">从内容中</string>
     <string name="settings_markdown_notes_title_source_file_name">文件名</string>

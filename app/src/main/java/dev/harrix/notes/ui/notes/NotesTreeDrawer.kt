@@ -154,15 +154,21 @@ private fun NotesTreeFolderRow(
     onToggle: () -> Unit,
     onOpen: () -> Unit,
 ) {
-    val iconSize = density.iconSizeDp.dp
-    val expandButtonSize = density.mergedButtonHeightDp.dp
+    val iconSize = density.treeIconSizeDp.dp
+    val expandButtonSize = density.treeMergedButtonHeightDp.dp
+    val textStyle =
+        if (density == NotesListDensity.Compact) {
+            MaterialTheme.typography.bodySmall
+        } else {
+            MaterialTheme.typography.bodyMedium
+        }
     Row(
         modifier =
         Modifier
             .fillMaxWidth()
-            .height(density.listRowHeightDp.dp)
+            .height(density.treeRowHeightDp.dp)
             .clickable(onClick = onOpen)
-            .padding(start = (8 + depth * 12).dp, end = 8.dp),
+            .padding(start = (8 + depth * 10).dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
@@ -188,10 +194,10 @@ private fun NotesTreeFolderRow(
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(iconSize),
         )
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(6.dp))
         Text(
             text = folder.name,
-            style = MaterialTheme.typography.bodyMedium,
+            style = textStyle,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
@@ -207,14 +213,20 @@ private fun NotesTreeNoteRow(
     selected: Boolean,
     onOpen: () -> Unit,
 ) {
-    val iconSize = density.iconSizeDp.dp
+    val iconSize = density.treeIconSizeDp.dp
+    val textStyle =
+        if (density == NotesListDensity.Compact) {
+            MaterialTheme.typography.bodySmall
+        } else {
+            MaterialTheme.typography.bodyMedium
+        }
     // Align note content with folder label (start padding + expand control).
-    val contentStart = 8 + density.mergedButtonHeightDp + depth * 12
+    val contentStart = 8 + density.treeMergedButtonHeightDp + depth * 10
     Row(
         modifier =
         Modifier
             .fillMaxWidth()
-            .height(density.listRowHeightDp.dp)
+            .height(density.treeRowHeightDp.dp)
             .background(
                 if (selected) {
                     MaterialTheme.colorScheme.secondaryContainer
@@ -226,10 +238,10 @@ private fun NotesTreeNoteRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         NotesNoteGlyph(icon = note.displayIcon, size = iconSize)
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(6.dp))
         Text(
             text = note.displayLabel,
-            style = MaterialTheme.typography.bodyMedium,
+            style = textStyle,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

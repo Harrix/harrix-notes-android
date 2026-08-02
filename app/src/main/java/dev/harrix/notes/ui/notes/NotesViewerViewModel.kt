@@ -40,6 +40,8 @@ class NotesViewerViewModel(
     val autosaveJob = mutableStateOf<Job?>(null)
     val folderListRequestId = mutableIntStateOf(0)
     val listDensity = mutableStateOf(preferences.loadListDensity())
+    val treeDensity = mutableStateOf(preferences.loadTreeDensity())
+    val pinnedBarDensity = mutableStateOf(preferences.loadPinnedBarDensity())
     val browseLayout = mutableStateOf(preferences.loadBrowseLayout())
     val titleSource = mutableStateOf(preferences.loadTitleSource())
     val noteOpenMode = mutableStateOf(preferences.loadNoteOpenMode())
