@@ -2,10 +2,13 @@ package dev.harrix.notes.ui.settings
 
 import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,10 +20,13 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DragHandle
@@ -28,14 +34,18 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -45,7 +55,6 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -57,6 +66,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -138,7 +148,7 @@ fun SettingsScreen(
                 .verticalScroll(scrollState)
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .adaptiveContentWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             key(settingsEpoch) {
                 AppearanceSettingsSection(
@@ -149,33 +159,37 @@ fun SettingsScreen(
                     appLanguage = appLanguage,
                     onAppLanguageChange = onAppLanguageChange,
                 )
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 NotesSettingsSection(showSectionTitle = true)
             }
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-            Text(
-                text = stringResource(R.string.settings_reset_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            SettingsFullWidthOutlinedButton(
-                onClick = {
-                    appPreferences.resetAppearanceToDefaults()
-                    notesPreferences.resetSettingsToDefaults()
-                    onThemeModeChange(ThemeMode.System)
-                    onUiFontSizeChange(AppPreferences.DEFAULT_UI_FONT_SIZE_SP)
-                    onAppLanguageChange(AppLanguage.System)
-                    settingsEpoch += 1
-                    resetMessage = context.getString(R.string.settings_reset_done)
-                },
-                label = stringResource(R.string.settings_reset),
-            )
-            resetMessage?.let { message ->
+            SettingsCategoryCard(
+                title = stringResource(R.string.settings_reset),
+                icon = Icons.Filled.RestartAlt,
+                initiallyExpanded = false,
+            ) {
                 Text(
-                    text = message,
+                    text = stringResource(R.string.settings_reset_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                SettingsFullWidthOutlinedButton(
+                    onClick = {
+                        appPreferences.resetAppearanceToDefaults()
+                        notesPreferences.resetSettingsToDefaults()
+                        onThemeModeChange(ThemeMode.System)
+                        onUiFontSizeChange(AppPreferences.DEFAULT_UI_FONT_SIZE_SP)
+                        onAppLanguageChange(AppLanguage.System)
+                        settingsEpoch += 1
+                        resetMessage = context.getString(R.string.settings_reset_done)
+                    },
+                    label = stringResource(R.string.settings_reset),
+                )
+                resetMessage?.let { message ->
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }
@@ -204,54 +218,81 @@ private fun SettingsFullWidthOutlinedButton(
 }
 
 @Composable
-private fun CollapsibleSettingsSection(
+private fun SettingsCategoryCard(
     title: String,
+    icon: ImageVector,
     modifier: Modifier = Modifier,
     initiallyExpanded: Boolean = true,
-    content: @Composable () -> Unit,
+    content: @Composable ColumnScope.() -> Unit,
 ) {
-    var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
-    Column(
+    var expanded by rememberSaveable(title) { mutableStateOf(initiallyExpanded) }
+    Card(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        colors =
+        CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
     ) {
-        Row(
-            modifier =
-            Modifier
-                .fillMaxWidth()
-                .clickable(
-                    role = Role.Button,
-                    onClick = { expanded = !expanded },
-                )
-                .padding(vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
-            )
-            Icon(
-                imageVector =
-                if (expanded) {
-                    Icons.Filled.ExpandLess
-                } else {
-                    Icons.Filled.ExpandMore
-                },
-                contentDescription =
-                stringResource(
+            Row(
+                modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        role = Role.Button,
+                        onClick = { expanded = !expanded },
+                    )
+                    .padding(vertical = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier =
+                    Modifier
+                        .size(40.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = CircleShape,
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(22.dp),
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                Icon(
+                    imageVector =
                     if (expanded) {
-                        R.string.settings_section_collapse
+                        Icons.Filled.ExpandLess
                     } else {
-                        R.string.settings_section_expand
+                        Icons.Filled.ExpandMore
                     },
-                ),
-            )
-        }
-        if (expanded) {
-            content()
+                    contentDescription =
+                    stringResource(
+                        if (expanded) {
+                            R.string.settings_section_collapse
+                        } else {
+                            R.string.settings_section_expand
+                        },
+                    ),
+                )
+            }
+            if (expanded) {
+                content()
+            }
         }
     }
 }
@@ -317,7 +358,7 @@ private fun NotesSettingsSection(
         preferences.savePinnedItems(uri, limited)
     }
 
-    val body: @Composable () -> Unit = {
+    val body: @Composable ColumnScope.() -> Unit = {
         NotesFolderPathControls(
             treeUri = treeUri,
             onTreeUriChange = {
@@ -586,8 +627,9 @@ private fun NotesSettingsSection(
     }
 
     if (showSectionTitle) {
-        CollapsibleSettingsSection(
+        SettingsCategoryCard(
             title = stringResource(R.string.settings_notes_title),
+            icon = Icons.AutoMirrored.Filled.Article,
             modifier = modifier,
             content = body,
         )
@@ -595,7 +637,7 @@ private fun NotesSettingsSection(
         Column(
             modifier = modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            content = { body() },
+            content = body,
         )
     }
 }
@@ -762,8 +804,9 @@ private fun AppearanceSettingsSection(
             appLanguage.nativeLabel
         }
 
-    CollapsibleSettingsSection(
+    SettingsCategoryCard(
         title = stringResource(R.string.settings_appearance_title),
+        icon = Icons.Filled.Palette,
         modifier = modifier,
     ) {
         Text(
