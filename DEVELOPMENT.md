@@ -1,5 +1,18 @@
 # Development
 
+<details>
+<summary>📖 Contents ⬇️</summary>
+
+## Contents
+
+- [Toolchain](#toolchain)
+- [Project layout](#project-layout)
+- [Format and check](#format-and-check)
+- [Build and install](#build-and-install)
+- [Related](#related)
+
+</details>
+
 ## Toolchain
 
 - JDK 17 (`JAVA_HOME`)

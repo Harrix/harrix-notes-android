@@ -2,11 +2,23 @@
 
 Android app for browsing and editing Markdown notes from a folder you choose (Storage Access Framework). Logical companion to [Harrix Notes Explorer](https://github.com/Harrix/harrix-notes-explorer) / the HSK VS Code notes panel — same folder and title conventions (`Name/Name.md`, hide `_<Folder>.g.md`, Diary / Dreams / Cases).
 
-| | |
-| --- | --- |
-| Display name | Harrix Notes |
+<details>
+<summary>📖 Contents ⬇️</summary>
+
+## Contents
+
+- [Build](#build)
+- [Editor bundle](#editor-bundle)
+- [Quality](#quality)
+- [License](#license)
+
+</details>
+
+|                           |                    |
+| ------------------------- | ------------------ |
+| Display name              | Harrix Notes       |
 | Package / `applicationId` | `dev.harrix.notes` |
-| Min SDK | 26 |
+| Min SDK                   | 26                 |
 
 ## Build
 
@@ -51,4 +63,4 @@ npm run build
 
 ## License
 
-MIT — see [LICENSE.md](LICENSE.md).
+MIT — see [`LICENSE.md`](LICENSE.md).
