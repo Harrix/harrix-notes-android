@@ -8,8 +8,8 @@ package dev.harrix.notes
  * `<details>` / `<summary>` HTML blocks. YAML front matter is wrapped in
  * `<details>` (collapsed). No formulas, footnotes, or tables.
  *
- * Relative image URLs become paths under [LOCAL_IMAGE_PATH_PREFIX] so the
- * preview WebView can intercept them against the notes SAF tree.
+ * Relative image URLs are rewritten to `/__notes_local__/…` tokens and then
+ * embedded as `data:` URIs by the preview pane (SAF cannot be loaded directly).
  */
 object SimpleMarkdownToHtml {
     private val FRONTMATTER_REGEX = Regex("^---\\r?\\n([\\s\\S]*?)\\r?\\n---\\r?\\n?")
@@ -37,6 +37,9 @@ object SimpleMarkdownToHtml {
 
     /** Path prefix under the preview base URL for SAF-backed images. */
     const val LOCAL_IMAGE_PATH_PREFIX = "/__notes_local__/"
+
+    private val LOCAL_IMAGE_SRC_REGEX =
+        Regex("""src="(/__notes_local__/[^"]+)"""")
 
     fun convert(source: String): String {
         var text = source
@@ -378,15 +381,52 @@ object SimpleMarkdownToHtml {
         return work
     }
 
-    /** Turns relative paths into preview-local URLs for the WebView interceptor. */
+    /**
+     * Turns relative paths into host-absolute `/__notes_local__/…` URLs.
+     * The path after the prefix is percent-encoded as one token (slashes → `%2F`)
+     * so it round-trips through [decodeLocalImagePath].
+     */
     fun rewriteImageSrc(raw: String): String {
         val src = stripUrlTitle(raw.trim().trim('"').trim('\''))
         if (isExternalImageSrc(src)) {
             return escapeHtml(src)
         }
         val normalized = src.replace('\\', '/').removePrefix("./")
-        val encoded = encodePath(normalized)
-        return escapeHtml(LOCAL_IMAGE_PATH_PREFIX.trimStart('/') + encoded)
+        val token = UriEncode.encode(normalized)
+        return escapeHtml(LOCAL_IMAGE_PATH_PREFIX + token)
+    }
+
+    /**
+     * Replaces `/__notes_local__/…` image URLs with `data:` URIs using [load].
+     * [load] receives the vault-relative path (leading `/` means from notes root).
+     */
+    fun embedLocalImages(
+        html: String,
+        load: (relativePath: String) -> Pair<String, ByteArray>?,
+    ): String = LOCAL_IMAGE_SRC_REGEX.replace(html) { match ->
+        val relative =
+            decodeLocalImagePath(match.groupValues[1])
+                ?: return@replace match.value
+        val loaded = load(relative) ?: return@replace match.value
+        val (mime, bytes) = loaded
+        val base64 = Base64Encoder.encode(bytes)
+        """src="data:$mime;base64,$base64""""
+    }
+
+    fun decodeLocalImagePath(urlPath: String): String? {
+        val prefix = LOCAL_IMAGE_PATH_PREFIX
+        if (!urlPath.startsWith(prefix) && !urlPath.startsWith(prefix.trimEnd('/'))) {
+            return null
+        }
+        val token =
+            when {
+                urlPath.startsWith(prefix) -> urlPath.substring(prefix.length)
+                else -> urlPath.substring(prefix.trimEnd('/').length).trimStart('/')
+            }
+        if (token.isEmpty()) {
+            return null
+        }
+        return UriEncode.decode(token).replace('\\', '/')
     }
 
     private fun rewriteLinkHref(raw: String): String {
@@ -438,11 +478,6 @@ object SimpleMarkdownToHtml {
 
     private fun stripTags(text: String): String = text.replace(Regex("<[^>]+>"), "")
 
-    private fun encodePath(path: String): String = path
-        .split('/')
-        .filter { it.isNotEmpty() }
-        .joinToString("/") { part -> UriEncode.encode(part) }
-
     /** Rewrites relative `src` on raw HTML `<img>` tags (e.g. inside details). */
     fun rewriteHtmlImageSources(html: String): String = HTML_IMG_SRC_REGEX.replace(html) { match ->
         val prefix = match.groupValues[1]
@@ -467,7 +502,7 @@ object SimpleMarkdownToHtml {
     }
 }
 
-/** Minimal percent-encoding for path segments (UTF-8). */
+/** Minimal percent-encoding for path tokens (UTF-8). */
 private object UriEncode {
     fun encode(value: String): String {
         val bytes = value.toByteArray(Charsets.UTF_8)
@@ -485,6 +520,39 @@ private object UriEncode {
         return out.toString()
     }
 
+    fun decode(value: String): String {
+        if (!value.contains('%')) {
+            return value
+        }
+        val bytes = ArrayList<Byte>(value.length)
+        var i = 0
+        while (i < value.length) {
+            val ch = value[i]
+            val encoded =
+                ch == '%' &&
+                    i + 2 < value.length &&
+                    hexValue(value[i + 1]) >= 0 &&
+                    hexValue(value[i + 2]) >= 0
+            if (encoded) {
+                val hi = hexValue(value[i + 1])
+                val lo = hexValue(value[i + 2])
+                bytes.add(((hi shl 4) or lo).toByte())
+                i += 3
+            } else {
+                bytes.add(ch.code.toByte())
+                i += 1
+            }
+        }
+        return bytes.toByteArray().toString(Charsets.UTF_8)
+    }
+
+    private fun hexValue(c: Char): Int = when (c) {
+        in '0'..'9' -> c - '0'
+        in 'a'..'f' -> c - 'a' + 10
+        in 'A'..'F' -> c - 'A' + 10
+        else -> -1
+    }
+
     private fun isUnreserved(c: Int): Boolean {
         if (c in 'a'.code..'z'.code) {
             return true
@@ -499,4 +567,45 @@ private object UriEncode {
     }
 
     private val HEX = "0123456789ABCDEF".toCharArray()
+}
+
+/** RFC 4648 Base64 without wrapping (for data URIs). */
+private object Base64Encoder {
+    private val TABLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".toCharArray()
+
+    fun encode(data: ByteArray): String {
+        val out = StringBuilder((data.size + 2) / 3 * 4)
+        var i = 0
+        while (i + 2 < data.size) {
+            val n =
+                ((data[i].toInt() and 0xFF) shl 16) or
+                    ((data[i + 1].toInt() and 0xFF) shl 8) or
+                    (data[i + 2].toInt() and 0xFF)
+            out.append(TABLE[(n shr 18) and 63])
+            out.append(TABLE[(n shr 12) and 63])
+            out.append(TABLE[(n shr 6) and 63])
+            out.append(TABLE[n and 63])
+            i += 3
+        }
+        when (data.size - i) {
+            1 -> {
+                val n = (data[i].toInt() and 0xFF) shl 16
+                out.append(TABLE[(n shr 18) and 63])
+                out.append(TABLE[(n shr 12) and 63])
+                out.append('=')
+                out.append('=')
+            }
+
+            2 -> {
+                val n =
+                    ((data[i].toInt() and 0xFF) shl 16) or
+                        ((data[i + 1].toInt() and 0xFF) shl 8)
+                out.append(TABLE[(n shr 18) and 63])
+                out.append(TABLE[(n shr 12) and 63])
+                out.append(TABLE[(n shr 6) and 63])
+                out.append('=')
+            }
+        }
+        return out.toString()
+    }
 }

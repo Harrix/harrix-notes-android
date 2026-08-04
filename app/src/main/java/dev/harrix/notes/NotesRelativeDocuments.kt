@@ -92,22 +92,25 @@ object NotesRelativeDocuments {
                         cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_MIME_TYPE)
                     var preferred: String? = null
                     var fallback: String? = null
+                    var caseFallback: String? = null
                     while (cursor.moveToNext() && preferred == null) {
-                        val childName = cursor.getString(nameIndex)
-                        if (childName == name) {
-                            val mime = cursor.getString(mimeIndex).orEmpty()
-                            val isDir = mime == DocumentsContract.Document.MIME_TYPE_DIR
-                            val id = cursor.getString(idIndex)
-                            if (id != null) {
-                                if (isDir == wantDirectory) {
-                                    preferred = id
-                                } else if (fallback == null) {
-                                    fallback = id
-                                }
+                        val childName = cursor.getString(nameIndex) ?: ""
+                        val mime = cursor.getString(mimeIndex).orEmpty()
+                        val isDir = mime == DocumentsContract.Document.MIME_TYPE_DIR
+                        val id = cursor.getString(idIndex)
+                        if (id == null) {
+                            // skip
+                        } else if (childName == name) {
+                            if (isDir == wantDirectory) {
+                                preferred = id
+                            } else if (fallback == null) {
+                                fallback = id
                             }
+                        } else if (caseFallback == null && childName.equals(name, ignoreCase = true)) {
+                            caseFallback = id
                         }
                     }
-                    preferred ?: fallback
+                    preferred ?: fallback ?: caseFallback
                 }
         }.getOrNull()
     }

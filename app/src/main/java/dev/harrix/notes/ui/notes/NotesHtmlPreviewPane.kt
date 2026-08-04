@@ -5,7 +5,6 @@ import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.Box
@@ -18,7 +17,11 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -32,18 +35,19 @@ import dev.harrix.notes.NotesPathSegment
 import dev.harrix.notes.NotesRelativeDocuments
 import dev.harrix.notes.NotesViewerPreferences
 import dev.harrix.notes.SimpleMarkdownToHtml
-import java.io.ByteArrayInputStream
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.Locale
 
-private const val PREVIEW_BASE_URL = "https://appassets.androidplatform.net/notes-preview/"
+private const val PREVIEW_BASE_URL = "https://appassets.androidplatform.net/"
 private const val PREVIEW_HOST = "appassets.androidplatform.net"
 
 /**
  * Note **preview** mode: simple custom Markdown → HTML in a WebView.
  *
  * White page background; YAML front matter is collapsed in `<details>`.
- * Relative images load from the notes SAF tree via
- * [SimpleMarkdownToHtml.LOCAL_IMAGE_PATH_PREFIX] under [PREVIEW_BASE_URL].
+ * Local images are embedded as `data:` URIs (SAF cannot be loaded by WebView
+ * as plain file/content URLs).
  */
 @Composable
 fun NotesHtmlPreviewPane(
@@ -57,10 +61,25 @@ fun NotesHtmlPreviewPane(
 ) {
     val context = LocalContext.current
     val resolver = remember(context) { context.applicationContext.contentResolver }
+    var html by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(content, fontSizeSp, treeUri, folderPath) {
+        val source = content.orEmpty()
+        html =
+            withContext(Dispatchers.IO) {
+                buildPreviewHtml(
+                    source = source,
+                    fontSizeSp = fontSizeSp,
+                    resolver = resolver,
+                    treeUri = treeUri,
+                    folderPath = folderPath,
+                )
+            }
+    }
 
     Box(modifier = modifier.fillMaxSize().clipToBounds()) {
         when {
-            isLoading -> {
+            isLoading || (content != null && html == null) -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
@@ -75,35 +94,17 @@ fun NotesHtmlPreviewPane(
             }
 
             else -> {
-                val html =
-                    remember(content, fontSizeSp) {
-                        buildPreviewHtml(content.orEmpty(), fontSizeSp)
-                    }
+                val document = html.orEmpty()
                 BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                     AndroidView(
-                        factory = { ctx ->
-                            createPreviewWebView(ctx, resolver, treeUri, folderPath)
-                        },
+                        factory = { ctx -> createPreviewWebView(ctx) },
                         update = { webView ->
-                            val holder = webView.tag as? PreviewWebViewTag
-                            val next =
-                                PreviewWebViewTag(
-                                    html = html,
-                                    treeUri = treeUri,
-                                    folderPath = folderPath,
-                                )
-                            if (holder?.html != html ||
-                                holder.treeUri != treeUri ||
-                                holder.folderPath != folderPath
-                            ) {
-                                webView.tag = next
-                                (webView.webViewClient as? PreviewWebViewClient)?.updateTarget(
-                                    treeUri,
-                                    folderPath,
-                                )
+                            val tag = webView.tag as? String
+                            if (tag != document) {
+                                webView.tag = document
                                 webView.loadDataWithBaseURL(
                                     PREVIEW_BASE_URL,
-                                    html,
+                                    document,
                                     "text/html",
                                     Charsets.UTF_8.name(),
                                     null,
@@ -121,106 +122,38 @@ fun NotesHtmlPreviewPane(
     }
 }
 
-private data class PreviewWebViewTag(
-    val html: String,
-    val treeUri: Uri?,
-    val folderPath: List<NotesPathSegment>,
-)
-
 @SuppressLint("SetJavaScriptEnabled")
-private fun createPreviewWebView(
-    context: Context,
-    resolver: ContentResolver,
-    treeUri: Uri?,
-    folderPath: List<NotesPathSegment>,
-): WebView {
-    val client = PreviewWebViewClient(resolver, treeUri, folderPath)
-    return WebView(context).apply {
-        // JS is needed so in-page #anchor clicks can scroll reliably after loadDataWithBaseURL.
-        settings.javaScriptEnabled = true
-        settings.domStorageEnabled = false
-        settings.loadsImagesAutomatically = true
-        settings.blockNetworkImage = false
-        isVerticalScrollBarEnabled = true
-        setBackgroundColor(Color.White.toArgb())
-        webViewClient = client
-        tag =
-            PreviewWebViewTag(
-                html = "",
-                treeUri = treeUri,
-                folderPath = folderPath,
-            )
-    }
+private fun createPreviewWebView(context: Context): WebView = WebView(context).apply {
+    settings.javaScriptEnabled = true
+    settings.domStorageEnabled = false
+    settings.loadsImagesAutomatically = true
+    settings.blockNetworkImage = false
+    isVerticalScrollBarEnabled = true
+    setBackgroundColor(Color.White.toArgb())
+    webViewClient = PreviewWebViewClient()
+    tag = ""
 }
 
-private class PreviewWebViewClient(
-    private val resolver: ContentResolver,
-    private var treeUri: Uri?,
-    private var folderPath: List<NotesPathSegment>,
-) : WebViewClient() {
-    fun updateTarget(
-        treeUri: Uri?,
-        folderPath: List<NotesPathSegment>,
-    ) {
-        this.treeUri = treeUri
-        this.folderPath = folderPath
-    }
-
+private class PreviewWebViewClient : WebViewClient() {
     override fun shouldOverrideUrlLoading(
         view: WebView,
         request: WebResourceRequest,
     ): Boolean {
         val url = request.url
         val fragment = url.fragment
-        val isPreviewDoc =
+        val isPreviewHost =
             url.scheme.equals("https", ignoreCase = true) &&
                 url.host.equals(PREVIEW_HOST, ignoreCase = true)
-        if (isPreviewDoc && !fragment.isNullOrEmpty() && isPreviewDocumentPath(url.path.orEmpty())) {
+        if (isPreviewHost && !fragment.isNullOrEmpty()) {
             scrollToAnchor(view, fragment)
             return true
         }
         if (url.scheme.equals("http", ignoreCase = true) ||
             url.scheme.equals("https", ignoreCase = true)
         ) {
-            // Keep http(s) navigation inside the WebView (external images / rare full links).
             return false
         }
-        // Block leaving preview for unsupported schemes (mailto, custom, etc.).
         return true
-    }
-
-    override fun shouldInterceptRequest(
-        view: WebView,
-        request: WebResourceRequest,
-    ): WebResourceResponse? {
-        val url = request.url
-        if (!url.scheme.equals("https", ignoreCase = true) ||
-            !url.host.equals(PREVIEW_HOST, ignoreCase = true)
-        ) {
-            return null
-        }
-        val path = url.path.orEmpty()
-        val marker = SimpleMarkdownToHtml.LOCAL_IMAGE_PATH_PREFIX.trimEnd('/')
-        // Paths look like /notes-preview/__notes_local__/folder/file.png
-        val markerIndex = path.indexOf(marker)
-        if (markerIndex < 0) {
-            return null
-        }
-        val tree = treeUri ?: return notFound()
-        val relative =
-            Uri.decode(path.substring(markerIndex + marker.length).trimStart('/'))
-                .replace('\\', '/')
-                .ifEmpty { return notFound() }
-        val docUri =
-            NotesRelativeDocuments.resolve(resolver, tree, folderPath, relative)
-                ?: return notFound()
-        val bytes = NotesRelativeDocuments.readBytes(resolver, docUri) ?: return notFound()
-        val mime = guessImageMime(relative)
-        return WebResourceResponse(
-            mime,
-            null,
-            ByteArrayInputStream(bytes),
-        )
     }
 
     private fun scrollToAnchor(
@@ -244,49 +177,23 @@ private class PreviewWebViewClient(
             null,
         )
     }
-
-    private fun isPreviewDocumentPath(path: String): Boolean {
-        if (path.isEmpty() || path == "/") {
-            return true
-        }
-        if (path.endsWith("/notes-preview")) {
-            return true
-        }
-        return path.endsWith("/notes-preview/")
-    }
-
-    private fun notFound(): WebResourceResponse = WebResourceResponse(
-        "text/plain",
-        "UTF-8",
-        404,
-        "Not Found",
-        emptyMap(),
-        ByteArrayInputStream(ByteArray(0)),
-    )
 }
 
-private fun guessImageMime(path: String): String {
-    val lower = path.lowercase(Locale.ROOT)
-    return when {
-        lower.endsWith(".png") -> "image/png"
-        lower.endsWith(".jpg") || lower.endsWith(".jpeg") -> "image/jpeg"
-        lower.endsWith(".gif") -> "image/gif"
-        lower.endsWith(".webp") -> "image/webp"
-        lower.endsWith(".svg") -> "image/svg+xml"
-        lower.endsWith(".avif") -> "image/avif"
-        lower.endsWith(".ico") -> "image/x-icon"
-        else -> "application/octet-stream"
-    }
-}
-
-/**
- * Builds a full HTML document from Markdown [source] with a white page background.
- */
 private fun buildPreviewHtml(
     source: String,
     fontSizeSp: Int,
+    resolver: ContentResolver,
+    treeUri: Uri?,
+    folderPath: List<NotesPathSegment>,
 ): String {
-    val body = SimpleMarkdownToHtml.convert(source)
+    var body = SimpleMarkdownToHtml.convert(source)
+    body = SimpleMarkdownToHtml.rewriteHtmlImageSources(body)
+    if (treeUri != null) {
+        body =
+            SimpleMarkdownToHtml.embedLocalImages(body) { relativePath ->
+                loadLocalImage(resolver, treeUri, folderPath, relativePath)
+            }
+    }
     val size =
         fontSizeSp.coerceIn(AppPreferences.MIN_FONT_SIZE_SP, AppPreferences.MAX_FONT_SIZE_SP)
     return """
@@ -382,4 +289,34 @@ private fun buildPreviewHtml(
         <body>$body</body>
         </html>
     """.trimIndent()
+}
+
+private fun loadLocalImage(
+    resolver: ContentResolver,
+    treeUri: Uri,
+    folderPath: List<NotesPathSegment>,
+    relativePath: String,
+): Pair<String, ByteArray>? {
+    val docUri =
+        NotesRelativeDocuments.resolve(resolver, treeUri, folderPath, relativePath)
+            ?: return null
+    val bytes = NotesRelativeDocuments.readBytes(resolver, docUri) ?: return null
+    if (bytes.isEmpty()) {
+        return null
+    }
+    return guessImageMime(relativePath) to bytes
+}
+
+private fun guessImageMime(path: String): String {
+    val lower = path.lowercase(Locale.ROOT)
+    return when {
+        lower.endsWith(".png") -> "image/png"
+        lower.endsWith(".jpg") || lower.endsWith(".jpeg") -> "image/jpeg"
+        lower.endsWith(".gif") -> "image/gif"
+        lower.endsWith(".webp") -> "image/webp"
+        lower.endsWith(".svg") -> "image/svg+xml"
+        lower.endsWith(".avif") -> "image/avif"
+        lower.endsWith(".ico") -> "image/x-icon"
+        else -> "image/*"
+    }
 }
