@@ -1367,12 +1367,14 @@ fun NotesViewerScreen(
                                         },
                                     )
                                 } else {
-                                    // Preview mode (temporary HTML <pre> viewer).
+                                    // Preview mode: simple Markdown → HTML.
                                     NotesHtmlPreviewPane(
                                         isLoading = noteLoading,
                                         content = noteContent,
                                         errorMessage = statusMessage,
                                         fontSizeSp = previewFontSizeSp,
+                                        treeUri = notesTreeUri?.let { Uri.parse(it) },
+                                        folderPath = selectedTab.folderPath,
                                     )
                                 }
                             }

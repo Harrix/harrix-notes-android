@@ -1,6 +1,12 @@
 package dev.harrix.notes.ui.notes
 
+import android.content.ContentResolver
+import android.content.Context
+import android.net.Uri
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,21 +22,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import dev.harrix.notes.AppPreferences
+import dev.harrix.notes.NotesPathSegment
+import dev.harrix.notes.NotesRelativeDocuments
 import dev.harrix.notes.NotesViewerPreferences
+import dev.harrix.notes.SimpleMarkdownToHtml
+import java.io.ByteArrayInputStream
+import java.util.Locale
 
 /**
- * Temporary note **preview** mode (not the editor).
+ * Note **preview** mode: simple custom Markdown → HTML in a WebView.
  *
- * Renders note source as the simplest possible HTML page: the full text is placed
- * inside a single `<pre>` with no Markdown/HTML processing. The slightly bluish
- * page background marks preview mode; later this can become a real HTML preview.
- *
- * Text is selectable for copy; the document is not editable here.
+ * White page background; YAML front matter is collapsed in `<details>`.
+ * Relative images load from the notes SAF tree via [SimpleMarkdownToHtml.LOCAL_IMAGE_SCHEME].
  */
 @Composable
 fun NotesHtmlPreviewPane(
@@ -39,8 +47,12 @@ fun NotesHtmlPreviewPane(
     errorMessage: String?,
     modifier: Modifier = Modifier,
     fontSizeSp: Int = NotesViewerPreferences.DEFAULT_PREVIEW_FONT_SIZE_SP,
+    treeUri: Uri? = null,
+    folderPath: List<NotesPathSegment> = emptyList(),
 ) {
-    // clipToBounds: WebView can paint outside Compose layout bounds while loading.
+    val context = LocalContext.current
+    val resolver = remember(context) { context.applicationContext.contentResolver }
+
     Box(modifier = modifier.fillMaxSize().clipToBounds()) {
         when {
             isLoading -> {
@@ -58,35 +70,34 @@ fun NotesHtmlPreviewPane(
             }
 
             else -> {
-                val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
-                val colors =
-                    remember(darkTheme) {
-                        if (darkTheme) PreviewHtmlColors.Dark else PreviewHtmlColors.Light
-                    }
                 val html =
-                    remember(content, colors, fontSizeSp) {
-                        buildRawPreHtml(content.orEmpty(), colors, fontSizeSp)
+                    remember(content, fontSizeSp) {
+                        buildPreviewHtml(content.orEmpty(), fontSizeSp)
                     }
-                // Pin WebView to the Compose slot size — otherwise it measures by
-                // document height and overlays chrome (tabs / breadcrumbs).
                 BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                     AndroidView(
-                        factory = { context ->
-                            WebView(context).apply {
-                                // Preview only: no scripts, selection stays enabled for copy.
-                                settings.javaScriptEnabled = false
-                                settings.domStorageEnabled = false
-                                isVerticalScrollBarEnabled = true
-                                setBackgroundColor(colors.pageBackground.toArgb())
-                            }
+                        factory = { ctx ->
+                            createPreviewWebView(ctx, resolver, treeUri, folderPath)
                         },
                         update = { webView ->
-                            webView.setBackgroundColor(colors.pageBackground.toArgb())
-                            val tag = webView.tag as? String
-                            if (tag != html) {
-                                webView.tag = html
+                            val holder = webView.tag as? PreviewWebViewTag
+                            val next =
+                                PreviewWebViewTag(
+                                    html = html,
+                                    treeUri = treeUri,
+                                    folderPath = folderPath,
+                                )
+                            if (holder?.html != html ||
+                                holder.treeUri != treeUri ||
+                                holder.folderPath != folderPath
+                            ) {
+                                webView.tag = next
+                                (webView.webViewClient as? PreviewWebViewClient)?.updateTarget(
+                                    treeUri,
+                                    folderPath,
+                                )
                                 webView.loadDataWithBaseURL(
-                                    null,
+                                    "https://notes.preview.local/",
                                     html,
                                     "text/html",
                                     Charsets.UTF_8.name(),
@@ -105,38 +116,108 @@ fun NotesHtmlPreviewPane(
     }
 }
 
-/** Bluish preview chrome — intentionally distinct from the editor surface. */
-private data class PreviewHtmlColors(
-    val pageBackground: Color,
-    val text: Color,
-) {
-    companion object {
-        val Light =
-            PreviewHtmlColors(
-                pageBackground = Color(0xFFE8F2F8),
-                text = Color(0xFF171C1F),
-            )
-        val Dark =
-            PreviewHtmlColors(
-                pageBackground = Color(0xFF152029),
-                text = Color(0xFFDDE2E6),
+private data class PreviewWebViewTag(
+    val html: String,
+    val treeUri: Uri?,
+    val folderPath: List<NotesPathSegment>,
+)
+
+private fun createPreviewWebView(
+    context: Context,
+    resolver: ContentResolver,
+    treeUri: Uri?,
+    folderPath: List<NotesPathSegment>,
+): WebView {
+    val client = PreviewWebViewClient(resolver, treeUri, folderPath)
+    return WebView(context).apply {
+        settings.javaScriptEnabled = false
+        settings.domStorageEnabled = false
+        settings.loadsImagesAutomatically = true
+        settings.blockNetworkImage = false
+        isVerticalScrollBarEnabled = true
+        setBackgroundColor(Color.White.toArgb())
+        webViewClient = client
+        tag =
+            PreviewWebViewTag(
+                html = "",
+                treeUri = treeUri,
+                folderPath = folderPath,
             )
     }
 }
 
+private class PreviewWebViewClient(
+    private val resolver: ContentResolver,
+    private var treeUri: Uri?,
+    private var folderPath: List<NotesPathSegment>,
+) : WebViewClient() {
+    fun updateTarget(
+        treeUri: Uri?,
+        folderPath: List<NotesPathSegment>,
+    ) {
+        this.treeUri = treeUri
+        this.folderPath = folderPath
+    }
+
+    override fun shouldInterceptRequest(
+        view: WebView,
+        request: WebResourceRequest,
+    ): WebResourceResponse? {
+        val url = request.url
+        if (url.scheme != SimpleMarkdownToHtml.LOCAL_IMAGE_SCHEME) {
+            return null
+        }
+        val tree = treeUri ?: return notFound()
+        val relative =
+            url.path
+                ?.trimStart('/')
+                ?.let { Uri.decode(it) }
+                ?.replace('\\', '/')
+                ?: return notFound()
+        val docUri =
+            NotesRelativeDocuments.resolve(resolver, tree, folderPath, relative)
+                ?: return notFound()
+        val bytes = NotesRelativeDocuments.readBytes(resolver, docUri) ?: return notFound()
+        val mime = guessImageMime(relative)
+        return WebResourceResponse(
+            mime,
+            null,
+            ByteArrayInputStream(bytes),
+        )
+    }
+
+    private fun notFound(): WebResourceResponse = WebResourceResponse(
+        "text/plain",
+        "UTF-8",
+        404,
+        "Not Found",
+        emptyMap(),
+        ByteArrayInputStream(ByteArray(0)),
+    )
+}
+
+private fun guessImageMime(path: String): String {
+    val lower = path.lowercase(Locale.ROOT)
+    return when {
+        lower.endsWith(".png") -> "image/png"
+        lower.endsWith(".jpg") || lower.endsWith(".jpeg") -> "image/jpeg"
+        lower.endsWith(".gif") -> "image/gif"
+        lower.endsWith(".webp") -> "image/webp"
+        lower.endsWith(".svg") -> "image/svg+xml"
+        lower.endsWith(".avif") -> "image/avif"
+        lower.endsWith(".ico") -> "image/x-icon"
+        else -> "application/octet-stream"
+    }
+}
+
 /**
- * Builds a minimal HTML document that shows [source] inside `<pre>`.
- * Only escapes `&`, `<`, `>` so the WebView displays the raw note text safely —
- * this is not Markdown processing.
+ * Builds a full HTML document from Markdown [source] with a white page background.
  */
-private fun buildRawPreHtml(
+private fun buildPreviewHtml(
     source: String,
-    colors: PreviewHtmlColors,
     fontSizeSp: Int,
 ): String {
-    val escaped = escapeHtmlForPre(source)
-    val bg = colors.pageBackground.toCssHex()
-    val fg = colors.text.toCssHex()
+    val body = SimpleMarkdownToHtml.convert(source)
     val size =
         fontSizeSp.coerceIn(AppPreferences.MIN_FONT_SIZE_SP, AppPreferences.MAX_FONT_SIZE_SP)
     return """
@@ -149,36 +230,84 @@ private fun buildRawPreHtml(
           html, body {
             margin: 0;
             padding: 0;
-            background: $bg;
+            background: #ffffff;
+            color: #1a1a1a;
             height: 100%;
           }
-          pre {
-            margin: 0;
+          body {
             padding: 16px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            font-family: monospace;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
             font-size: ${size}px;
-            line-height: 1.45;
-            color: $fg;
-            background: $bg;
+            line-height: 1.5;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+          }
+          h1, h2, h3, h4, h5, h6 {
+            line-height: 1.25;
+            margin: 1.1em 0 0.5em;
+          }
+          h1 { font-size: 1.6em; }
+          h2 { font-size: 1.35em; }
+          h3 { font-size: 1.2em; }
+          p, ul, ol, blockquote, pre, details {
+            margin: 0 0 0.85em;
+          }
+          ul, ol { padding-left: 1.4em; }
+          blockquote {
+            border-left: 3px solid #cccccc;
+            padding-left: 0.8em;
+            color: #444444;
+          }
+          code {
+            font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+            font-size: 0.92em;
+            background: #f3f3f3;
+            padding: 0.1em 0.35em;
+            border-radius: 3px;
+          }
+          pre {
+            background: #f3f3f3;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+          }
+          pre code {
+            background: transparent;
+            padding: 0;
+          }
+          img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0.6em 0;
+          }
+          a { color: #0b57d0; }
+          hr {
+            border: none;
+            border-top: 1px solid #dddddd;
+            margin: 1.2em 0;
+          }
+          details.frontmatter {
+            background: #f7f7f7;
+            border: 1px solid #e4e4e4;
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: #555555;
+          }
+          details.frontmatter summary {
+            cursor: pointer;
+            font-weight: 600;
+          }
+          details.frontmatter pre {
+            margin: 8px 0 0;
+            white-space: pre-wrap;
+            font-size: 0.85em;
+            background: transparent;
+            padding: 0;
           }
         </style>
         </head>
-        <body><pre>$escaped</pre></body>
+        <body>$body</body>
         </html>
     """.trimIndent()
-}
-
-private fun escapeHtmlForPre(text: String): String {
-    val out = StringBuilder(text.length + 16)
-    for (c in text) {
-        when (c) {
-            '&' -> out.append("&amp;")
-            '<' -> out.append("&lt;")
-            '>' -> out.append("&gt;")
-            else -> out.append(c)
-        }
-    }
-    return out.toString()
 }
