@@ -112,4 +112,5 @@
     <string name="markdown_notes_saved">Kaydedildi</string>
     <string name="markdown_notes_new_note">+ Yeni Not</string>
     <string name="markdown_notes_create_failed">Not oluşturulamadı</string>
+    <string name="loading_elapsed_seconds">%1$d sn</string>
 </resources>

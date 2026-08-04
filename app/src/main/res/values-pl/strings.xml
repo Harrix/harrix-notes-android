@@ -112,4 +112,5 @@
     <string name="markdown_notes_saved">Zapisano</string>
     <string name="markdown_notes_new_note">+ Nowa notatka</string>
     <string name="markdown_notes_create_failed">Nie można utworzyć notatki</string>
+    <string name="loading_elapsed_seconds">%1$d s</string>
 </resources>

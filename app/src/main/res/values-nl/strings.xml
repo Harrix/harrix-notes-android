@@ -112,4 +112,5 @@
     <string name="markdown_notes_saved">Opgeslagen</string>
     <string name="markdown_notes_new_note">+ Nieuwe notitie</string>
     <string name="markdown_notes_create_failed">Kan notitie niet maken</string>
+    <string name="loading_elapsed_seconds">%1$d s</string>
 </resources>

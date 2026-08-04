@@ -61,7 +61,6 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -1400,7 +1399,7 @@ fun NotesViewerScreen(
                             }
 
                             isLoading -> {
-                                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                                NotesLoadingIndicator(modifier = Modifier.align(Alignment.Center))
                             }
 
                             else -> {

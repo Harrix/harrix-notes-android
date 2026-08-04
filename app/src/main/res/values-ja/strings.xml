@@ -112,4 +112,5 @@
     <string name="markdown_notes_saved">保存しました</string>
     <string name="markdown_notes_new_note">+ 新しいノート</string>
     <string name="markdown_notes_create_failed">ノートの作成に失敗しました</string>
+    <string name="loading_elapsed_seconds">%1$d 秒</string>
 </resources>

@@ -112,4 +112,5 @@
     <string name="markdown_notes_saved">Enregistré</string>
     <string name="markdown_notes_new_note">+ Nouvelle note</string>
     <string name="markdown_notes_create_failed">Échec de la création de la note</string>
+    <string name="loading_elapsed_seconds">%1$d s</string>
 </resources>

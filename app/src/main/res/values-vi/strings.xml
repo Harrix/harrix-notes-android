@@ -112,4 +112,5 @@
     <string name="markdown_notes_saved">Đã lưu</string>
     <string name="markdown_notes_new_note">+ Ghi chú mới</string>
     <string name="markdown_notes_create_failed">Không thể tạo ghi chú</string>
+    <string name="loading_elapsed_seconds">%1$d giây</string>
 </resources>

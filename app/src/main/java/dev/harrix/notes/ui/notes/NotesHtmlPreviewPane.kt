@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -65,11 +64,17 @@ fun NotesHtmlPreviewPane(
     var html by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(content, fontSizeSp, treeUri, folderPath, noteDocumentId) {
-        val source = content.orEmpty()
+        // Do not build from null content: that left a non-null empty HTML and hid
+        // the spinner when the real note arrived (first open from the browser).
+        if (content == null) {
+            html = null
+            return@LaunchedEffect
+        }
+        html = null
         html =
             withContext(Dispatchers.IO) {
                 buildPreviewHtml(
-                    source = source,
+                    source = content,
                     fontSizeSp = fontSizeSp,
                     resolver = resolver,
                     treeUri = treeUri,
@@ -83,7 +88,7 @@ fun NotesHtmlPreviewPane(
         when {
             isLoading || (content != null && html == null) -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+                    NotesLoadingIndicator()
                 }
             }
 
