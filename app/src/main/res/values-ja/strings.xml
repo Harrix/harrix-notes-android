@@ -6,6 +6,12 @@
     <string name="nav_drawer_home">ホーム</string>
     <string name="settings_title">設定</string>
     <string name="settings_back">戻る</string>
+    <string name="settings_general_title">一般</string>
+    <string name="settings_general_summary">ファイルとフォルダ</string>
+    <string name="settings_edit_mode_title">編集モード</string>
+    <string name="settings_edit_mode_summary">エディタの設定</string>
+    <string name="settings_view_mode_title">表示モード</string>
+    <string name="settings_view_mode_summary">プレビューの設定</string>
     <string name="settings_appearance_title">外観</string>
     <string name="settings_appearance_summary">テーマ、言語、文字サイズ</string>
     <string name="settings_language_title">言語</string>
@@ -18,7 +24,13 @@
     <string name="settings_font_size_hint">10 から 28 sp まで</string>
     <string name="settings_section_expand">セクションを展開する</string>
     <string name="settings_section_collapse">セクションを折りたたむ</string>
-    <string name="settings_category_main">基本</string>
+    <string name="settings_category_essential">基本</string>
+    <string name="settings_category_main">その他</string>
+    <string name="settings_category_location">保存場所</string>
+    <string name="settings_category_opening">開き方</string>
+    <string name="settings_category_file_browser">ファイルブラウザ</string>
+    <string name="settings_category_pinned_bar">ピン留めバー</string>
+    <string name="settings_category_syntax_highlighting">構文ハイライト</string>
     <string name="settings_notes_title">ノート</string>
     <string name="settings_notes_summary">フォルダー、表示、エディター、ピン留め</string>
     <string name="settings_other_title">その他</string>

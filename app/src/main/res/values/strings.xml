@@ -6,6 +6,12 @@
     <string name="nav_drawer_home">Home</string>
     <string name="settings_title">Settings</string>
     <string name="settings_back">Back</string>
+    <string name="settings_general_title">General</string>
+    <string name="settings_general_summary">Files and folders</string>
+    <string name="settings_edit_mode_title">Edit mode</string>
+    <string name="settings_edit_mode_summary">Editor settings</string>
+    <string name="settings_view_mode_title">View mode</string>
+    <string name="settings_view_mode_summary">Preview settings</string>
     <string name="settings_appearance_title">Appearance</string>
     <string name="settings_appearance_summary">Theme, language, font size</string>
     <string name="settings_language_title">Language</string>
@@ -18,7 +24,13 @@
     <string name="settings_font_size_hint">From 10 to 28 sp</string>
     <string name="settings_section_expand">Expand section</string>
     <string name="settings_section_collapse">Collapse section</string>
+    <string name="settings_category_essential">Essential</string>
     <string name="settings_category_main">Main</string>
+    <string name="settings_category_location">Location</string>
+    <string name="settings_category_opening">Opening</string>
+    <string name="settings_category_file_browser">File browser</string>
+    <string name="settings_category_pinned_bar">Pinned bar</string>
+    <string name="settings_category_syntax_highlighting">Syntax highlighting</string>
     <string name="settings_notes_title">Notes</string>
     <string name="settings_notes_summary">Folder, browsing, editor, pins</string>
     <string name="settings_other_title">Other</string>

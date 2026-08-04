@@ -6,6 +6,12 @@
     <string name="nav_drawer_home">Домой</string>
     <string name="settings_title">Настройки</string>
     <string name="settings_back">Назад</string>
+    <string name="settings_general_title">Общие</string>
+    <string name="settings_general_summary">Файлы и папки</string>
+    <string name="settings_edit_mode_title">Режим редактирования</string>
+    <string name="settings_edit_mode_summary">Настройки редактора</string>
+    <string name="settings_view_mode_title">Режим просмотра</string>
+    <string name="settings_view_mode_summary">Настройки превью</string>
     <string name="settings_appearance_title">Оформление</string>
     <string name="settings_appearance_summary">Тема, язык, размер шрифта</string>
     <string name="settings_language_title">Язык</string>
@@ -18,7 +24,13 @@
     <string name="settings_font_size_hint">От 10 до 28 sp</string>
     <string name="settings_section_expand">Развернуть раздел</string>
     <string name="settings_section_collapse">Свернуть раздел</string>
-    <string name="settings_category_main">Основное</string>
+    <string name="settings_category_essential">Основное</string>
+    <string name="settings_category_main">Прочее</string>
+    <string name="settings_category_location">Расположение</string>
+    <string name="settings_category_opening">Открытие</string>
+    <string name="settings_category_file_browser">Обзор файлов</string>
+    <string name="settings_category_pinned_bar">Панель закреплений</string>
+    <string name="settings_category_syntax_highlighting">Подсветка синтаксиса</string>
     <string name="settings_notes_title">Заметки</string>
     <string name="settings_notes_summary">Папка, просмотр, редактор, закрепления</string>
     <string name="settings_other_title">Другое</string>

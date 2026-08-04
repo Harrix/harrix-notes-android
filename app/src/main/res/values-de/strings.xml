@@ -6,6 +6,12 @@
     <string name="nav_drawer_home">Startseite</string>
     <string name="settings_title">Einstellungen</string>
     <string name="settings_back">Zurück</string>
+    <string name="settings_general_title">Allgemein</string>
+    <string name="settings_general_summary">Dateien und Ordner</string>
+    <string name="settings_edit_mode_title">Bearbeitungsmodus</string>
+    <string name="settings_edit_mode_summary">Editor-Einstellungen</string>
+    <string name="settings_view_mode_title">Ansichtsmodus</string>
+    <string name="settings_view_mode_summary">Vorschau-Einstellungen</string>
     <string name="settings_appearance_title">Aussehen</string>
     <string name="settings_appearance_summary">Design, Sprache, Schriftgröße</string>
     <string name="settings_language_title">Sprache</string>
@@ -18,7 +24,13 @@
     <string name="settings_font_size_hint">Von 10 bis 28 sp</string>
     <string name="settings_section_expand">Abschnitt aufklappen</string>
     <string name="settings_section_collapse">Abschnitt einklappen</string>
+    <string name="settings_category_essential">Wesentlich</string>
     <string name="settings_category_main">Allgemein</string>
+    <string name="settings_category_location">Speicherort</string>
+    <string name="settings_category_opening">Öffnen</string>
+    <string name="settings_category_file_browser">Dateibrowser</string>
+    <string name="settings_category_pinned_bar">Angeheftete Leiste</string>
+    <string name="settings_category_syntax_highlighting">Syntaxhervorhebung</string>
     <string name="settings_notes_title">Notizen</string>
     <string name="settings_notes_summary">Ordner, Ansicht, Editor, Anheftungen</string>
     <string name="settings_other_title">Sonstiges</string>

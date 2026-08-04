@@ -6,6 +6,12 @@
     <string name="nav_drawer_home">主页</string>
     <string name="settings_title">设置</string>
     <string name="settings_back">返回</string>
+    <string name="settings_general_title">常规</string>
+    <string name="settings_general_summary">文件和文件夹</string>
+    <string name="settings_edit_mode_title">编辑模式</string>
+    <string name="settings_edit_mode_summary">编辑器设置</string>
+    <string name="settings_view_mode_title">查看模式</string>
+    <string name="settings_view_mode_summary">预览设置</string>
     <string name="settings_appearance_title">外观</string>
     <string name="settings_appearance_summary">主题、语言、字号</string>
     <string name="settings_language_title">语言</string>
@@ -18,7 +24,13 @@
     <string name="settings_font_size_hint">从 10 到 28 sp</string>
     <string name="settings_section_expand">展开部分</string>
     <string name="settings_section_collapse">折叠部分</string>
-    <string name="settings_category_main">常规</string>
+    <string name="settings_category_essential">基本</string>
+    <string name="settings_category_main">主要</string>
+    <string name="settings_category_location">位置</string>
+    <string name="settings_category_opening">打开方式</string>
+    <string name="settings_category_file_browser">文件浏览器</string>
+    <string name="settings_category_pinned_bar">置顶栏</string>
+    <string name="settings_category_syntax_highlighting">语法高亮</string>
     <string name="settings_notes_title">笔记</string>
     <string name="settings_notes_summary">文件夹、浏览、编辑器、置顶</string>
     <string name="settings_other_title">其他</string>

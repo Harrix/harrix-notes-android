@@ -19,17 +19,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DragHandle
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MoreHoriz
-import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -47,6 +46,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -67,7 +67,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
@@ -91,10 +90,15 @@ import dev.harrix.notes.ui.theme.ThemeMode
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
+/**
+ * Settings navigation mirrors Markor's nested preference screens:
+ * General / Edit mode / View mode, with Theme & Language on the hub root.
+ */
 private enum class NotesSettingsPage {
     Hub,
-    Appearance,
-    Notes,
+    General,
+    EditMode,
+    ViewMode,
     Other,
 }
 
@@ -120,8 +124,9 @@ fun SettingsScreen(
     val pageTitle =
         when (page) {
             NotesSettingsPage.Hub -> stringResource(R.string.settings_title)
-            NotesSettingsPage.Appearance -> stringResource(R.string.settings_appearance_title)
-            NotesSettingsPage.Notes -> stringResource(R.string.settings_notes_title)
+            NotesSettingsPage.General -> stringResource(R.string.settings_general_title)
+            NotesSettingsPage.EditMode -> stringResource(R.string.settings_edit_mode_title)
+            NotesSettingsPage.ViewMode -> stringResource(R.string.settings_view_mode_title)
             NotesSettingsPage.Other -> stringResource(R.string.settings_other_title)
         }
 
@@ -175,18 +180,37 @@ fun SettingsScreen(
                         .adaptiveContentWidth(),
                 ) {
                     SettingsHubRow(
-                        title = stringResource(R.string.settings_appearance_title),
-                        summary = stringResource(R.string.settings_appearance_summary),
-                        icon = Icons.Filled.Palette,
-                        onClick = { page = NotesSettingsPage.Appearance },
+                        title = stringResource(R.string.settings_general_title),
+                        summary = stringResource(R.string.settings_general_summary),
+                        icon = Icons.Filled.Folder,
+                        onClick = { page = NotesSettingsPage.General },
                     )
                     HorizontalDivider()
                     SettingsHubRow(
-                        title = stringResource(R.string.settings_notes_title),
-                        summary = stringResource(R.string.settings_notes_summary),
-                        icon = Icons.AutoMirrored.Filled.Article,
-                        onClick = { page = NotesSettingsPage.Notes },
+                        title = stringResource(R.string.settings_edit_mode_title),
+                        summary = stringResource(R.string.settings_edit_mode_summary),
+                        icon = Icons.Filled.Edit,
+                        onClick = { page = NotesSettingsPage.EditMode },
                     )
+                    HorizontalDivider()
+                    SettingsHubRow(
+                        title = stringResource(R.string.settings_view_mode_title),
+                        summary = stringResource(R.string.settings_view_mode_summary),
+                        icon = Icons.Filled.Visibility,
+                        onClick = { page = NotesSettingsPage.ViewMode },
+                    )
+                    SettingsCategoryHeader(text = stringResource(R.string.settings_category_essential))
+                    key(settingsEpoch) {
+                        EssentialSettingsSection(
+                            themeMode = themeMode,
+                            onThemeModeChange = onThemeModeChange,
+                            uiFontSizeSp = uiFontSizeSp,
+                            onUiFontSizeChange = onUiFontSizeChange,
+                            appLanguage = appLanguage,
+                            onAppLanguageChange = onAppLanguageChange,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                        )
+                    }
                     SettingsCategoryHeader(text = stringResource(R.string.settings_category_main))
                     SettingsHubRow(
                         title = stringResource(R.string.settings_other_title),
@@ -197,25 +221,26 @@ fun SettingsScreen(
                 }
             }
 
-            NotesSettingsPage.Appearance -> {
+            NotesSettingsPage.General -> {
                 SettingsDetailPane(innerPadding = innerPadding) {
                     key(settingsEpoch) {
-                        AppearanceSettingsSection(
-                            themeMode = themeMode,
-                            onThemeModeChange = onThemeModeChange,
-                            uiFontSizeSp = uiFontSizeSp,
-                            onUiFontSizeChange = onUiFontSizeChange,
-                            appLanguage = appLanguage,
-                            onAppLanguageChange = onAppLanguageChange,
-                        )
+                        GeneralSettingsSection()
                     }
                 }
             }
 
-            NotesSettingsPage.Notes -> {
+            NotesSettingsPage.EditMode -> {
                 SettingsDetailPane(innerPadding = innerPadding) {
                     key(settingsEpoch) {
-                        NotesSettingsSection()
+                        EditModeSettingsSection()
+                    }
+                }
+            }
+
+            NotesSettingsPage.ViewMode -> {
+                SettingsDetailPane(innerPadding = innerPadding) {
+                    key(settingsEpoch) {
+                        ViewModeSettingsSection()
                     }
                 }
             }
@@ -280,6 +305,19 @@ private fun SettingsCategoryHeader(text: String) {
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp),
+    )
+}
+
+@Composable
+private fun SettingsSectionHeader(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        modifier =
+        Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp, bottom = 4.dp),
     )
 }
 
@@ -351,9 +389,7 @@ private fun SettingsFullWidthOutlinedButton(
 }
 
 @Composable
-private fun NotesSettingsSection(
-    modifier: Modifier = Modifier,
-) {
+private fun GeneralSettingsSection(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val preferences = remember { NotesViewerPreferences(context.applicationContext) }
     val repository = remember { NotesTreeRepository(context.applicationContext) }
@@ -364,22 +400,9 @@ private fun NotesSettingsSection(
     var pinnedBarDensity by remember { mutableStateOf(preferences.loadPinnedBarDensity()) }
     var titleSource by remember { mutableStateOf(preferences.loadTitleSource()) }
     var noteOpenMode by remember { mutableStateOf(preferences.loadNoteOpenMode()) }
-    var previewFontSizeText by remember {
-        mutableStateOf(preferences.loadPreviewFontSizeSp().toString())
-    }
-    var editorFontSizeText by remember {
-        mutableStateOf(preferences.loadEditorFontSizeSp().toString())
-    }
-    var highlightMaxMbText by remember {
-        mutableStateOf(preferences.loadHighlightMaxMb().toString())
-    }
-    var maxOpenTabsText by remember {
-        mutableStateOf(preferences.loadMaxOpenTabs().toString())
-    }
+    var maxOpenTabs by remember { mutableIntStateOf(preferences.loadMaxOpenTabs()) }
     var pinnedBarEnabled by remember { mutableStateOf(preferences.loadPinnedBarEnabled()) }
-    var maxPinnedText by remember {
-        mutableStateOf(preferences.loadMaxPinnedItems().toString())
-    }
+    var maxPinnedItems by remember { mutableIntStateOf(preferences.loadMaxPinnedItems()) }
     var pinnedItems by remember(treeUri) {
         mutableStateOf(loadPinnedItemsForSettings(preferences, repository, treeUri))
     }
@@ -413,7 +436,11 @@ private fun NotesSettingsSection(
         preferences.savePinnedItems(uri, limited)
     }
 
-    val body: @Composable ColumnScope.() -> Unit = {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        SettingsSectionHeader(text = stringResource(R.string.settings_category_location))
         NotesFolderPathControls(
             treeUri = treeUri,
             onTreeUriChange = {
@@ -421,161 +448,47 @@ private fun NotesSettingsSection(
                 pinnedItems = loadPinnedItemsForSettings(preferences, repository, it)
             },
         )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = stringResource(R.string.settings_markdown_notes_open_mode),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            openModeOptions.forEachIndexed { index, (mode, labelRes) ->
-                SegmentedButton(
-                    selected = noteOpenMode == mode,
-                    onClick = {
-                        noteOpenMode = mode
-                        preferences.saveNoteOpenMode(mode)
-                    },
-                    shape =
-                    SegmentedButtonDefaults.itemShape(
-                        index = index,
-                        count = openModeOptions.size,
-                    ),
-                ) {
-                    Text(
-                        text = stringResource(labelRes),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        FontSizeField(
-            label = stringResource(R.string.settings_markdown_notes_preview_font_size),
-            valueText = previewFontSizeText,
-            onValueTextChange = { previewFontSizeText = it },
-            onCommit = { preferences.savePreviewFontSizeSp(it) },
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        FontSizeField(
-            label = stringResource(R.string.settings_markdown_notes_editor_font_size),
-            valueText = editorFontSizeText,
-            onValueTextChange = { editorFontSizeText = it },
-            onCommit = { preferences.saveEditorFontSizeSp(it) },
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = stringResource(R.string.settings_markdown_notes_highlight_max_mb),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        OutlinedTextField(
-            value = highlightMaxMbText,
-            onValueChange = { raw ->
-                val digits = raw.filter { it.isDigit() }.take(2)
-                highlightMaxMbText = digits
-                val parsed = digits.toIntOrNull() ?: return@OutlinedTextField
-                val clamped =
-                    parsed.coerceIn(
-                        NotesViewerPreferences.MIN_HIGHLIGHT_MAX_MB,
-                        NotesViewerPreferences.MAX_HIGHLIGHT_MAX_MB,
-                    )
-                highlightMaxMbText = clamped.toString()
-                preferences.saveHighlightMaxMb(clamped)
-            },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            supportingText = {
-                Text(stringResource(R.string.settings_markdown_notes_highlight_max_mb_hint))
+
+        SettingsSectionHeader(text = stringResource(R.string.settings_category_opening))
+        SettingsChoiceRow(
+            label = stringResource(R.string.settings_markdown_notes_open_mode),
+            options = openModeOptions,
+            selected = noteOpenMode,
+            onSelect = { mode ->
+                noteOpenMode = mode
+                preferences.saveNoteOpenMode(mode)
             },
         )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = stringResource(R.string.settings_markdown_notes_browse_layout),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            layoutOptions.forEachIndexed { index, (layout, labelRes) ->
-                SegmentedButton(
-                    selected = browseLayout == layout,
-                    onClick = {
-                        browseLayout = layout
-                        preferences.saveBrowseLayout(layout)
-                    },
-                    shape =
-                    SegmentedButtonDefaults.itemShape(
-                        index = index,
-                        count = layoutOptions.size,
-                    ),
-                ) {
-                    Text(
-                        text = stringResource(labelRes),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = stringResource(R.string.settings_markdown_notes_title_source),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            titleSourceOptions.forEachIndexed { index, (source, labelRes) ->
-                SegmentedButton(
-                    selected = titleSource == source,
-                    onClick = {
-                        titleSource = source
-                        preferences.saveTitleSource(source)
-                    },
-                    shape =
-                    SegmentedButtonDefaults.itemShape(
-                        index = index,
-                        count = titleSourceOptions.size,
-                    ),
-                ) {
-                    Text(
-                        text = stringResource(labelRes),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = stringResource(R.string.settings_markdown_notes_max_open_tabs),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        OutlinedTextField(
-            value = maxOpenTabsText,
-            onValueChange = { raw ->
-                val digits = raw.filter { it.isDigit() }.take(2)
-                maxOpenTabsText = digits
-                val parsed = digits.toIntOrNull() ?: return@OutlinedTextField
-                val clamped =
-                    parsed.coerceIn(
-                        NotesViewerPreferences.MIN_OPEN_TABS,
-                        NotesViewerPreferences.MAX_OPEN_TABS,
-                    )
-                preferences.saveMaxOpenTabs(clamped)
-                if (parsed != clamped) {
-                    maxOpenTabsText = clamped.toString()
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            supportingText = {
-                Text(stringResource(R.string.settings_markdown_notes_max_open_tabs_hint))
+
+        SettingsSectionHeader(text = stringResource(R.string.settings_category_file_browser))
+        SettingsChoiceRow(
+            label = stringResource(R.string.settings_markdown_notes_browse_layout),
+            options = layoutOptions,
+            selected = browseLayout,
+            onSelect = { layout ->
+                browseLayout = layout
+                preferences.saveBrowseLayout(layout)
             },
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        SettingsChoiceRow(
+            label = stringResource(R.string.settings_markdown_notes_title_source),
+            options = titleSourceOptions,
+            selected = titleSource,
+            onSelect = { source ->
+                titleSource = source
+                preferences.saveTitleSource(source)
+            },
+        )
+        IntSliderSetting(
+            label = stringResource(R.string.settings_markdown_notes_max_open_tabs),
+            value = maxOpenTabs,
+            valueRange = NotesViewerPreferences.MIN_OPEN_TABS..NotesViewerPreferences.MAX_OPEN_TABS,
+            hint = stringResource(R.string.settings_markdown_notes_max_open_tabs_hint),
+            onValueChange = { value ->
+                maxOpenTabs = value
+                preferences.saveMaxOpenTabs(value)
+            },
+        )
         NotesDensitySettingRow(
             labelRes = R.string.settings_markdown_notes_list_density,
             selected = listDensity,
@@ -585,7 +498,6 @@ private fun NotesSettingsSection(
                 preferences.saveListDensity(density)
             },
         )
-        Spacer(modifier = Modifier.height(8.dp))
         NotesDensitySettingRow(
             labelRes = R.string.settings_markdown_notes_tree_density,
             selected = treeDensity,
@@ -595,22 +507,8 @@ private fun NotesSettingsSection(
                 preferences.saveTreeDensity(density)
             },
         )
-        Spacer(modifier = Modifier.height(8.dp))
-        NotesDensitySettingRow(
-            labelRes = R.string.settings_markdown_notes_pinned_bar_density,
-            selected = pinnedBarDensity,
-            options = densityOptions,
-            onSelect = { density ->
-                pinnedBarDensity = density
-                preferences.savePinnedBarDensity(density)
-            },
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = stringResource(R.string.settings_markdown_notes_pinned_bar),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+
+        SettingsSectionHeader(text = stringResource(R.string.settings_category_pinned_bar))
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -630,37 +528,26 @@ private fun NotesSettingsSection(
                 },
             )
         }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = stringResource(R.string.settings_markdown_notes_max_pinned),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        OutlinedTextField(
-            value = maxPinnedText,
-            onValueChange = { raw ->
-                val digits = raw.filter { it.isDigit() }.take(2)
-                maxPinnedText = digits
-                val parsed = digits.toIntOrNull() ?: return@OutlinedTextField
-                val clamped =
-                    parsed.coerceIn(
-                        NotesViewerPreferences.MIN_PINNED_ITEMS,
-                        NotesViewerPreferences.MAX_PINNED_ITEMS,
-                    )
-                preferences.saveMaxPinnedItems(clamped)
-                if (parsed != clamped) {
-                    maxPinnedText = clamped.toString()
-                }
+        IntSliderSetting(
+            label = stringResource(R.string.settings_markdown_notes_max_pinned),
+            value = maxPinnedItems,
+            valueRange = NotesViewerPreferences.MIN_PINNED_ITEMS..NotesViewerPreferences.MAX_PINNED_ITEMS,
+            hint = stringResource(R.string.settings_markdown_notes_max_pinned_hint),
+            onValueChange = { value ->
+                maxPinnedItems = value
+                preferences.saveMaxPinnedItems(value)
                 persistPinned(pinnedItems)
             },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            supportingText = {
-                Text(stringResource(R.string.settings_markdown_notes_max_pinned_hint))
+        )
+        NotesDensitySettingRow(
+            labelRes = R.string.settings_markdown_notes_pinned_bar_density,
+            selected = pinnedBarDensity,
+            options = densityOptions,
+            onSelect = { density ->
+                pinnedBarDensity = density
+                preferences.savePinnedBarDensity(density)
             },
         )
-        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = stringResource(R.string.settings_markdown_notes_pinned_items),
             style = MaterialTheme.typography.labelLarge,
@@ -680,9 +567,10 @@ private fun NotesSettingsSection(
             )
         } else {
             val homeLabel = stringResource(R.string.nav_drawer_home)
-            val displayLabels = remember(pinnedItems, homeLabel) {
-                pinnedDisplayLabels(pinnedItems, homeLabel)
-            }
+            val displayLabels =
+                remember(pinnedItems, homeLabel) {
+                    pinnedDisplayLabels(pinnedItems, homeLabel)
+                }
             pinnedItems.forEachIndexed { index, item ->
                 SettingsPinnedItemRow(
                     item = item,
@@ -707,12 +595,267 @@ private fun NotesSettingsSection(
             }
         }
     }
+}
+
+@Composable
+private fun EditModeSettingsSection(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val preferences = remember { NotesViewerPreferences(context.applicationContext) }
+    var editorFontSizeSp by remember { mutableIntStateOf(preferences.loadEditorFontSizeSp()) }
+    var highlightMaxMb by remember { mutableIntStateOf(preferences.loadHighlightMaxMb()) }
 
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
-        content = body,
-    )
+    ) {
+        IntSliderSetting(
+            label = stringResource(R.string.settings_markdown_notes_editor_font_size),
+            value = editorFontSizeSp,
+            valueRange = AppPreferences.MIN_FONT_SIZE_SP..AppPreferences.MAX_FONT_SIZE_SP,
+            hint = stringResource(R.string.settings_font_size_hint),
+            valueLabel = { "$it sp" },
+            onValueChange = { value ->
+                editorFontSizeSp = value
+                preferences.saveEditorFontSizeSp(value)
+            },
+        )
+        SettingsSectionHeader(text = stringResource(R.string.settings_category_syntax_highlighting))
+        IntSliderSetting(
+            label = stringResource(R.string.settings_markdown_notes_highlight_max_mb),
+            value = highlightMaxMb,
+            valueRange =
+            NotesViewerPreferences.MIN_HIGHLIGHT_MAX_MB..NotesViewerPreferences.MAX_HIGHLIGHT_MAX_MB,
+            hint = stringResource(R.string.settings_markdown_notes_highlight_max_mb_hint),
+            valueLabel = { "$it MB" },
+            onValueChange = { value ->
+                highlightMaxMb = value
+                preferences.saveHighlightMaxMb(value)
+            },
+        )
+    }
+}
+
+@Composable
+private fun ViewModeSettingsSection(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val preferences = remember { NotesViewerPreferences(context.applicationContext) }
+    var previewFontSizeSp by remember { mutableIntStateOf(preferences.loadPreviewFontSizeSp()) }
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        IntSliderSetting(
+            label = stringResource(R.string.settings_markdown_notes_preview_font_size),
+            value = previewFontSizeSp,
+            valueRange = AppPreferences.MIN_FONT_SIZE_SP..AppPreferences.MAX_FONT_SIZE_SP,
+            hint = stringResource(R.string.settings_font_size_hint),
+            valueLabel = { "$it sp" },
+            onValueChange = { value ->
+                previewFontSizeSp = value
+                preferences.savePreviewFontSizeSp(value)
+            },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EssentialSettingsSection(
+    themeMode: ThemeMode,
+    onThemeModeChange: (ThemeMode) -> Unit,
+    uiFontSizeSp: Int,
+    onUiFontSizeChange: (Int) -> Unit,
+    appLanguage: AppLanguage,
+    onAppLanguageChange: (AppLanguage) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val options =
+        listOf(
+            ThemeMode.System to R.string.settings_theme_system,
+            ThemeMode.Light to R.string.settings_theme_light,
+            ThemeMode.Dark to R.string.settings_theme_dark,
+        )
+    var languageMenuExpanded by remember { mutableStateOf(false) }
+    val systemLanguageLabel = stringResource(R.string.settings_language_system)
+    val languageLabel =
+        if (appLanguage == AppLanguage.System) {
+            systemLanguageLabel
+        } else {
+            appLanguage.nativeLabel
+        }
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.settings_language_title),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        ExposedDropdownMenuBox(
+            expanded = languageMenuExpanded,
+            onExpandedChange = { languageMenuExpanded = it },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            OutlinedTextField(
+                value = languageLabel,
+                onValueChange = {},
+                readOnly = true,
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = languageMenuExpanded) },
+                modifier =
+                Modifier
+                    .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                    .fillMaxWidth(),
+            )
+            ExposedDropdownMenu(
+                expanded = languageMenuExpanded,
+                onDismissRequest = { languageMenuExpanded = false },
+            ) {
+                AppLanguage.entries.forEach { language ->
+                    val optionLabel =
+                        if (language == AppLanguage.System) {
+                            systemLanguageLabel
+                        } else {
+                            language.nativeLabel
+                        }
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = optionLabel,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        },
+                        onClick = {
+                            languageMenuExpanded = false
+                            if (language != appLanguage) {
+                                onAppLanguageChange(language)
+                            }
+                        },
+                    )
+                }
+            }
+        }
+        Text(
+            text = stringResource(R.string.settings_theme_title),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            options.forEachIndexed { index, (mode, labelRes) ->
+                SegmentedButton(
+                    selected = themeMode == mode,
+                    onClick = { onThemeModeChange(mode) },
+                    shape =
+                    SegmentedButtonDefaults.itemShape(
+                        index = index,
+                        count = options.size,
+                    ),
+                ) {
+                    Text(
+                        text = stringResource(labelRes),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+        }
+        IntSliderSetting(
+            label = stringResource(R.string.settings_ui_font_size),
+            value = uiFontSizeSp,
+            valueRange = AppPreferences.MIN_FONT_SIZE_SP..AppPreferences.MAX_FONT_SIZE_SP,
+            hint = stringResource(R.string.settings_font_size_hint),
+            valueLabel = { "$it sp" },
+            onValueChange = onUiFontSizeChange,
+        )
+    }
+}
+
+@Composable
+private fun <T> SettingsChoiceRow(
+    label: String,
+    options: List<Pair<T, Int>>,
+    selected: T,
+    onSelect: (T) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+            options.forEachIndexed { index, (value, labelRes) ->
+                SegmentedButton(
+                    selected = selected == value,
+                    onClick = { onSelect(value) },
+                    shape =
+                    SegmentedButtonDefaults.itemShape(
+                        index = index,
+                        count = options.size,
+                    ),
+                ) {
+                    Text(
+                        text = stringResource(labelRes),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun IntSliderSetting(
+    label: String,
+    value: Int,
+    valueRange: ClosedRange<Int>,
+    onValueChange: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    hint: String? = null,
+    valueLabel: (Int) -> String = { it.toString() },
+) {
+    val min = valueRange.start
+    val max = valueRange.endInclusive
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = valueLabel(value),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+        Slider(
+            value = value.toFloat(),
+            onValueChange = { onValueChange(it.roundToInt().coerceIn(min, max)) },
+            valueRange = min.toFloat()..max.toFloat(),
+            steps = (max - min - 1).coerceAtLeast(0),
+        )
+        if (hint != null) {
+            Text(
+                text = hint,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
 }
 
 private fun loadPinnedItemsForSettings(
@@ -738,32 +881,13 @@ private fun NotesDensitySettingRow(
     onSelect: (NotesListDensity) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = stringResource(labelRes),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            options.forEachIndexed { index, (density, optionLabelRes) ->
-                SegmentedButton(
-                    selected = selected == density,
-                    onClick = { onSelect(density) },
-                    shape =
-                    SegmentedButtonDefaults.itemShape(
-                        index = index,
-                        count = options.size,
-                    ),
-                ) {
-                    Text(
-                        text = stringResource(optionLabelRes),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
-        }
-    }
+    SettingsChoiceRow(
+        label = stringResource(labelRes),
+        options = options,
+        selected = selected,
+        onSelect = onSelect,
+        modifier = modifier,
+    )
 }
 
 private val SettingsPinnedReorderStepHeight = 48.dp
@@ -850,163 +974,5 @@ private fun SettingsPinnedItemRow(
                 contentDescription = stringResource(R.string.settings_markdown_notes_pinned_remove),
             )
         }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun AppearanceSettingsSection(
-    themeMode: ThemeMode,
-    onThemeModeChange: (ThemeMode) -> Unit,
-    uiFontSizeSp: Int,
-    onUiFontSizeChange: (Int) -> Unit,
-    appLanguage: AppLanguage,
-    onAppLanguageChange: (AppLanguage) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val options =
-        listOf(
-            ThemeMode.System to R.string.settings_theme_system,
-            ThemeMode.Light to R.string.settings_theme_light,
-            ThemeMode.Dark to R.string.settings_theme_dark,
-        )
-    var uiFontSizeText by remember(uiFontSizeSp) { mutableStateOf(uiFontSizeSp.toString()) }
-    var languageMenuExpanded by remember { mutableStateOf(false) }
-    val systemLanguageLabel = stringResource(R.string.settings_language_system)
-    val languageLabel =
-        if (appLanguage == AppLanguage.System) {
-            systemLanguageLabel
-        } else {
-            appLanguage.nativeLabel
-        }
-
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(
-            text = stringResource(R.string.settings_language_title),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        ExposedDropdownMenuBox(
-            expanded = languageMenuExpanded,
-            onExpandedChange = { languageMenuExpanded = it },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            OutlinedTextField(
-                value = languageLabel,
-                onValueChange = {},
-                readOnly = true,
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = languageMenuExpanded) },
-                modifier =
-                Modifier
-                    .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                    .fillMaxWidth(),
-            )
-            ExposedDropdownMenu(
-                expanded = languageMenuExpanded,
-                onDismissRequest = { languageMenuExpanded = false },
-            ) {
-                AppLanguage.entries.forEach { language ->
-                    val optionLabel =
-                        if (language == AppLanguage.System) {
-                            systemLanguageLabel
-                        } else {
-                            language.nativeLabel
-                        }
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text = optionLabel,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        },
-                        onClick = {
-                            languageMenuExpanded = false
-                            if (language != appLanguage) {
-                                onAppLanguageChange(language)
-                            }
-                        },
-                    )
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = stringResource(R.string.settings_theme_title),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-            options.forEachIndexed { index, (mode, labelRes) ->
-                SegmentedButton(
-                    selected = themeMode == mode,
-                    onClick = { onThemeModeChange(mode) },
-                    shape =
-                    SegmentedButtonDefaults.itemShape(
-                        index = index,
-                        count = options.size,
-                    ),
-                ) {
-                    Text(
-                        text = stringResource(labelRes),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        FontSizeField(
-            label = stringResource(R.string.settings_ui_font_size),
-            valueText = uiFontSizeText,
-            onValueTextChange = { uiFontSizeText = it },
-            onCommit = onUiFontSizeChange,
-        )
-    }
-}
-
-@Composable
-private fun FontSizeField(
-    label: String,
-    valueText: String,
-    onValueTextChange: (String) -> Unit,
-    onCommit: (Int) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        OutlinedTextField(
-            value = valueText,
-            onValueChange = { raw ->
-                val digits = raw.filter { it.isDigit() }.take(2)
-                onValueTextChange(digits)
-                val parsed = digits.toIntOrNull() ?: return@OutlinedTextField
-                val clamped =
-                    parsed.coerceIn(
-                        AppPreferences.MIN_FONT_SIZE_SP,
-                        AppPreferences.MAX_FONT_SIZE_SP,
-                    )
-                onCommit(clamped)
-                if (parsed != clamped) {
-                    onValueTextChange(clamped.toString())
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            supportingText = {
-                Text(stringResource(R.string.settings_font_size_hint))
-            },
-        )
     }
 }

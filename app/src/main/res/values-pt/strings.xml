@@ -6,6 +6,12 @@
     <string name="nav_drawer_home">Início</string>
     <string name="settings_title">Definições</string>
     <string name="settings_back">Voltar</string>
+    <string name="settings_general_title">Geral</string>
+    <string name="settings_general_summary">Arquivos e pastas</string>
+    <string name="settings_edit_mode_title">Modo de edição</string>
+    <string name="settings_edit_mode_summary">Configurações do editor</string>
+    <string name="settings_view_mode_title">Modo de visualização</string>
+    <string name="settings_view_mode_summary">Configurações da pré-visualização</string>
     <string name="settings_appearance_title">Aparência</string>
     <string name="settings_appearance_summary">Tema, idioma, tamanho da fonte</string>
     <string name="settings_language_title">Idioma</string>
@@ -18,7 +24,13 @@
     <string name="settings_font_size_hint">De 10 a 28 sp</string>
     <string name="settings_section_expand">Expandir secção</string>
     <string name="settings_section_collapse">Recolher secção</string>
-    <string name="settings_category_main">Geral</string>
+    <string name="settings_category_essential">Essencial</string>
+    <string name="settings_category_main">Principal</string>
+    <string name="settings_category_location">Local</string>
+    <string name="settings_category_opening">Abertura</string>
+    <string name="settings_category_file_browser">Navegador de arquivos</string>
+    <string name="settings_category_pinned_bar">Barra de fixados</string>
+    <string name="settings_category_syntax_highlighting">Realce de sintaxe</string>
     <string name="settings_notes_title">Notas</string>
     <string name="settings_notes_summary">Pasta, navegação, editor, fixados</string>
     <string name="settings_other_title">Outros</string>

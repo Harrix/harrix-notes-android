@@ -6,6 +6,12 @@
     <string name="nav_drawer_home">Inicio</string>
     <string name="settings_title">Ajustes</string>
     <string name="settings_back">Atrás</string>
+    <string name="settings_general_title">General</string>
+    <string name="settings_general_summary">Archivos y carpetas</string>
+    <string name="settings_edit_mode_title">Modo edición</string>
+    <string name="settings_edit_mode_summary">Ajustes del editor</string>
+    <string name="settings_view_mode_title">Modo vista</string>
+    <string name="settings_view_mode_summary">Ajustes de vista previa</string>
     <string name="settings_appearance_title">Apariencia</string>
     <string name="settings_appearance_summary">Tema, idioma, tamaño de fuente</string>
     <string name="settings_language_title">Idioma</string>
@@ -18,7 +24,13 @@
     <string name="settings_font_size_hint">De 10 a 28 sp</string>
     <string name="settings_section_expand">Expandir sección</string>
     <string name="settings_section_collapse">Contraer sección</string>
-    <string name="settings_category_main">General</string>
+    <string name="settings_category_essential">Esencial</string>
+    <string name="settings_category_main">Principal</string>
+    <string name="settings_category_location">Ubicación</string>
+    <string name="settings_category_opening">Apertura</string>
+    <string name="settings_category_file_browser">Explorador de archivos</string>
+    <string name="settings_category_pinned_bar">Barra de fijados</string>
+    <string name="settings_category_syntax_highlighting">Resaltado de sintaxis</string>
     <string name="settings_notes_title">Notas</string>
     <string name="settings_notes_summary">Carpeta, navegación, editor, fijados</string>
     <string name="settings_other_title">Otros</string>

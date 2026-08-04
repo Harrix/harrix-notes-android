@@ -6,6 +6,12 @@
     <string name="nav_drawer_home">Accueil</string>
     <string name="settings_title">Paramètres</string>
     <string name="settings_back">Retour</string>
+    <string name="settings_general_title">Général</string>
+    <string name="settings_general_summary">Fichiers et dossiers</string>
+    <string name="settings_edit_mode_title">Mode édition</string>
+    <string name="settings_edit_mode_summary">Paramètres de l\'éditeur</string>
+    <string name="settings_view_mode_title">Mode affichage</string>
+    <string name="settings_view_mode_summary">Paramètres de l\'aperçu</string>
     <string name="settings_appearance_title">Apparence</string>
     <string name="settings_appearance_summary">Thème, langue, taille de police</string>
     <string name="settings_language_title">Langue</string>
@@ -18,7 +24,13 @@
     <string name="settings_font_size_hint">De 10 à 28 sp</string>
     <string name="settings_section_expand">Développer la section</string>
     <string name="settings_section_collapse">Réduire la section</string>
+    <string name="settings_category_essential">Essentiel</string>
     <string name="settings_category_main">Général</string>
+    <string name="settings_category_location">Emplacement</string>
+    <string name="settings_category_opening">Ouverture</string>
+    <string name="settings_category_file_browser">Explorateur de fichiers</string>
+    <string name="settings_category_pinned_bar">Barre d\'épingles</string>
+    <string name="settings_category_syntax_highlighting">Coloration syntaxique</string>
     <string name="settings_notes_title">Notes</string>
     <string name="settings_notes_summary">Dossier, navigation, éditeur, épinglés</string>
     <string name="settings_other_title">Autres</string>
