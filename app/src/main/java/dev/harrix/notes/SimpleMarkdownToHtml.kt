@@ -10,6 +10,7 @@ package dev.harrix.notes
  *
  * Relative image URLs are rewritten to `/__notes_local__/…` tokens and then
  * embedded as `data:` URIs by the preview pane (SAF cannot be loaded directly).
+ * Oversized or slow notes use gray placeholders instead of images.
  */
 object SimpleMarkdownToHtml {
     private val FRONTMATTER_REGEX = Regex("^---\\r?\\n([\\s\\S]*?)\\r?\\n---\\r?\\n?")
@@ -40,6 +41,15 @@ object SimpleMarkdownToHtml {
 
     private val LOCAL_IMAGE_SRC_REGEX =
         Regex("""src="(/__notes_local__/[^"]+)"""")
+
+    private val IMG_TAG_REGEX = Regex("""(?is)<img\b[^>]*>""")
+
+    private val LOCAL_IMG_TAG_REGEX =
+        Regex("""(?is)<img\b[^>]*?\bsrc\s*=\s*"/__notes_local__/[^"]+"[^>]*>""")
+
+    /** Gray placeholder shown instead of images in simplified preview. */
+    const val SIMPLIFIED_IMAGE_PLACEHOLDER_MESSAGE =
+        "Images are not shown in simplified mode"
 
     fun convert(source: String): String {
         var text = source
@@ -534,6 +544,7 @@ object SimpleMarkdownToHtml {
     /**
      * Replaces `/__notes_local__/…` image URLs with `data:` URIs using [load].
      * [load] receives the vault-relative path (leading `/` means from notes root).
+     * Return null from [load] to leave that `src` unchanged.
      */
     fun embedLocalImages(
         html: String,
@@ -547,6 +558,27 @@ object SimpleMarkdownToHtml {
         val base64 = Base64Encoder.encode(bytes)
         """src="data:$mime;base64,$base64""""
     }
+
+    /** Replaces every `<img>` with a gray simplified-mode placeholder. */
+    fun replaceImagesWithPlaceholder(
+        html: String,
+        message: String = SIMPLIFIED_IMAGE_PLACEHOLDER_MESSAGE,
+    ): String {
+        val block = placeholderHtml(message)
+        return IMG_TAG_REGEX.replace(html) { block }
+    }
+
+    /** Replaces only SAF-backed local `<img>` tags (unresolved `/__notes_local__/…`). */
+    fun replaceLocalImagesWithPlaceholder(
+        html: String,
+        message: String = SIMPLIFIED_IMAGE_PLACEHOLDER_MESSAGE,
+    ): String {
+        val block = placeholderHtml(message)
+        return LOCAL_IMG_TAG_REGEX.replace(html) { block }
+    }
+
+    private fun placeholderHtml(message: String): String =
+        """<div class="img-placeholder">${escapeHtml(message)}</div>"""
 
     fun decodeLocalImagePath(urlPath: String): String? {
         val prefix = LOCAL_IMAGE_PATH_PREFIX

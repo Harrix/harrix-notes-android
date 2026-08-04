@@ -21,9 +21,9 @@ import androidx.compose.ui.unit.dp
 import dev.harrix.notes.R
 import kotlinx.coroutines.delay
 
-private const val ELAPSED_TIME_VISIBLE_AFTER_SECONDS = 2
+private const val ELAPSED_TIME_VISIBLE_AFTER_SECONDS = 1
 
-/** Spinner that shows elapsed wait time after [ELAPSED_TIME_VISIBLE_AFTER_SECONDS] seconds. */
+/** Spinner that shows elapsed wait time after [ELAPSED_TIME_VISIBLE_AFTER_SECONDS] second(s). */
 @Composable
 fun NotesLoadingIndicator(
     modifier: Modifier = Modifier,
