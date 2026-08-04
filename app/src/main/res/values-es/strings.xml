@@ -41,7 +41,7 @@
     <string name="settings_markdown_notes_title">Notas</string>
     <string name="settings_markdown_notes_path">Carpeta de notas</string>
     <string name="settings_markdown_notes_path_none">No establecida</string>
-    <string name="settings_markdown_notes_path_clear">Borrar carpeta de notas</string>
+    <string name="settings_markdown_notes_path_clear">Quitar carpeta de notas</string>
     <string name="settings_markdown_notes_open_mode">Abrir notas en</string>
     <string name="settings_markdown_notes_open_mode_preview">Vista previa</string>
     <string name="settings_markdown_notes_open_mode_edit">Editor</string>
@@ -106,8 +106,8 @@
     <string name="markdown_notes_folder_empty">No hay notas ni carpetas aquí</string>
     <string name="markdown_notes_load_failed">No se pudieron cargar las notas</string>
     <string name="markdown_notes_save_failed">No se pudo guardar la nota</string>
-    <string name="markdown_notes_edit">Editar nota</string>
-    <string name="markdown_notes_save">Guardar nota</string>
+    <string name="markdown_notes_edit">Editar</string>
+    <string name="markdown_notes_save">Guardar</string>
     <string name="markdown_notes_preview">Vista previa</string>
     <string name="markdown_notes_saved">Guardado</string>
     <string name="markdown_notes_new_note">+ Nota nueva</string>

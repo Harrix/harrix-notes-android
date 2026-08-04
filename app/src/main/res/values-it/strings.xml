@@ -41,7 +41,7 @@
     <string name="settings_markdown_notes_title">Note</string>
     <string name="settings_markdown_notes_path">Cartella delle note</string>
     <string name="settings_markdown_notes_path_none">Non impostata</string>
-    <string name="settings_markdown_notes_path_clear">Cancella cartella note</string>
+    <string name="settings_markdown_notes_path_clear">Rimuovi cartella note</string>
     <string name="settings_markdown_notes_open_mode">Apri le note in</string>
     <string name="settings_markdown_notes_open_mode_preview">Anteprima</string>
     <string name="settings_markdown_notes_open_mode_edit">Editor</string>
@@ -70,7 +70,7 @@
     <string name="settings_markdown_notes_pinned_items">Elementi fissati</string>
     <string name="settings_markdown_notes_pinned_items_empty">Nessun elemento fissato</string>
     <string name="settings_markdown_notes_pinned_items_need_folder">Scegli una cartella di note per modificare gli elementi fissati</string>
-    <string name="settings_markdown_notes_pinned_remove">Rimuovi</string>
+    <string name="settings_markdown_notes_pinned_remove">Rimuovi fissaggio</string>
     <string name="settings_markdown_notes_pinned_reorder">Riordina</string>
     <string name="markdown_notes_title">Harrix Notes</string>
     <string name="markdown_notes_menu">Altro</string>
@@ -97,7 +97,7 @@
     <string name="markdown_notes_folder_menu">Opzioni cartella</string>
     <string name="markdown_notes_note_menu">Opzioni nota</string>
     <string name="markdown_notes_pin">Fissa</string>
-    <string name="markdown_notes_unpin">Rimuovi</string>
+    <string name="markdown_notes_unpin">Rimuovi fissaggio</string>
     <string name="markdown_notes_pinned">Fissato</string>
     <string name="markdown_notes_pin_empty">vuoto</string>
     <string name="markdown_notes_pin_how_title">Come fissare</string>
@@ -106,8 +106,8 @@
     <string name="markdown_notes_folder_empty">Non ci sono note o cartelle qui</string>
     <string name="markdown_notes_load_failed">Impossibile caricare le note</string>
     <string name="markdown_notes_save_failed">Impossibile salvare la nota</string>
-    <string name="markdown_notes_edit">Modifica nota</string>
-    <string name="markdown_notes_save">Salva nota</string>
+    <string name="markdown_notes_edit">Modifica</string>
+    <string name="markdown_notes_save">Salva</string>
     <string name="markdown_notes_preview">Anteprima</string>
     <string name="markdown_notes_saved">Salvato</string>
     <string name="markdown_notes_new_note">+ Nuova nota</string>

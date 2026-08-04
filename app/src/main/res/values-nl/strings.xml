@@ -3,7 +3,7 @@
     <string name="app_name">Harrix Notes</string>
     <string name="nav_open">Navigatie openen</string>
     <string name="nav_settings">Instellingen</string>
-    <string name="nav_drawer_home">Thuis</string>
+    <string name="nav_drawer_home">Start</string>
     <string name="settings_title">Instellingen</string>
     <string name="settings_back">Terug</string>
     <string name="settings_general_title">Algemeen</string>
@@ -25,7 +25,7 @@
     <string name="settings_section_expand">Vouw sectie uit</string>
     <string name="settings_section_collapse">Sectie samenvouwen</string>
     <string name="settings_category_essential">Essentieel</string>
-    <string name="settings_category_main">Belangrijkste</string>
+    <string name="settings_category_main">Hoofd</string>
     <string name="settings_category_location">Locatie</string>
     <string name="settings_category_opening">Openen</string>
     <string name="settings_category_file_browser">Bestandsbrowser</string>
@@ -41,7 +41,7 @@
     <string name="settings_markdown_notes_title">Opmerkingen</string>
     <string name="settings_markdown_notes_path">map Notities</string>
     <string name="settings_markdown_notes_path_none">Niet ingesteld</string>
-    <string name="settings_markdown_notes_path_clear">Maak de notitiemap leeg</string>
+    <string name="settings_markdown_notes_path_clear">Notitiemap wissen</string>
     <string name="settings_markdown_notes_open_mode">Notities openen in</string>
     <string name="settings_markdown_notes_open_mode_preview">Voorbeeld</string>
     <string name="settings_markdown_notes_open_mode_edit">Redacteur</string>
@@ -106,9 +106,9 @@
     <string name="markdown_notes_folder_empty">Geen notities of mappen hier</string>
     <string name="markdown_notes_load_failed">Kan notities niet laden</string>
     <string name="markdown_notes_save_failed">Kan notitie niet opslaan</string>
-    <string name="markdown_notes_edit">Notitie bewerken</string>
-    <string name="markdown_notes_save">Bewaar notitie</string>
-    <string name="markdown_notes_preview">Voorbeeldnotitie</string>
+    <string name="markdown_notes_edit">Bewerken</string>
+    <string name="markdown_notes_save">Opslaan</string>
+    <string name="markdown_notes_preview">Voorbeeld</string>
     <string name="markdown_notes_saved">Opgeslagen</string>
     <string name="markdown_notes_new_note">+ Nieuwe notitie</string>
     <string name="markdown_notes_create_failed">Kan notitie niet maken</string>

@@ -25,7 +25,7 @@
     <string name="settings_section_expand">セクションを展開する</string>
     <string name="settings_section_collapse">セクションを折りたたむ</string>
     <string name="settings_category_essential">基本</string>
-    <string name="settings_category_main">その他</string>
+    <string name="settings_category_main">メイン</string>
     <string name="settings_category_location">保存場所</string>
     <string name="settings_category_opening">開き方</string>
     <string name="settings_category_file_browser">ファイルブラウザ</string>
@@ -41,7 +41,7 @@
     <string name="settings_markdown_notes_title">ノート</string>
     <string name="settings_markdown_notes_path">ノートフォルダ</string>
     <string name="settings_markdown_notes_path_none">未設定</string>
-    <string name="settings_markdown_notes_path_clear">ノートフォルダをクリア</string>
+    <string name="settings_markdown_notes_path_clear">ノートフォルダの選択を解除</string>
     <string name="settings_markdown_notes_open_mode">ノートを開く方法</string>
     <string name="settings_markdown_notes_open_mode_preview">プレビュー</string>
     <string name="settings_markdown_notes_open_mode_edit">エディタ</string>
@@ -96,7 +96,7 @@
     <string name="markdown_notes_show_merged">マージされたノートを表示</string>
     <string name="markdown_notes_folder_menu">フォルダオプション</string>
     <string name="markdown_notes_note_menu">ノートオプション</string>
-    <string name="markdown_notes_pin">ピン留めする</string>
+    <string name="markdown_notes_pin">ピン留め</string>
     <string name="markdown_notes_unpin">ピン留めを解除</string>
     <string name="markdown_notes_pinned">ピン留め済み</string>
     <string name="markdown_notes_pin_empty">空</string>
@@ -106,8 +106,8 @@
     <string name="markdown_notes_folder_empty">ここにノートやフォルダはありません</string>
     <string name="markdown_notes_load_failed">ノートの読み込みに失敗しました</string>
     <string name="markdown_notes_save_failed">ノートの保存に失敗しました</string>
-    <string name="markdown_notes_edit">ノートを編集</string>
-    <string name="markdown_notes_save">ノートを保存</string>
+    <string name="markdown_notes_edit">編集</string>
+    <string name="markdown_notes_save">保存</string>
     <string name="markdown_notes_preview">プレビュー</string>
     <string name="markdown_notes_saved">保存しました</string>
     <string name="markdown_notes_new_note">+ 新しいノート</string>

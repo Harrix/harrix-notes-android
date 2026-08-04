@@ -18,7 +18,7 @@
     <string name="settings_language_system">Hệ thống</string>
     <string name="settings_theme_title">chủ đề</string>
     <string name="settings_theme_system">Hệ thống</string>
-    <string name="settings_theme_light">Ánh sáng</string>
+    <string name="settings_theme_light">Sáng</string>
     <string name="settings_theme_dark">Tối</string>
     <string name="settings_ui_font_size">Kích thước phông chữ giao diện</string>
     <string name="settings_font_size_hint">Từ 10 đến 28 sp</string>
@@ -41,7 +41,7 @@
     <string name="settings_markdown_notes_title">Ghi chú</string>
     <string name="settings_markdown_notes_path">Thư mục ghi chú</string>
     <string name="settings_markdown_notes_path_none">Chưa đặt</string>
-    <string name="settings_markdown_notes_path_clear">Xóa thư mục ghi chú</string>
+    <string name="settings_markdown_notes_path_clear">Xóa chọn thư mục ghi chú</string>
     <string name="settings_markdown_notes_open_mode">Mở ghi chú trong</string>
     <string name="settings_markdown_notes_open_mode_preview">Xem trước</string>
     <string name="settings_markdown_notes_open_mode_edit">Biên tập viên</string>
@@ -106,9 +106,9 @@
     <string name="markdown_notes_folder_empty">Không có ghi chú hoặc thư mục ở đây</string>
     <string name="markdown_notes_load_failed">Không thể tải ghi chú</string>
     <string name="markdown_notes_save_failed">Không thể lưu ghi chú</string>
-    <string name="markdown_notes_edit">Chỉnh sửa ghi chú</string>
-    <string name="markdown_notes_save">Lưu ghi chú</string>
-    <string name="markdown_notes_preview">Xem trước ghi chú</string>
+    <string name="markdown_notes_edit">Chỉnh sửa</string>
+    <string name="markdown_notes_save">Lưu</string>
+    <string name="markdown_notes_preview">Xem trước</string>
     <string name="markdown_notes_saved">Đã lưu</string>
     <string name="markdown_notes_new_note">+ Ghi chú mới</string>
     <string name="markdown_notes_create_failed">Không thể tạo ghi chú</string>

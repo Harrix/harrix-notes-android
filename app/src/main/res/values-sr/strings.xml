@@ -41,7 +41,7 @@
     <string name="settings_markdown_notes_title">Белешке</string>
     <string name="settings_markdown_notes_path">Фасцикла за белешке</string>
     <string name="settings_markdown_notes_path_none">Није постављено</string>
-    <string name="settings_markdown_notes_path_clear">Уклони фасциклу за белешке</string>
+    <string name="settings_markdown_notes_path_clear">Скини фасциклу бележака</string>
     <string name="settings_markdown_notes_open_mode">Отвори белешке у</string>
     <string name="settings_markdown_notes_open_mode_preview">Преглед</string>
     <string name="settings_markdown_notes_open_mode_edit">Уређивач</string>
@@ -106,9 +106,9 @@
     <string name="markdown_notes_folder_empty">Овде нема белешки или фасцикли</string>
     <string name="markdown_notes_load_failed">Није могуће учитати белешке</string>
     <string name="markdown_notes_save_failed">Није могуће сачувати белешку</string>
-    <string name="markdown_notes_edit">Уреди белешку</string>
-    <string name="markdown_notes_save">Сачувај белешку</string>
-    <string name="markdown_notes_preview">Преглед белешке</string>
+    <string name="markdown_notes_edit">Уреди</string>
+    <string name="markdown_notes_save">Сачувај</string>
+    <string name="markdown_notes_preview">Преглед</string>
     <string name="markdown_notes_saved">Сачувано</string>
     <string name="markdown_notes_new_note">+ Нова белешка</string>
     <string name="markdown_notes_create_failed">Није могуће креирати белешку</string>

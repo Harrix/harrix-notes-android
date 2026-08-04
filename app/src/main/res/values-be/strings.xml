@@ -41,7 +41,7 @@
     <string name="settings_markdown_notes_title">Нататкі</string>
     <string name="settings_markdown_notes_path">Папка з нататкамі</string>
     <string name="settings_markdown_notes_path_none">Не выбрана</string>
-    <string name="settings_markdown_notes_path_clear">Ачысціць папку з нататкамі</string>
+    <string name="settings_markdown_notes_path_clear">Скінуць папку нататак</string>
     <string name="settings_markdown_notes_open_mode">Адкрываць нататкі ў</string>
     <string name="settings_markdown_notes_open_mode_preview">Папярэдні прагляд</string>
     <string name="settings_markdown_notes_open_mode_edit">Рэдактар</string>
@@ -87,7 +87,7 @@
     <string name="about_github_label">GitHub</string>
     <string name="markdown_notes_welcome_title">Выберыце папку з нататкамі</string>
     <string name="markdown_notes_welcome_message">Выберыце тэчку з вашымі нататкамі Markdown, каб пачаць. Вы можаце змяніць гэта пазней у наладах.</string>
-    <string name="markdown_notes_choose_folder">Выберыце тэчку</string>
+    <string name="markdown_notes_choose_folder">Выбраць папку</string>
     <string name="markdown_notes_path_unknown">Выбраная папка</string>
     <string name="markdown_notes_back">Назад</string>
     <string name="markdown_notes_close_tab">Закрыць укладку</string>
@@ -106,9 +106,9 @@
     <string name="markdown_notes_folder_empty">Тут няма нататак і тэчак</string>
     <string name="markdown_notes_load_failed">Не атрымалася загрузіць нататкі</string>
     <string name="markdown_notes_save_failed">Не ўдалося захаваць нататку</string>
-    <string name="markdown_notes_edit">Рэдагаваць нататку</string>
-    <string name="markdown_notes_save">Захаваць нататку</string>
-    <string name="markdown_notes_preview">Папярэдні прагляд нататкі</string>
+    <string name="markdown_notes_edit">Рэдагаваць</string>
+    <string name="markdown_notes_save">Захаваць</string>
+    <string name="markdown_notes_preview">Прагляд</string>
     <string name="markdown_notes_saved">Захавана</string>
     <string name="markdown_notes_new_note">+ Новая нататка</string>
     <string name="markdown_notes_create_failed">Не атрымалася стварыць нататку</string>

@@ -18,13 +18,13 @@
     <string name="settings_language_system">시스템</string>
     <string name="settings_theme_title">테마</string>
     <string name="settings_theme_system">시스템</string>
-    <string name="settings_theme_light">빛</string>
-    <string name="settings_theme_dark">어둠</string>
+    <string name="settings_theme_light">밝게</string>
+    <string name="settings_theme_dark">어둡게</string>
     <string name="settings_ui_font_size">인터페이스 글꼴 크기</string>
     <string name="settings_font_size_hint">10~28sp</string>
     <string name="settings_section_expand">섹션 펼치기</string>
     <string name="settings_section_collapse">섹션 접기</string>
-    <string name="settings_category_essential">필수</string>
+    <string name="settings_category_essential">기본</string>
     <string name="settings_category_main">메인</string>
     <string name="settings_category_location">위치</string>
     <string name="settings_category_opening">오프닝</string>
@@ -41,7 +41,7 @@
     <string name="settings_markdown_notes_title">메모</string>
     <string name="settings_markdown_notes_path">메모 폴더</string>
     <string name="settings_markdown_notes_path_none">설정되지 않음</string>
-    <string name="settings_markdown_notes_path_clear">메모 폴더 지우기</string>
+    <string name="settings_markdown_notes_path_clear">메모 폴더 선택 해제</string>
     <string name="settings_markdown_notes_open_mode">다음에서 메모 열기</string>
     <string name="settings_markdown_notes_open_mode_preview">미리보기</string>
     <string name="settings_markdown_notes_open_mode_edit">편집자</string>
@@ -70,7 +70,7 @@
     <string name="settings_markdown_notes_pinned_items">고정된 항목</string>
     <string name="settings_markdown_notes_pinned_items_empty">고정된 항목 없음</string>
     <string name="settings_markdown_notes_pinned_items_need_folder">고정된 항목을 편집하려면 메모 폴더를 선택하세요.</string>
-    <string name="settings_markdown_notes_pinned_remove">핀 제거</string>
+    <string name="settings_markdown_notes_pinned_remove">고정 해제</string>
     <string name="settings_markdown_notes_pinned_reorder">핀 재정렬</string>
     <string name="markdown_notes_title">Harrix Notes</string>
     <string name="markdown_notes_menu">추가 옵션</string>
@@ -96,7 +96,7 @@
     <string name="markdown_notes_show_merged">병합된 메모 표시</string>
     <string name="markdown_notes_folder_menu">폴더 옵션</string>
     <string name="markdown_notes_note_menu">메모 옵션</string>
-    <string name="markdown_notes_pin">핀</string>
+    <string name="markdown_notes_pin">고정</string>
     <string name="markdown_notes_unpin">고정 해제</string>
     <string name="markdown_notes_pinned">고정됨</string>
     <string name="markdown_notes_pin_empty">비어 있음</string>
@@ -106,9 +106,9 @@
     <string name="markdown_notes_folder_empty">여기에는 메모나 폴더가 없습니다.</string>
     <string name="markdown_notes_load_failed">메모를 로드할 수 없습니다.</string>
     <string name="markdown_notes_save_failed">메모를 저장할 수 없습니다.</string>
-    <string name="markdown_notes_edit">메모 수정</string>
-    <string name="markdown_notes_save">메모 저장</string>
-    <string name="markdown_notes_preview">미리보기 노트</string>
+    <string name="markdown_notes_edit">편집</string>
+    <string name="markdown_notes_save">저장</string>
+    <string name="markdown_notes_preview">미리보기</string>
     <string name="markdown_notes_saved">저장됨</string>
     <string name="markdown_notes_new_note">+ 새 메모</string>
     <string name="markdown_notes_create_failed">메모를 만들 수 없습니다.</string>

@@ -106,8 +106,8 @@
     <string name="markdown_notes_folder_empty">Il n\'y a ni notes ni dossiers ici</string>
     <string name="markdown_notes_load_failed">Échec du chargement des notes</string>
     <string name="markdown_notes_save_failed">Échec de l\'enregistrement de la note</string>
-    <string name="markdown_notes_edit">Modifier la note</string>
-    <string name="markdown_notes_save">Enregistrer la note</string>
+    <string name="markdown_notes_edit">Modifier</string>
+    <string name="markdown_notes_save">Enregistrer</string>
     <string name="markdown_notes_preview">Aperçu</string>
     <string name="markdown_notes_saved">Enregistré</string>
     <string name="markdown_notes_new_note">+ Nouvelle note</string>

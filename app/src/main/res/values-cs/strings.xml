@@ -18,7 +18,7 @@
     <string name="settings_language_system">Systém</string>
     <string name="settings_theme_title">téma</string>
     <string name="settings_theme_system">Systém</string>
-    <string name="settings_theme_light">Světlo</string>
+    <string name="settings_theme_light">Světlý</string>
     <string name="settings_theme_dark">Tmavý</string>
     <string name="settings_ui_font_size">Velikost písma rozhraní</string>
     <string name="settings_font_size_hint">Od 10 do 28 sp</string>
@@ -41,7 +41,7 @@
     <string name="settings_markdown_notes_title">Poznámky</string>
     <string name="settings_markdown_notes_path">Složka poznámky</string>
     <string name="settings_markdown_notes_path_none">Nenastaveno</string>
-    <string name="settings_markdown_notes_path_clear">Vymazat složku poznámek</string>
+    <string name="settings_markdown_notes_path_clear">Zrušit složku poznámek</string>
     <string name="settings_markdown_notes_open_mode">Otevřít poznámky v</string>
     <string name="settings_markdown_notes_open_mode_preview">Náhled</string>
     <string name="settings_markdown_notes_open_mode_edit">redaktor</string>
@@ -96,7 +96,7 @@
     <string name="markdown_notes_show_merged">Zobrazit sloučenou poznámku</string>
     <string name="markdown_notes_folder_menu">Možnosti složky</string>
     <string name="markdown_notes_note_menu">Možnosti poznámek</string>
-    <string name="markdown_notes_pin">Pin</string>
+    <string name="markdown_notes_pin">Připnout</string>
     <string name="markdown_notes_unpin">Odepnout</string>
     <string name="markdown_notes_pinned">Připnuto</string>
     <string name="markdown_notes_pin_empty">prázdný</string>
@@ -106,9 +106,9 @@
     <string name="markdown_notes_folder_empty">Nejsou zde žádné poznámky ani složky</string>
     <string name="markdown_notes_load_failed">Poznámky se nepodařilo načíst</string>
     <string name="markdown_notes_save_failed">Poznámku se nepodařilo uložit</string>
-    <string name="markdown_notes_edit">Upravit poznámku</string>
-    <string name="markdown_notes_save">Uložit poznámku</string>
-    <string name="markdown_notes_preview">Náhled poznámky</string>
+    <string name="markdown_notes_edit">Upravit</string>
+    <string name="markdown_notes_save">Uložit</string>
+    <string name="markdown_notes_preview">Náhled</string>
     <string name="markdown_notes_saved">Uloženo</string>
     <string name="markdown_notes_new_note">+ Nová poznámka</string>
     <string name="markdown_notes_create_failed">Poznámku nelze vytvořit</string>

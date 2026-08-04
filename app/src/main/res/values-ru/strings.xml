@@ -3,7 +3,7 @@
     <string name="app_name">Harrix Notes</string>
     <string name="nav_open">Открыть навигацию</string>
     <string name="nav_settings">Настройки</string>
-    <string name="nav_drawer_home">Домой</string>
+    <string name="nav_drawer_home">Главная</string>
     <string name="settings_title">Настройки</string>
     <string name="settings_back">Назад</string>
     <string name="settings_general_title">Общие</string>
@@ -25,7 +25,7 @@
     <string name="settings_section_expand">Развернуть раздел</string>
     <string name="settings_section_collapse">Свернуть раздел</string>
     <string name="settings_category_essential">Основное</string>
-    <string name="settings_category_main">Прочее</string>
+    <string name="settings_category_main">Главное</string>
     <string name="settings_category_location">Расположение</string>
     <string name="settings_category_opening">Открытие</string>
     <string name="settings_category_file_browser">Обзор файлов</string>

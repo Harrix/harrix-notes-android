@@ -3,7 +3,7 @@
     <string name="app_name">Harrix Notes</string>
     <string name="nav_open">Buka navigasi</string>
     <string name="nav_settings">Pengaturan</string>
-    <string name="nav_drawer_home">Rumah</string>
+    <string name="nav_drawer_home">Beranda</string>
     <string name="settings_title">Pengaturan</string>
     <string name="settings_back">Kembali</string>
     <string name="settings_general_title">Umum</string>
@@ -18,7 +18,7 @@
     <string name="settings_language_system">Sistem</string>
     <string name="settings_theme_title">Tema</string>
     <string name="settings_theme_system">Sistem</string>
-    <string name="settings_theme_light">Ringan</string>
+    <string name="settings_theme_light">Terang</string>
     <string name="settings_theme_dark">Gelap</string>
     <string name="settings_ui_font_size">Ukuran font antarmuka</string>
     <string name="settings_font_size_hint">Dari 10 hingga 28 sp</string>
@@ -39,9 +39,9 @@
     <string name="settings_reset_hint">Kembalikan opsi tampilan dan catatan ke default. Folder catatan disimpan.</string>
     <string name="settings_reset_done">Pengaturan dikembalikan ke default</string>
     <string name="settings_markdown_notes_title">Catatan</string>
-    <string name="settings_markdown_notes_path">Folder Catatan</string>
+    <string name="settings_markdown_notes_path">Folder catatan</string>
     <string name="settings_markdown_notes_path_none">Tidak disetel</string>
-    <string name="settings_markdown_notes_path_clear">Hapus folder catatan</string>
+    <string name="settings_markdown_notes_path_clear">Hapus pilihan folder catatan</string>
     <string name="settings_markdown_notes_open_mode">Buka catatan di</string>
     <string name="settings_markdown_notes_open_mode_preview">Pratinjau</string>
     <string name="settings_markdown_notes_open_mode_edit">Penyunting</string>
@@ -87,8 +87,8 @@
     <string name="about_github_label">GitHub</string>
     <string name="markdown_notes_welcome_title">Pilih folder catatan</string>
     <string name="markdown_notes_welcome_message">Pilih folder dengan catatan penurunan harga Anda untuk memulai. Anda dapat mengubahnya nanti di Pengaturan.</string>
-    <string name="markdown_notes_choose_folder">Pilih map</string>
-    <string name="markdown_notes_path_unknown">Folder yang dipilih</string>
+    <string name="markdown_notes_choose_folder">Pilih folder</string>
+    <string name="markdown_notes_path_unknown">Folder terpilih</string>
     <string name="markdown_notes_back">Kembali</string>
     <string name="markdown_notes_close_tab">Tutup tab</string>
     <string name="markdown_notes_open_tabs">Buka tab</string>
@@ -106,9 +106,9 @@
     <string name="markdown_notes_folder_empty">Tidak ada catatan atau folder di sini</string>
     <string name="markdown_notes_load_failed">Tidak dapat memuat catatan</string>
     <string name="markdown_notes_save_failed">Tidak dapat menyimpan catatan</string>
-    <string name="markdown_notes_edit">Sunting catatan</string>
-    <string name="markdown_notes_save">Simpan catatan</string>
-    <string name="markdown_notes_preview">Catatan pratinjau</string>
+    <string name="markdown_notes_edit">Sunting</string>
+    <string name="markdown_notes_save">Simpan</string>
+    <string name="markdown_notes_preview">Pratinjau</string>
     <string name="markdown_notes_saved">Disimpan</string>
     <string name="markdown_notes_new_note">+ Catatan Baru</string>
     <string name="markdown_notes_create_failed">Tidak dapat membuat catatan</string>

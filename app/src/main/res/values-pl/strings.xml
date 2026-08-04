@@ -3,7 +3,7 @@
     <string name="app_name">Harrix Notes</string>
     <string name="nav_open">Otwórz nawigację</string>
     <string name="nav_settings">Ustawienia</string>
-    <string name="nav_drawer_home">Dom</string>
+    <string name="nav_drawer_home">Start</string>
     <string name="settings_title">Ustawienia</string>
     <string name="settings_back">Powrót</string>
     <string name="settings_general_title">Generał</string>
@@ -15,17 +15,17 @@
     <string name="settings_appearance_title">Wygląd</string>
     <string name="settings_appearance_summary">Motyw, język, rozmiar czcionki</string>
     <string name="settings_language_title">Język</string>
-    <string name="settings_language_system">Systemu</string>
+    <string name="settings_language_system">System</string>
     <string name="settings_theme_title">Motyw</string>
-    <string name="settings_theme_system">Systemu</string>
-    <string name="settings_theme_light">Światło</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Jasny</string>
     <string name="settings_theme_dark">Ciemny</string>
     <string name="settings_ui_font_size">Rozmiar czcionki interfejsu</string>
     <string name="settings_font_size_hint">Od 10 do 28 sp</string>
     <string name="settings_section_expand">Rozwiń sekcję</string>
     <string name="settings_section_collapse">Zwiń sekcję</string>
     <string name="settings_category_essential">Niezbędne</string>
-    <string name="settings_category_main">Główny</string>
+    <string name="settings_category_main">Główne</string>
     <string name="settings_category_location">Lokalizacja</string>
     <string name="settings_category_opening">Otwarcie</string>
     <string name="settings_category_file_browser">Przeglądarka plików</string>
@@ -41,7 +41,7 @@
     <string name="settings_markdown_notes_title">Notatki</string>
     <string name="settings_markdown_notes_path">Folder Notatki</string>
     <string name="settings_markdown_notes_path_none">Nie ustawiono</string>
-    <string name="settings_markdown_notes_path_clear">Wyczyść folder notatek</string>
+    <string name="settings_markdown_notes_path_clear">Wyczyść wybór folderu notatek</string>
     <string name="settings_markdown_notes_open_mode">Otwórz notatki w</string>
     <string name="settings_markdown_notes_open_mode_preview">Podgląd</string>
     <string name="settings_markdown_notes_open_mode_edit">Redaktor</string>
@@ -106,10 +106,10 @@
     <string name="markdown_notes_folder_empty">Nie ma tu żadnych notatek ani folderów</string>
     <string name="markdown_notes_load_failed">Nie udało się wczytać notatek</string>
     <string name="markdown_notes_save_failed">Nie udało się zapisać notatki</string>
-    <string name="markdown_notes_edit">Edytuj notatkę</string>
-    <string name="markdown_notes_save">Zapisz notatkę</string>
-    <string name="markdown_notes_preview">Podgląd notatki</string>
+    <string name="markdown_notes_edit">Edytuj</string>
+    <string name="markdown_notes_save">Zapisz</string>
+    <string name="markdown_notes_preview">Podgląd</string>
     <string name="markdown_notes_saved">Zapisano</string>
-    <string name="markdown_notes_new_note">+ Nowa uwaga</string>
+    <string name="markdown_notes_new_note">+ Nowa notatka</string>
     <string name="markdown_notes_create_failed">Nie można utworzyć notatki</string>
 </resources>

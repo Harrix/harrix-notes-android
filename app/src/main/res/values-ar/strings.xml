@@ -3,7 +3,7 @@
     <string name="app_name">Harrix Notes</string>
     <string name="nav_open">افتح التنقل</string>
     <string name="nav_settings">الإعدادات</string>
-    <string name="nav_drawer_home">الصفحة الرئيسية</string>
+    <string name="nav_drawer_home">الرئيسية</string>
     <string name="settings_title">الإعدادات</string>
     <string name="settings_back">العودة</string>
     <string name="settings_general_title">عام</string>
@@ -24,7 +24,7 @@
     <string name="settings_font_size_hint">من 10 إلى 28 sp</string>
     <string name="settings_section_expand">قم بتوسيع القسم</string>
     <string name="settings_section_collapse">طي القسم</string>
-    <string name="settings_category_essential">ضروري</string>
+    <string name="settings_category_essential">أساسي</string>
     <string name="settings_category_main">الرئيسية</string>
     <string name="settings_category_location">الموقع</string>
     <string name="settings_category_opening">الافتتاح</string>
@@ -70,7 +70,7 @@
     <string name="settings_markdown_notes_pinned_items">العناصر المثبتة</string>
     <string name="settings_markdown_notes_pinned_items_empty">لا توجد عناصر مثبتة</string>
     <string name="settings_markdown_notes_pinned_items_need_folder">اختر مجلد ملاحظات لتحرير العناصر المثبتة</string>
-    <string name="settings_markdown_notes_pinned_remove">إزالة الدبوس</string>
+    <string name="settings_markdown_notes_pinned_remove">إلغاء التثبيت</string>
     <string name="settings_markdown_notes_pinned_reorder">إعادة ترتيب دبوس</string>
     <string name="markdown_notes_title">Harrix Notes</string>
     <string name="markdown_notes_menu">المزيد من الخيارات</string>
@@ -96,8 +96,8 @@
     <string name="markdown_notes_show_merged">إظهار الملاحظة المدمجة</string>
     <string name="markdown_notes_folder_menu">خيارات المجلد</string>
     <string name="markdown_notes_note_menu">خيارات الملاحظة</string>
-    <string name="markdown_notes_pin">دبوس</string>
-    <string name="markdown_notes_unpin">إزالة التثبيت</string>
+    <string name="markdown_notes_pin">تثبيت</string>
+    <string name="markdown_notes_unpin">إلغاء التثبيت</string>
     <string name="markdown_notes_pinned">مثبت</string>
     <string name="markdown_notes_pin_empty">فارغ</string>
     <string name="markdown_notes_pin_how_title">كيفية تثبيت</string>
@@ -106,9 +106,9 @@
     <string name="markdown_notes_folder_empty">لا توجد ملاحظات أو مجلدات هنا</string>
     <string name="markdown_notes_load_failed">تعذر تحميل الملاحظات</string>
     <string name="markdown_notes_save_failed">تعذر حفظ الملاحظة</string>
-    <string name="markdown_notes_edit">تحرير الملاحظة</string>
-    <string name="markdown_notes_save">حفظ الملاحظة</string>
-    <string name="markdown_notes_preview">معاينة المذكرة</string>
+    <string name="markdown_notes_edit">تحرير</string>
+    <string name="markdown_notes_save">حفظ</string>
+    <string name="markdown_notes_preview">معاينة</string>
     <string name="markdown_notes_saved">تم الحفظ</string>
     <string name="markdown_notes_new_note">+ ملاحظة جديدة</string>
     <string name="markdown_notes_create_failed">لا يمكن إنشاء ملاحظة</string>

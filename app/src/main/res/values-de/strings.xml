@@ -3,7 +3,7 @@
     <string name="app_name">Harrix Notes</string>
     <string name="nav_open">Navigation öffnen</string>
     <string name="nav_settings">Einstellungen</string>
-    <string name="nav_drawer_home">Startseite</string>
+    <string name="nav_drawer_home">Start</string>
     <string name="settings_title">Einstellungen</string>
     <string name="settings_back">Zurück</string>
     <string name="settings_general_title">Allgemein</string>
@@ -24,7 +24,7 @@
     <string name="settings_font_size_hint">Von 10 bis 28 sp</string>
     <string name="settings_section_expand">Abschnitt aufklappen</string>
     <string name="settings_section_collapse">Abschnitt einklappen</string>
-    <string name="settings_category_essential">Wesentlich</string>
+    <string name="settings_category_essential">Wesentliches</string>
     <string name="settings_category_main">Allgemein</string>
     <string name="settings_category_location">Speicherort</string>
     <string name="settings_category_opening">Öffnen</string>
@@ -41,7 +41,7 @@
     <string name="settings_markdown_notes_title">Notizen</string>
     <string name="settings_markdown_notes_path">Notizordner</string>
     <string name="settings_markdown_notes_path_none">Nicht festgelegt</string>
-    <string name="settings_markdown_notes_path_clear">Notizordner entfernen</string>
+    <string name="settings_markdown_notes_path_clear">Notizordner zurücksetzen</string>
     <string name="settings_markdown_notes_open_mode">Notizen öffnen in</string>
     <string name="settings_markdown_notes_open_mode_preview">Vorschau</string>
     <string name="settings_markdown_notes_open_mode_edit">Editor</string>
@@ -70,7 +70,7 @@
     <string name="settings_markdown_notes_pinned_items">Angeheftete Elemente</string>
     <string name="settings_markdown_notes_pinned_items_empty">Keine angehefteten Elemente</string>
     <string name="settings_markdown_notes_pinned_items_need_folder">Wählen Sie einen Notizordner, um angeheftete Elemente zu bearbeiten</string>
-    <string name="settings_markdown_notes_pinned_remove">Loslösen</string>
+    <string name="settings_markdown_notes_pinned_remove">Losheften</string>
     <string name="settings_markdown_notes_pinned_reorder">Anordnung ändern</string>
     <string name="markdown_notes_title">Harrix Notes</string>
     <string name="markdown_notes_menu">Mehr</string>
@@ -97,7 +97,7 @@
     <string name="markdown_notes_folder_menu">Ordneroptionen</string>
     <string name="markdown_notes_note_menu">Notizoptionen</string>
     <string name="markdown_notes_pin">Anheften</string>
-    <string name="markdown_notes_unpin">Loslösen</string>
+    <string name="markdown_notes_unpin">Losheften</string>
     <string name="markdown_notes_pinned">Angeheftet</string>
     <string name="markdown_notes_pin_empty">leer</string>
     <string name="markdown_notes_pin_how_title">Wie man anheftet</string>

@@ -106,8 +106,8 @@
     <string name="markdown_notes_folder_empty">Não existem notas ou pastas aqui</string>
     <string name="markdown_notes_load_failed">Falha ao carregar as notas</string>
     <string name="markdown_notes_save_failed">Falha ao guardar a nota</string>
-    <string name="markdown_notes_edit">Editar nota</string>
-    <string name="markdown_notes_save">Guardar nota</string>
+    <string name="markdown_notes_edit">Editar</string>
+    <string name="markdown_notes_save">Guardar</string>
     <string name="markdown_notes_preview">Pré-visualização</string>
     <string name="markdown_notes_saved">Guardado</string>
     <string name="markdown_notes_new_note">+ Nova nota</string>
