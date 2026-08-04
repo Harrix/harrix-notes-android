@@ -32,18 +32,39 @@ object NotesRelativeDocuments {
             return null
         }
         val rootId = DocumentsContract.getTreeDocumentId(treeUri)
-        var currentDirId =
-            when {
-                fromRoot -> rootId
-
-                else ->
-                    noteParentDocumentId(noteDocumentId)
-                        ?: folderPath.lastOrNull()?.documentId
-                        ?: rootId
+        val baseDocumentIds =
+            if (fromRoot) {
+                listOf(rootId)
+            } else {
+                listOfNotNull(
+                    folderPath.lastOrNull()?.documentId,
+                    noteParentDocumentId(noteDocumentId),
+                    rootId,
+                ).distinct()
             }
+        for (baseDocumentId in baseDocumentIds) {
+            resolveFromBase(
+                resolver = resolver,
+                treeUri = treeUri,
+                rootDocumentId = rootId,
+                baseDocumentId = baseDocumentId,
+                parts = parts,
+            )?.let { return it }
+        }
+        return null
+    }
+
+    private fun resolveFromBase(
+        resolver: ContentResolver,
+        treeUri: Uri,
+        rootDocumentId: String,
+        baseDocumentId: String,
+        parts: List<String>,
+    ): Uri? {
+        var currentDirId = baseDocumentId
         for (part in parts.dropLast(1)) {
             if (part == "..") {
-                currentDirId = parentTreeDocumentId(currentDirId) ?: rootId
+                currentDirId = parentTreeDocumentId(currentDirId) ?: rootDocumentId
                 continue
             }
             currentDirId =
