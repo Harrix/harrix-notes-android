@@ -27,9 +27,30 @@ sealed class NotesEntry {
         val displayLabel: String,
         /** YAML `icon:` emoji when resolved; empty until background meta resolve finishes. */
         val displayIcon: String = "",
+        /**
+         * When this row is a collapsed `Folder/Folder.md` listing entry, the folder that
+         * actually contains the note (and typically `img/`). Callers must append this to
+         * the listing path so relative assets resolve.
+         */
+        val containingFolder: NotesPathSegment? = null,
     ) : NotesEntry() {
         override val sortLabel: String get() = displayLabel
     }
+}
+
+/**
+ * Listing/tree [path] plus [NotesEntry.Note.containingFolder] when the note was collapsed
+ * from a same-name folder.
+ */
+fun noteAssetFolderPath(
+    path: List<NotesPathSegment>,
+    note: NotesEntry.Note,
+): List<NotesPathSegment> {
+    val containing = note.containingFolder ?: return path
+    if (path.lastOrNull()?.documentId == containing.documentId) {
+        return path
+    }
+    return path + containing
 }
 
 /** Title and/or icon updates from a background note-prefix read. */

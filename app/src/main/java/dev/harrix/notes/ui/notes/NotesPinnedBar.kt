@@ -273,7 +273,12 @@ private fun NotesPinnedBarItem(
             onDismissRequest = { menuExpanded = false },
         ) {
             DropdownMenuItem(
-                text = { Text(stringResource(R.string.markdown_notes_unpin)) },
+                text = {
+                    Text(
+                        text = stringResource(R.string.markdown_notes_unpin),
+                        maxLines = 2,
+                    )
+                },
                 onClick = {
                     menuExpanded = false
                     onUnpin()

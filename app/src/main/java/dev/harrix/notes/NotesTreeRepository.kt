@@ -201,7 +201,18 @@ class NotesTreeRepository(
 
             val collapsedNote = sameNameMd.takeIf { canCollapse && !hasVisibleSubfolders }
             if (collapsedNote != null) {
-                items.add(noteEntry(collapsedNote))
+                // Keep the real parent folder: asset dirs like `img/` do not block collapse,
+                // but relative images must resolve against this folder, not the listing parent.
+                items.add(
+                    noteEntry(collapsedNote).copy(
+                        containingFolder =
+                        NotesPathSegment(
+                            documentId = folder.documentId,
+                            name = folder.name,
+                            uri = folder.uri,
+                        ),
+                    ),
+                )
             } else {
                 items.add(
                     NotesEntry.Folder(

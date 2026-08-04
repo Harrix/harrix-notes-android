@@ -330,19 +330,13 @@ private fun SettingsHubRow(
 ) {
     ListItem(
         headlineContent = {
-            Text(
-                text = title,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Text(text = title)
         },
         supportingContent = {
             Text(
                 text = summary,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
             )
         },
         leadingContent = {
@@ -516,8 +510,6 @@ private fun GeneralSettingsSection(modifier: Modifier = Modifier) {
             Text(
                 text = stringResource(R.string.settings_markdown_notes_pinned_bar_enabled),
                 style = MaterialTheme.typography.bodyLarge,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
             Switch(
@@ -724,8 +716,7 @@ private fun EssentialSettingsSection(
                         text = {
                             Text(
                                 text = optionLabel,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 2,
                             )
                         },
                         onClick = {
@@ -961,8 +952,6 @@ private fun SettingsPinnedItemRow(
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
             modifier =
             Modifier
                 .weight(1f)

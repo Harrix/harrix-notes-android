@@ -36,9 +36,11 @@ object NotesRelativeDocuments {
             if (fromRoot) {
                 listOf(rootId)
             } else {
+                // Prefer the note's real parent: collapsed Folder/Folder.md rows may open with
+                // a listing path that points at the parent of that folder (missing `img/`).
                 listOfNotNull(
-                    folderPath.lastOrNull()?.documentId,
                     noteParentDocumentId(noteDocumentId),
+                    folderPath.lastOrNull()?.documentId,
                     rootId,
                 ).distinct()
             }

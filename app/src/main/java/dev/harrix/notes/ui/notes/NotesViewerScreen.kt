@@ -116,6 +116,7 @@ import dev.harrix.notes.NotesTreeRepository
 import dev.harrix.notes.NotesViewerPreferences
 import dev.harrix.notes.OpenNoteTab
 import dev.harrix.notes.R
+import dev.harrix.notes.noteAssetFolderPath
 import dev.harrix.notes.notesFolderDisplayName
 import dev.harrix.notes.takeNotesFolderPermission
 import dev.harrix.notes.ui.adaptiveContentWidth
@@ -792,6 +793,16 @@ fun NotesViewerScreen(
                     folderPath = pathForNote,
                 ),
             )
+        } else if (existing.folderPath.map { it.documentId } != pathForNote.map { it.documentId }) {
+            // Refresh path (e.g. collapsed Folder/Folder.md previously opened with parent path).
+            openTabs =
+                openTabs.map { tab ->
+                    if (tab.documentId == note.documentId) {
+                        tab.copy(folderPath = pathForNote)
+                    } else {
+                        tab
+                    }
+                }
         }
         if (selectedTabDocumentId != note.documentId) {
             noteLoading = true
@@ -1248,7 +1259,7 @@ fun NotesViewerScreen(
                 },
                 onOpenNote = { note, parentPath ->
                     scope.launch { drawerState.close() }
-                    openNote(note, parentPath)
+                    openNote(note, noteAssetFolderPath(parentPath, note))
                 },
                 onOpenSettings = {
                     scope.launch {
@@ -1426,7 +1437,7 @@ fun NotesViewerScreen(
                                         )
                                     },
                                     onOpenNote = { note ->
-                                        openNote(note, folderPath)
+                                        openNote(note, noteAssetFolderPath(folderPath, note))
                                     },
                                     onShowMergedNote = { folder ->
                                         openMergedNote(folder, folderPath)
@@ -1446,7 +1457,7 @@ fun NotesViewerScreen(
                                         unpinByDocumentId(folder.documentId)
                                     },
                                     onPinNote = { note ->
-                                        pinNote(note, folderPath)
+                                        pinNote(note, noteAssetFolderPath(folderPath, note))
                                     },
                                     onUnpinNote = { note ->
                                         unpinByDocumentId(note.documentId)
@@ -1543,7 +1554,10 @@ private fun NotesTopChrome(
             ) {
                 DropdownMenuItem(
                     text = {
-                        Text(stringResource(R.string.markdown_notes_settings))
+                        Text(
+                            text = stringResource(R.string.markdown_notes_settings),
+                            maxLines = 2,
+                        )
                     },
                     onClick = {
                         onMenuExpandedChange(false)
@@ -1558,7 +1572,10 @@ private fun NotesTopChrome(
                 )
                 DropdownMenuItem(
                     text = {
-                        Text(stringResource(R.string.markdown_notes_about))
+                        Text(
+                            text = stringResource(R.string.markdown_notes_about),
+                            maxLines = 2,
+                        )
                     },
                     onClick = {
                         onMenuExpandedChange(false)
@@ -2473,7 +2490,12 @@ private fun NotesEntryContextMenu(
     ) {
         if (showMergedNote) {
             DropdownMenuItem(
-                text = { Text(stringResource(R.string.markdown_notes_show_merged)) },
+                text = {
+                    Text(
+                        text = stringResource(R.string.markdown_notes_show_merged),
+                        maxLines = 2,
+                    )
+                },
                 onClick = {
                     onDismiss()
                     onShowMergedNote()
@@ -2489,6 +2511,7 @@ private fun NotesEntryContextMenu(
         DropdownMenuItem(
             text = {
                 Text(
+                    text =
                     stringResource(
                         if (pinned) {
                             R.string.markdown_notes_unpin
@@ -2496,6 +2519,7 @@ private fun NotesEntryContextMenu(
                             R.string.markdown_notes_pin
                         },
                     ),
+                    maxLines = 2,
                 )
             },
             onClick = {
