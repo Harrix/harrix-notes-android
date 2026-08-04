@@ -388,6 +388,11 @@ object SimpleMarkdownToHtml {
      */
     fun rewriteImageSrc(raw: String): String {
         val src = stripUrlTitle(raw.trim().trim('"').trim('\''))
+        // Idempotent: convert() already rewrites markdown images; rewriteHtmlImageSources
+        // must not encode `/__notes_local__/…` a second time.
+        if (src.startsWith(LOCAL_IMAGE_PATH_PREFIX)) {
+            return escapeHtml(src)
+        }
         if (isExternalImageSrc(src)) {
             return escapeHtml(src)
         }
