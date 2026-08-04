@@ -6,6 +6,10 @@ import android.provider.DocumentsContract
 
 /**
  * Resolves note-relative paths (for preview images) against the SAF tree.
+ *
+ * - `foo/bar.png`, `./foo.png` — relative to the note parent ([folderPath])
+ * - `/foo/bar.png` — from the notes tree root
+ * - `../` segments walk up toward the root
  */
 object NotesRelativeDocuments {
     fun resolve(
@@ -14,9 +18,10 @@ object NotesRelativeDocuments {
         folderPath: List<NotesPathSegment>,
         relativePath: String,
     ): Uri? {
+        val raw = Uri.decode(relativePath.trim()).replace('\\', '/')
+        val fromRoot = raw.startsWith("/")
         val parts =
-            relativePath
-                .replace('\\', '/')
+            raw
                 .split('/')
                 .filter { it.isNotEmpty() && it != "." }
         if (parts.isEmpty()) {
@@ -24,7 +29,7 @@ object NotesRelativeDocuments {
         }
         val rootId = DocumentsContract.getTreeDocumentId(treeUri)
         val stack = ArrayList<String>(folderPath.size + 4)
-        if (folderPath.isEmpty()) {
+        if (fromRoot || folderPath.isEmpty()) {
             stack.add(rootId)
         } else {
             folderPath.forEach { stack.add(it.documentId) }
@@ -36,9 +41,9 @@ object NotesRelativeDocuments {
                 }
                 continue
             }
-            val parentId = stack.last()
-            val childId = findChildDocumentId(resolver, treeUri, parentId, part, directory = true)
-                ?: return null
+            val childId =
+                findChildDocumentId(resolver, treeUri, stack.last(), part, wantDirectory = true)
+                    ?: return null
             stack.add(childId)
         }
         val fileName = parts.last()
@@ -46,7 +51,7 @@ object NotesRelativeDocuments {
             return null
         }
         val fileId =
-            findChildDocumentId(resolver, treeUri, stack.last(), fileName, directory = false)
+            findChildDocumentId(resolver, treeUri, stack.last(), fileName, wantDirectory = false)
                 ?: return null
         return DocumentsContract.buildDocumentUriUsingTree(treeUri, fileId)
     }
@@ -63,7 +68,7 @@ object NotesRelativeDocuments {
         treeUri: Uri,
         parentDocumentId: String,
         name: String,
-        directory: Boolean,
+        wantDirectory: Boolean,
     ): String? {
         val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, parentDocumentId)
         return runCatching {
@@ -85,16 +90,24 @@ object NotesRelativeDocuments {
                         cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DISPLAY_NAME)
                     val mimeIndex =
                         cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_MIME_TYPE)
-                    var foundId: String? = null
-                    while (cursor.moveToNext() && foundId == null) {
+                    var preferred: String? = null
+                    var fallback: String? = null
+                    while (cursor.moveToNext() && preferred == null) {
                         val childName = cursor.getString(nameIndex)
-                        val mime = cursor.getString(mimeIndex).orEmpty()
-                        val isDir = mime == DocumentsContract.Document.MIME_TYPE_DIR
-                        if (childName == name && isDir == directory) {
-                            foundId = cursor.getString(idIndex)
+                        if (childName == name) {
+                            val mime = cursor.getString(mimeIndex).orEmpty()
+                            val isDir = mime == DocumentsContract.Document.MIME_TYPE_DIR
+                            val id = cursor.getString(idIndex)
+                            if (id != null) {
+                                if (isDir == wantDirectory) {
+                                    preferred = id
+                                } else if (fallback == null) {
+                                    fallback = id
+                                }
+                            }
                         }
                     }
-                    foundId
+                    preferred ?: fallback
                 }
         }.getOrNull()
     }

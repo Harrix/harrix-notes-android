@@ -1,5 +1,6 @@
 package dev.harrix.notes.ui.notes
 
+import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
@@ -34,11 +35,15 @@ import dev.harrix.notes.SimpleMarkdownToHtml
 import java.io.ByteArrayInputStream
 import java.util.Locale
 
+private const val PREVIEW_BASE_URL = "https://appassets.androidplatform.net/notes-preview/"
+private const val PREVIEW_HOST = "appassets.androidplatform.net"
+
 /**
  * Note **preview** mode: simple custom Markdown → HTML in a WebView.
  *
  * White page background; YAML front matter is collapsed in `<details>`.
- * Relative images load from the notes SAF tree via [SimpleMarkdownToHtml.LOCAL_IMAGE_SCHEME].
+ * Relative images load from the notes SAF tree via
+ * [SimpleMarkdownToHtml.LOCAL_IMAGE_PATH_PREFIX] under [PREVIEW_BASE_URL].
  */
 @Composable
 fun NotesHtmlPreviewPane(
@@ -97,7 +102,7 @@ fun NotesHtmlPreviewPane(
                                     folderPath,
                                 )
                                 webView.loadDataWithBaseURL(
-                                    "https://notes.preview.local/",
+                                    PREVIEW_BASE_URL,
                                     html,
                                     "text/html",
                                     Charsets.UTF_8.name(),
@@ -122,6 +127,7 @@ private data class PreviewWebViewTag(
     val folderPath: List<NotesPathSegment>,
 )
 
+@SuppressLint("SetJavaScriptEnabled")
 private fun createPreviewWebView(
     context: Context,
     resolver: ContentResolver,
@@ -130,7 +136,8 @@ private fun createPreviewWebView(
 ): WebView {
     val client = PreviewWebViewClient(resolver, treeUri, folderPath)
     return WebView(context).apply {
-        settings.javaScriptEnabled = false
+        // JS is needed so in-page #anchor clicks can scroll reliably after loadDataWithBaseURL.
+        settings.javaScriptEnabled = true
         settings.domStorageEnabled = false
         settings.loadsImagesAutomatically = true
         settings.blockNetworkImage = false
@@ -159,21 +166,51 @@ private class PreviewWebViewClient(
         this.folderPath = folderPath
     }
 
+    override fun shouldOverrideUrlLoading(
+        view: WebView,
+        request: WebResourceRequest,
+    ): Boolean {
+        val url = request.url
+        val fragment = url.fragment
+        val isPreviewDoc =
+            url.scheme.equals("https", ignoreCase = true) &&
+                url.host.equals(PREVIEW_HOST, ignoreCase = true)
+        if (isPreviewDoc && !fragment.isNullOrEmpty() && isPreviewDocumentPath(url.path.orEmpty())) {
+            scrollToAnchor(view, fragment)
+            return true
+        }
+        if (url.scheme.equals("http", ignoreCase = true) ||
+            url.scheme.equals("https", ignoreCase = true)
+        ) {
+            // Keep http(s) navigation inside the WebView (external images / rare full links).
+            return false
+        }
+        // Block leaving preview for unsupported schemes (mailto, custom, etc.).
+        return true
+    }
+
     override fun shouldInterceptRequest(
         view: WebView,
         request: WebResourceRequest,
     ): WebResourceResponse? {
         val url = request.url
-        if (url.scheme != SimpleMarkdownToHtml.LOCAL_IMAGE_SCHEME) {
+        if (!url.scheme.equals("https", ignoreCase = true) ||
+            !url.host.equals(PREVIEW_HOST, ignoreCase = true)
+        ) {
+            return null
+        }
+        val path = url.path.orEmpty()
+        val marker = SimpleMarkdownToHtml.LOCAL_IMAGE_PATH_PREFIX.trimEnd('/')
+        // Paths look like /notes-preview/__notes_local__/folder/file.png
+        val markerIndex = path.indexOf(marker)
+        if (markerIndex < 0) {
             return null
         }
         val tree = treeUri ?: return notFound()
         val relative =
-            url.path
-                ?.trimStart('/')
-                ?.let { Uri.decode(it) }
-                ?.replace('\\', '/')
-                ?: return notFound()
+            Uri.decode(path.substring(markerIndex + marker.length).trimStart('/'))
+                .replace('\\', '/')
+                .ifEmpty { return notFound() }
         val docUri =
             NotesRelativeDocuments.resolve(resolver, tree, folderPath, relative)
                 ?: return notFound()
@@ -184,6 +221,38 @@ private class PreviewWebViewClient(
             null,
             ByteArrayInputStream(bytes),
         )
+    }
+
+    private fun scrollToAnchor(
+        view: WebView,
+        rawFragment: String,
+    ) {
+        val id = SimpleMarkdownToHtml.slugify(Uri.decode(rawFragment))
+        val safeId =
+            id
+                .replace("\\", "\\\\")
+                .replace("'", "\\'")
+                .replace("\n", "")
+                .replace("\r", "")
+        view.evaluateJavascript(
+            """
+            (function() {
+              var el = document.getElementById('$safeId');
+              if (el) { el.scrollIntoView({block:'start'}); }
+            })();
+            """.trimIndent(),
+            null,
+        )
+    }
+
+    private fun isPreviewDocumentPath(path: String): Boolean {
+        if (path.isEmpty() || path == "/") {
+            return true
+        }
+        if (path.endsWith("/notes-preview")) {
+            return true
+        }
+        return path.endsWith("/notes-preview/")
     }
 
     private fun notFound(): WebResourceResponse = WebResourceResponse(
@@ -245,6 +314,7 @@ private fun buildPreviewHtml(
           h1, h2, h3, h4, h5, h6 {
             line-height: 1.25;
             margin: 1.1em 0 0.5em;
+            scroll-margin-top: 8px;
           }
           h1 { font-size: 1.6em; }
           h2 { font-size: 1.35em; }
@@ -287,14 +357,16 @@ private fun buildPreviewHtml(
             border-top: 1px solid #dddddd;
             margin: 1.2em 0;
           }
-          details.frontmatter {
+          details {
             background: #f7f7f7;
             border: 1px solid #e4e4e4;
             border-radius: 6px;
             padding: 8px 12px;
+          }
+          details.frontmatter {
             color: #555555;
           }
-          details.frontmatter summary {
+          details summary {
             cursor: pointer;
             font-weight: 600;
           }
