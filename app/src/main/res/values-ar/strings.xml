@@ -63,6 +63,8 @@
     <string name="settings_markdown_notes_title_source_file_name">اسم الملف</string>
     <string name="settings_markdown_notes_max_open_tabs">الحد الأقصى لعلامات التبويب المفتوحة</string>
     <string name="settings_markdown_notes_max_open_tabs_hint">يتم إغلاق علامة التبويب الأقدم عند تجاوز الحد الأقصى</string>
+    <string name="settings_markdown_notes_single_note_mode">وضع ملاحظة واحدةحدة</string>
+    <string name="settings_markdown_notes_single_note_mode_hint">فتح ملاحظة يغلق السابقة</string>
     <string name="settings_markdown_notes_pinned_bar">شريط مثبت</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">إظهار الشريط المثبت</string>
     <string name="settings_markdown_notes_max_pinned">الحد الأقصى للعناصر المثبتة</string>

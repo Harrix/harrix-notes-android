@@ -63,6 +63,8 @@
     <string name="settings_markdown_notes_title_source_file_name">File name</string>
     <string name="settings_markdown_notes_max_open_tabs">Max open tabs</string>
     <string name="settings_markdown_notes_max_open_tabs_hint">Oldest tab closes when the limit is exceeded</string>
+    <string name="settings_markdown_notes_single_note_mode">Single note mode</string>
+    <string name="settings_markdown_notes_single_note_mode_hint">Opening a note closes the previous one</string>
     <string name="settings_markdown_notes_pinned_bar">Pinned bar</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Show pinned bar</string>
     <string name="settings_markdown_notes_max_pinned">Max pinned items</string>

@@ -178,6 +178,7 @@ fun NotesViewerScreen(
     var editorFontSizeSp by viewModel.editorFontSizeSp
     var highlightMaxMb by viewModel.highlightMaxMb
     var maxOpenTabs by viewModel.maxOpenTabs
+    var singleNoteMode by viewModel.singleNoteMode
     var pinnedBarEnabled by viewModel.pinnedBarEnabled
     var maxPinnedItems by viewModel.maxPinnedItems
     var pinnedItems by viewModel.pinnedItems
@@ -200,6 +201,7 @@ fun NotesViewerScreen(
         editorFontSizeSp = preferences.loadEditorFontSizeSp()
         highlightMaxMb = preferences.loadHighlightMaxMb()
         maxOpenTabs = preferences.loadMaxOpenTabs()
+        singleNoteMode = preferences.loadSingleNoteMode()
         pinnedBarEnabled = preferences.loadPinnedBarEnabled()
         maxPinnedItems = preferences.loadMaxPinnedItems()
     }
@@ -751,29 +753,44 @@ fun NotesViewerScreen(
     fun ensureMaxOpenTabs(
         preferredSelectedId: String? = selectedTabDocumentId,
     ) {
-        val limit = maxOpenTabs.coerceAtLeast(NotesViewerPreferences.MIN_OPEN_TABS)
-        if (openTabs.size <= limit) {
-            if (preferredSelectedId != null && openTabs.any { it.documentId == preferredSelectedId }) {
-                selectedTabDocumentId = preferredSelectedId
-            } else if (selectedTabDocumentId != null &&
-                openTabs.none { it.documentId == selectedTabDocumentId }
-            ) {
-                selectedTabDocumentId = openTabs.lastOrNull()?.documentId
+        val limit =
+            if (singleNoteMode) {
+                1
+            } else {
+                maxOpenTabs.coerceAtLeast(NotesViewerPreferences.MIN_OPEN_TABS)
             }
-            return
+        if (openTabs.size > limit) {
+            openTabs =
+                if (singleNoteMode) {
+                    val preferred =
+                        preferredSelectedId?.let { id ->
+                            openTabs.firstOrNull { it.documentId == id }
+                        }
+                    listOfNotNull(preferred ?: openTabs.lastOrNull())
+                } else {
+                    // Drop oldest tabs first (left side of the tab bar).
+                    openTabs.takeLast(limit)
+                }
         }
-        // Drop oldest tabs first (left side of the tab bar) until within the limit.
-        val kept = openTabs.takeLast(limit)
-        openTabs = kept
+        val kept = openTabs
         if (preferredSelectedId != null && kept.any { it.documentId == preferredSelectedId }) {
             selectedTabDocumentId = preferredSelectedId
-        } else {
+        } else if (selectedTabDocumentId != null &&
+            kept.none { it.documentId == selectedTabDocumentId }
+        ) {
+            selectedTabDocumentId = kept.lastOrNull()?.documentId
+        } else if (preferredSelectedId != null && kept.none { it.documentId == preferredSelectedId }) {
             selectedTabDocumentId = kept.lastOrNull()?.documentId
         }
     }
 
     fun appendOpenTab(tab: OpenNoteTab) {
-        openTabs = openTabs + tab
+        openTabs =
+            if (singleNoteMode) {
+                listOf(tab)
+            } else {
+                openTabs + tab
+            }
         ensureMaxOpenTabs(preferredSelectedId = tab.documentId)
     }
 
@@ -781,34 +798,49 @@ fun NotesViewerScreen(
         note: NotesEntry.Note,
         pathForNote: List<NotesPathSegment>,
     ) {
-        val existing = openTabs.firstOrNull { it.documentId == note.documentId }
-        if (existing == null) {
-            appendOpenTab(
-                OpenNoteTab(
-                    documentId = note.documentId,
-                    uri = note.uri,
-                    title = note.displayLabel,
-                    fileName = note.name,
-                    folderPath = pathForNote,
-                ),
-            )
-        } else if (existing.folderPath.map { it.documentId } != pathForNote.map { it.documentId }) {
-            // Refresh path (e.g. collapsed Folder/Folder.md previously opened with parent path).
-            openTabs =
-                openTabs.map { tab ->
-                    if (tab.documentId == note.documentId) {
-                        tab.copy(folderPath = pathForNote)
-                    } else {
-                        tab
-                    }
+        fun applyOpen() {
+            val existing = openTabs.firstOrNull { it.documentId == note.documentId }
+            if (existing == null) {
+                appendOpenTab(
+                    OpenNoteTab(
+                        documentId = note.documentId,
+                        uri = note.uri,
+                        title = note.displayLabel,
+                        fileName = note.name,
+                        folderPath = pathForNote,
+                    ),
+                )
+            } else {
+                if (existing.folderPath.map { it.documentId } != pathForNote.map { it.documentId }) {
+                    // Refresh path (e.g. collapsed Folder/Folder.md previously opened with parent path).
+                    openTabs =
+                        openTabs.map { tab ->
+                            if (tab.documentId == note.documentId) {
+                                tab.copy(folderPath = pathForNote)
+                            } else {
+                                tab
+                            }
+                        }
                 }
+                if (singleNoteMode && openTabs.size > 1) {
+                    openTabs = listOf(openTabs.first { it.documentId == note.documentId })
+                }
+            }
+            if (selectedTabDocumentId != note.documentId) {
+                noteLoading = true
+                noteContent = null
+                resetEditorState()
+            }
+            selectedTabDocumentId = note.documentId
         }
-        if (selectedTabDocumentId != note.documentId) {
-            noteLoading = true
-            noteContent = null
-            resetEditorState()
+
+        val closesOthers =
+            singleNoteMode && openTabs.any { it.documentId != note.documentId }
+        if (closesOthers || selectedTabDocumentId != note.documentId) {
+            persistCurrentDraft { applyOpen() }
+        } else {
+            applyOpen()
         }
-        selectedTabDocumentId = note.documentId
     }
 
     fun createNewNote() {
@@ -902,24 +934,37 @@ fun NotesViewerScreen(
                     name = folder.name,
                     uri = folder.uri,
                 )
-        val existing = openTabs.firstOrNull { it.documentId == documentId }
-        if (existing == null) {
-            appendOpenTab(
-                OpenNoteTab(
-                    documentId = documentId,
-                    uri = uri,
-                    title = title,
-                    fileName = fileName,
-                    folderPath = noteParentPath,
-                ),
-            )
+
+        fun applyOpen() {
+            val existing = openTabs.firstOrNull { it.documentId == documentId }
+            if (existing == null) {
+                appendOpenTab(
+                    OpenNoteTab(
+                        documentId = documentId,
+                        uri = uri,
+                        title = title,
+                        fileName = fileName,
+                        folderPath = noteParentPath,
+                    ),
+                )
+            } else if (singleNoteMode && openTabs.size > 1) {
+                openTabs = listOf(existing)
+            }
+            if (selectedTabDocumentId != documentId) {
+                noteLoading = true
+                noteContent = null
+                resetEditorState()
+            }
+            selectedTabDocumentId = documentId
         }
-        if (selectedTabDocumentId != documentId) {
-            noteLoading = true
-            noteContent = null
-            resetEditorState()
+
+        val closesOthers =
+            singleNoteMode && openTabs.any { it.documentId != documentId }
+        if (closesOthers || selectedTabDocumentId != documentId) {
+            persistCurrentDraft { applyOpen() }
+        } else {
+            applyOpen()
         }
-        selectedTabDocumentId = documentId
     }
 
     fun closeTab(documentId: String) {
@@ -1009,6 +1054,7 @@ fun NotesViewerScreen(
         }
         val previousTitleSource = titleSource
         val previousMaxOpenTabs = maxOpenTabs
+        val previousSingleNoteMode = singleNoteMode
         val previousMaxPinned = maxPinnedItems
         val hadSession = viewModel.appliedSettingsRevision >= 0
         reloadPath()
@@ -1016,7 +1062,9 @@ fun NotesViewerScreen(
         if (previousTitleSource != titleSource) {
             applyTitleSourceToVisibleLists()
         }
-        if (previousMaxOpenTabs != maxOpenTabs) {
+        if (previousMaxOpenTabs != maxOpenTabs ||
+            previousSingleNoteMode != singleNoteMode
+        ) {
             ensureMaxOpenTabs()
         }
         val tree = notesTreeUri

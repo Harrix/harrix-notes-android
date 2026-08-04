@@ -63,6 +63,8 @@
     <string name="settings_markdown_notes_title_source_file_name">Nama berkas</string>
     <string name="settings_markdown_notes_max_open_tabs">Tab terbuka maksimal</string>
     <string name="settings_markdown_notes_max_open_tabs_hint">Tab terlama ditutup ketika batas terlampaui</string>
+    <string name="settings_markdown_notes_single_note_mode">Mode satu catatan</string>
+    <string name="settings_markdown_notes_single_note_mode_hint">Membuka catatan menutup catatan sebelumnya</string>
     <string name="settings_markdown_notes_pinned_bar">Bilah yang disematkan</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Tampilkan bilah yang disematkan</string>
     <string name="settings_markdown_notes_max_pinned">Item yang disematkan maksimal</string>

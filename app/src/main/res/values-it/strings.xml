@@ -63,6 +63,8 @@
     <string name="settings_markdown_notes_title_source_file_name">Nome del file</string>
     <string name="settings_markdown_notes_max_open_tabs">Max schede aperte</string>
     <string name="settings_markdown_notes_max_open_tabs_hint">La scheda più vecchia viene chiusa quando si supera il limite</string>
+    <string name="settings_markdown_notes_single_note_mode">Modalità nota singola</string>
+    <string name="settings_markdown_notes_single_note_mode_hint">Aprendo una nota si chiude la precedente</string>
     <string name="settings_markdown_notes_pinned_bar">Barra degli elementi fissati</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Mostra la barra degli elementi fissati</string>
     <string name="settings_markdown_notes_max_pinned">Max elementi fissati</string>

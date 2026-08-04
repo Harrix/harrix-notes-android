@@ -63,6 +63,8 @@
     <string name="settings_markdown_notes_title_source_file_name">파일 이름</string>
     <string name="settings_markdown_notes_max_open_tabs">최대 열린 탭</string>
     <string name="settings_markdown_notes_max_open_tabs_hint">한도를 초과하면 가장 오래된 탭이 닫힙니다.</string>
+    <string name="settings_markdown_notes_single_note_mode">단일 메모 모드</string>
+    <string name="settings_markdown_notes_single_note_mode_hint">메모를 열면 이전 메모가 닫힙니다</string>
     <string name="settings_markdown_notes_pinned_bar">고정 막대</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">고정된 막대 표시</string>
     <string name="settings_markdown_notes_max_pinned">최대 고정 항목</string>

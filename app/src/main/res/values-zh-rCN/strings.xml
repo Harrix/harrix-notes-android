@@ -63,6 +63,8 @@
     <string name="settings_markdown_notes_title_source_file_name">文件名</string>
     <string name="settings_markdown_notes_max_open_tabs">最大打开标签页</string>
     <string name="settings_markdown_notes_max_open_tabs_hint">超出限制时最旧的标签页将被关闭</string>
+    <string name="settings_markdown_notes_single_note_mode">单笔记模式</string>
+    <string name="settings_markdown_notes_single_note_mode_hint">打开笔记时关闭上一个</string>
     <string name="settings_markdown_notes_pinned_bar">固定栏</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">显示固定栏</string>
     <string name="settings_markdown_notes_max_pinned">最大固定项目</string>

@@ -394,6 +394,7 @@ private fun GeneralSettingsSection(modifier: Modifier = Modifier) {
     var pinnedBarDensity by remember { mutableStateOf(preferences.loadPinnedBarDensity()) }
     var titleSource by remember { mutableStateOf(preferences.loadTitleSource()) }
     var noteOpenMode by remember { mutableStateOf(preferences.loadNoteOpenMode()) }
+    var singleNoteMode by remember { mutableStateOf(preferences.loadSingleNoteMode()) }
     var maxOpenTabs by remember { mutableIntStateOf(preferences.loadMaxOpenTabs()) }
     var pinnedBarEnabled by remember { mutableStateOf(preferences.loadPinnedBarEnabled()) }
     var maxPinnedItems by remember { mutableIntStateOf(preferences.loadMaxPinnedItems()) }
@@ -453,6 +454,30 @@ private fun GeneralSettingsSection(modifier: Modifier = Modifier) {
                 preferences.saveNoteOpenMode(mode)
             },
         )
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.settings_markdown_notes_single_note_mode),
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f),
+                )
+                Switch(
+                    checked = singleNoteMode,
+                    onCheckedChange = { enabled ->
+                        singleNoteMode = enabled
+                        preferences.saveSingleNoteMode(enabled)
+                    },
+                )
+            }
+            Text(
+                text = stringResource(R.string.settings_markdown_notes_single_note_mode_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
 
         SettingsSectionHeader(text = stringResource(R.string.settings_category_file_browser))
         SettingsChoiceRow(
@@ -473,16 +498,18 @@ private fun GeneralSettingsSection(modifier: Modifier = Modifier) {
                 preferences.saveTitleSource(source)
             },
         )
-        IntSliderSetting(
-            label = stringResource(R.string.settings_markdown_notes_max_open_tabs),
-            value = maxOpenTabs,
-            valueRange = NotesViewerPreferences.MIN_OPEN_TABS..NotesViewerPreferences.MAX_OPEN_TABS,
-            hint = stringResource(R.string.settings_markdown_notes_max_open_tabs_hint),
-            onValueChange = { value ->
-                maxOpenTabs = value
-                preferences.saveMaxOpenTabs(value)
-            },
-        )
+        if (!singleNoteMode) {
+            IntSliderSetting(
+                label = stringResource(R.string.settings_markdown_notes_max_open_tabs),
+                value = maxOpenTabs,
+                valueRange = NotesViewerPreferences.MIN_OPEN_TABS..NotesViewerPreferences.MAX_OPEN_TABS,
+                hint = stringResource(R.string.settings_markdown_notes_max_open_tabs_hint),
+                onValueChange = { value ->
+                    maxOpenTabs = value
+                    preferences.saveMaxOpenTabs(value)
+                },
+            )
+        }
         NotesDensitySettingRow(
             labelRes = R.string.settings_markdown_notes_list_density,
             selected = listDensity,

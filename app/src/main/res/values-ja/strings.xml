@@ -63,6 +63,8 @@
     <string name="settings_markdown_notes_title_source_file_name">ファイル名</string>
     <string name="settings_markdown_notes_max_open_tabs">最大開くタブ数</string>
     <string name="settings_markdown_notes_max_open_tabs_hint">制限を超えると最も古いタブが閉じられます</string>
+    <string name="settings_markdown_notes_single_note_mode">単一ノートモード</string>
+    <string name="settings_markdown_notes_single_note_mode_hint">ノートを開くと前のノートが閉じます</string>
     <string name="settings_markdown_notes_pinned_bar">ピン留めバー</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">ピン留めバーを表示</string>
     <string name="settings_markdown_notes_max_pinned">最大ピン留め数</string>

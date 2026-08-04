@@ -63,6 +63,8 @@
     <string name="settings_markdown_notes_title_source_file_name">Име датотеке</string>
     <string name="settings_markdown_notes_max_open_tabs">Максимално отворене картице</string>
     <string name="settings_markdown_notes_max_open_tabs_hint">Најстарија картица се затвара када се прекорачи ограничење</string>
+    <string name="settings_markdown_notes_single_note_mode">Режим једне белешке</string>
+    <string name="settings_markdown_notes_single_note_mode_hint">Отварањем белешке претходна се затвара</string>
     <string name="settings_markdown_notes_pinned_bar">Трака са закаченим ставкама</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Прикажи траку са закаченим ставкама</string>
     <string name="settings_markdown_notes_max_pinned">Максималан број закачених ставки</string>
