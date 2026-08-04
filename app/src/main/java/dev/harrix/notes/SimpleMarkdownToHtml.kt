@@ -4,9 +4,9 @@ package dev.harrix.notes
  * Minimal Markdown → HTML converter for note preview.
  *
  * Supports headings (with anchor ids), paragraphs, emphasis, links, images,
- * inline/fenced code, lists, blockquotes, thematic breaks, and raw
- * `<details>` / `<summary>` HTML blocks. YAML front matter is wrapped in
- * `<details>` (collapsed). No formulas, footnotes, or tables.
+ * inline/fenced code, lists, blockquotes, GFM pipe tables, thematic breaks,
+ * and raw `<details>` / `<summary>` HTML blocks. YAML front matter is wrapped
+ * in `<details>` (collapsed). No formulas or footnotes.
  *
  * Relative image URLs are rewritten to `/__notes_local__/…` tokens and then
  * embedded as `data:` URIs by the preview pane (SAF cannot be loaded directly).
@@ -116,7 +116,130 @@ object SimpleMarkdownToHtml {
         if (ORDERED_ITEM_REGEX.matches(trimmed)) {
             return appendOrderedList(lines, start, out)
         }
+        if (isTableHeader(lines, start)) {
+            return appendTable(lines, start, out)
+        }
         return appendParagraph(lines, start, out)
+    }
+
+    private fun isTableHeader(
+        lines: List<String>,
+        start: Int,
+    ): Boolean {
+        if (start + 1 >= lines.size) {
+            return false
+        }
+        val header = lines[start].trim()
+        val separator = lines[start + 1].trim()
+        return looksLikeTableRow(header) && isTableSeparator(separator)
+    }
+
+    private fun looksLikeTableRow(line: String): Boolean {
+        if (line.isEmpty() || !line.contains('|')) {
+            return false
+        }
+        // Avoid treating emphasis / plain pipes in prose as a table start alone.
+        return splitTableCells(line).isNotEmpty()
+    }
+
+    private fun isTableSeparator(line: String): Boolean {
+        if (!line.contains('|') && !line.contains('-')) {
+            return false
+        }
+        val cells = splitTableCells(line)
+        if (cells.isEmpty()) {
+            return false
+        }
+        return cells.all { cell ->
+            val trimmed = cell.trim()
+            if (trimmed.isEmpty()) {
+                return@all false
+            }
+            val core = trimmed.trim(':').trim()
+            core.isNotEmpty() && core.all { it == '-' }
+        }
+    }
+
+    private fun splitTableCells(line: String): List<String> {
+        var body = line.trim()
+        if (body.startsWith("|")) {
+            body = body.substring(1)
+        }
+        if (body.endsWith("|")) {
+            body = body.substring(0, body.length - 1)
+        }
+        if (body.isEmpty()) {
+            return emptyList()
+        }
+        return body.split('|').map { it.trim() }
+    }
+
+    private fun tableCellAlign(separatorCell: String): String? {
+        val trimmed = separatorCell.trim()
+        val left = trimmed.startsWith(':')
+        val right = trimmed.endsWith(':')
+        return when {
+            left && right -> "center"
+            right -> "right"
+            left -> "left"
+            else -> null
+        }
+    }
+
+    private fun appendTable(
+        lines: List<String>,
+        start: Int,
+        out: StringBuilder,
+    ): Int {
+        val headerCells = splitTableCells(lines[start].trim())
+        val alignCells = splitTableCells(lines[start + 1].trim())
+        val aligns =
+            headerCells.indices.map { index ->
+                alignCells.getOrNull(index)?.let { tableCellAlign(it) }
+            }
+        var i = start + 2
+        val bodyRows = ArrayList<List<String>>()
+        while (i < lines.size) {
+            val trimmed = lines[i].trim()
+            if (trimmed.isEmpty() || !looksLikeTableRow(trimmed)) {
+                break
+            }
+            bodyRows += splitTableCells(trimmed)
+            i += 1
+        }
+        out.append("<div class=\"table-wrap\"><table>\n<thead><tr>")
+        headerCells.forEachIndexed { index, cell ->
+            out.append(tableCellHtml("th", cell, aligns.getOrNull(index)))
+        }
+        out.append("</tr></thead>\n")
+        if (bodyRows.isNotEmpty()) {
+            out.append("<tbody>\n")
+            for (row in bodyRows) {
+                out.append("<tr>")
+                for (index in headerCells.indices) {
+                    val cell = row.getOrElse(index) { "" }
+                    out.append(tableCellHtml("td", cell, aligns.getOrNull(index)))
+                }
+                out.append("</tr>\n")
+            }
+            out.append("</tbody>\n")
+        }
+        out.append("</table></div>\n")
+        return i
+    }
+
+    private fun tableCellHtml(
+        tag: String,
+        text: String,
+        align: String?,
+    ): String {
+        val style =
+            if (align != null) {
+                " style=\"text-align:$align\""
+            } else {
+                ""
+            }
+        return "<$tag$style>${renderInline(text)}</$tag>"
     }
 
     private fun appendDetails(
@@ -300,7 +423,7 @@ object SimpleMarkdownToHtml {
     ): Int {
         val para = StringBuilder(lines[start])
         var i = start + 1
-        while (i < lines.size && !isBlockBoundary(lines[i])) {
+        while (i < lines.size && !isBlockBoundary(lines, i)) {
             para.append('\n')
             para.append(lines[i])
             i += 1
@@ -311,7 +434,11 @@ object SimpleMarkdownToHtml {
         return i
     }
 
-    private fun isBlockBoundary(line: String): Boolean {
+    private fun isBlockBoundary(
+        lines: List<String>,
+        index: Int,
+    ): Boolean {
+        val line = lines[index]
         val trimmed = line.trim()
         if (trimmed.isEmpty()) {
             return true
@@ -334,7 +461,10 @@ object SimpleMarkdownToHtml {
         if (UNORDERED_ITEM_REGEX.matches(trimmed)) {
             return true
         }
-        return ORDERED_ITEM_REGEX.matches(trimmed)
+        if (ORDERED_ITEM_REGEX.matches(trimmed)) {
+            return true
+        }
+        return isTableHeader(lines, index)
     }
 
     private fun renderInline(text: String): String {

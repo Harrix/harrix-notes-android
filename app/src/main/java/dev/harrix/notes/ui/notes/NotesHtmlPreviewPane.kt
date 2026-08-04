@@ -229,7 +229,7 @@ private fun buildPreviewHtml(
           h1 { font-size: 1.6em; }
           h2 { font-size: 1.35em; }
           h3 { font-size: 1.2em; }
-          p, ul, ol, blockquote, pre, details {
+          p, ul, ol, blockquote, pre, details, .table-wrap {
             margin: 0 0 0.85em;
           }
           ul, ol { padding-left: 1.4em; }
@@ -237,6 +237,24 @@ private fun buildPreviewHtml(
             border-left: 3px solid #cccccc;
             padding-left: 0.8em;
             color: #444444;
+          }
+          .table-wrap {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+          }
+          table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 0.95em;
+          }
+          th, td {
+            border: 1px solid #dddddd;
+            padding: 6px 10px;
+            vertical-align: top;
+          }
+          th {
+            background: #f3f3f3;
+            font-weight: 600;
           }
           code {
             font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
