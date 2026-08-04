@@ -884,6 +884,14 @@ fun NotesViewerScreen(
         val documentId = folder.mergedNoteDocumentId ?: return
         val title = "_${folder.name}.g"
         val fileName = "_${folder.name}.g.md"
+        // Images/files live beside the merged note inside [folder], not in the parent listing.
+        val noteParentPath =
+            pathForFolder +
+                NotesPathSegment(
+                    documentId = folder.documentId,
+                    name = folder.name,
+                    uri = folder.uri,
+                )
         val existing = openTabs.firstOrNull { it.documentId == documentId }
         if (existing == null) {
             appendOpenTab(
@@ -892,7 +900,7 @@ fun NotesViewerScreen(
                     uri = uri,
                     title = title,
                     fileName = fileName,
-                    folderPath = pathForFolder,
+                    folderPath = noteParentPath,
                 ),
             )
         }
@@ -1375,6 +1383,7 @@ fun NotesViewerScreen(
                                         fontSizeSp = previewFontSizeSp,
                                         treeUri = notesTreeUri?.let { Uri.parse(it) },
                                         folderPath = selectedTab.folderPath,
+                                        noteDocumentId = selectedTab.documentId,
                                     )
                                 }
                             }

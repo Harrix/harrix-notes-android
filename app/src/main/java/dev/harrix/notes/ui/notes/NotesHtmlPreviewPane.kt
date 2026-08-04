@@ -58,12 +58,13 @@ fun NotesHtmlPreviewPane(
     fontSizeSp: Int = NotesViewerPreferences.DEFAULT_PREVIEW_FONT_SIZE_SP,
     treeUri: Uri? = null,
     folderPath: List<NotesPathSegment> = emptyList(),
+    noteDocumentId: String? = null,
 ) {
     val context = LocalContext.current
     val resolver = remember(context) { context.applicationContext.contentResolver }
     var html by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(content, fontSizeSp, treeUri, folderPath) {
+    LaunchedEffect(content, fontSizeSp, treeUri, folderPath, noteDocumentId) {
         val source = content.orEmpty()
         html =
             withContext(Dispatchers.IO) {
@@ -73,6 +74,7 @@ fun NotesHtmlPreviewPane(
                     resolver = resolver,
                     treeUri = treeUri,
                     folderPath = folderPath,
+                    noteDocumentId = noteDocumentId,
                 )
             }
     }
@@ -185,13 +187,14 @@ private fun buildPreviewHtml(
     resolver: ContentResolver,
     treeUri: Uri?,
     folderPath: List<NotesPathSegment>,
+    noteDocumentId: String?,
 ): String {
     var body = SimpleMarkdownToHtml.convert(source)
     body = SimpleMarkdownToHtml.rewriteHtmlImageSources(body)
     if (treeUri != null) {
         body =
             SimpleMarkdownToHtml.embedLocalImages(body) { relativePath ->
-                loadLocalImage(resolver, treeUri, folderPath, relativePath)
+                loadLocalImage(resolver, treeUri, folderPath, noteDocumentId, relativePath)
             }
     }
     val size =
@@ -295,11 +298,17 @@ private fun loadLocalImage(
     resolver: ContentResolver,
     treeUri: Uri,
     folderPath: List<NotesPathSegment>,
+    noteDocumentId: String?,
     relativePath: String,
 ): Pair<String, ByteArray>? {
     val docUri =
-        NotesRelativeDocuments.resolve(resolver, treeUri, folderPath, relativePath)
-            ?: return null
+        NotesRelativeDocuments.resolve(
+            resolver = resolver,
+            treeUri = treeUri,
+            folderPath = folderPath,
+            relativePath = relativePath,
+            noteDocumentId = noteDocumentId,
+        ) ?: return null
     val bytes = NotesRelativeDocuments.readBytes(resolver, docUri) ?: return null
     if (bytes.isEmpty()) {
         return null

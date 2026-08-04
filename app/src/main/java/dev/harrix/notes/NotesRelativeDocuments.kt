@@ -7,9 +7,12 @@ import android.provider.DocumentsContract
 /**
  * Resolves note-relative paths (for preview images) against the SAF tree.
  *
- * - `foo/bar.png`, `./foo.png` — relative to the note parent ([folderPath])
+ * - `foo/bar.png`, `./foo.png` — relative to the note's parent folder
  * - `/foo/bar.png` — from the notes tree root
  * - `../` segments walk up toward the root
+ *
+ * Prefer [noteDocumentId] so merged notes (`_Folder.g.md` inside `Folder/`) resolve
+ * `img/` against `Folder/`, not the parent listing path.
  */
 object NotesRelativeDocuments {
     fun resolve(
@@ -17,6 +20,7 @@ object NotesRelativeDocuments {
         treeUri: Uri,
         folderPath: List<NotesPathSegment>,
         relativePath: String,
+        noteDocumentId: String? = null,
     ): Uri? {
         val raw = Uri.decode(relativePath.trim()).replace('\\', '/')
         val fromRoot = raw.startsWith("/")
@@ -28,30 +32,30 @@ object NotesRelativeDocuments {
             return null
         }
         val rootId = DocumentsContract.getTreeDocumentId(treeUri)
-        val stack = ArrayList<String>(folderPath.size + 4)
-        if (fromRoot || folderPath.isEmpty()) {
-            stack.add(rootId)
-        } else {
-            folderPath.forEach { stack.add(it.documentId) }
-        }
+        var currentDirId =
+            when {
+                fromRoot -> rootId
+
+                else ->
+                    noteParentDocumentId(noteDocumentId)
+                        ?: folderPath.lastOrNull()?.documentId
+                        ?: rootId
+            }
         for (part in parts.dropLast(1)) {
             if (part == "..") {
-                if (stack.size > 1) {
-                    stack.removeAt(stack.lastIndex)
-                }
+                currentDirId = parentTreeDocumentId(currentDirId) ?: rootId
                 continue
             }
-            val childId =
-                findChildDocumentId(resolver, treeUri, stack.last(), part, wantDirectory = true)
+            currentDirId =
+                findChildDocumentId(resolver, treeUri, currentDirId, part, wantDirectory = true)
                     ?: return null
-            stack.add(childId)
         }
         val fileName = parts.last()
         if (fileName == "..") {
             return null
         }
         val fileId =
-            findChildDocumentId(resolver, treeUri, stack.last(), fileName, wantDirectory = false)
+            findChildDocumentId(resolver, treeUri, currentDirId, fileName, wantDirectory = false)
                 ?: return null
         return DocumentsContract.buildDocumentUriUsingTree(treeUri, fileId)
     }
@@ -62,6 +66,28 @@ object NotesRelativeDocuments {
     ): ByteArray? = runCatching {
         resolver.openInputStream(uri)?.use { it.readBytes() }
     }.getOrNull()
+
+    /**
+     * Parent document id for a note file id (`primary:a/b/note.md` → `primary:a/b`).
+     */
+    fun noteParentDocumentId(noteDocumentId: String?): String? {
+        if (noteDocumentId.isNullOrBlank()) {
+            return null
+        }
+        return parentTreeDocumentId(noteDocumentId)
+    }
+
+    private fun parentTreeDocumentId(documentId: String): String? {
+        val slash = documentId.lastIndexOf('/')
+        if (slash <= 0) {
+            return null
+        }
+        val colon = documentId.indexOf(':')
+        if (colon >= 0 && slash <= colon) {
+            return null
+        }
+        return documentId.substring(0, slash)
+    }
 
     private fun findChildDocumentId(
         resolver: ContentResolver,
