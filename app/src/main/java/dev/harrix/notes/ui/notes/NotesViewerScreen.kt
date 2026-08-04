@@ -2065,7 +2065,7 @@ private fun NotesBreadcrumbs(
                     tint = color,
                     modifier =
                     Modifier
-                        .size(18.dp)
+                        .size(22.dp)
                         .then(
                             if (clickable) {
                                 Modifier.clickable { onSegmentClick(index) }
