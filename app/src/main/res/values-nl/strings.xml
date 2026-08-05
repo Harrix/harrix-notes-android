@@ -67,6 +67,13 @@
     <string name="settings_markdown_notes_single_note_mode_hint">Een notitie openen sluit de vorige</string>
     <string name="settings_markdown_notes_show_note_dates">Datums tonen</string>
     <string name="settings_markdown_notes_show_note_dates_hint">Toon wijzigingsdatum onder titels in de mappenlijst</string>
+    <string name="settings_markdown_notes_sort_by">Sorteren op</string>
+    <string name="markdown_notes_sort_by_name">Naam</string>
+    <string name="markdown_notes_sort_by_date">Datum</string>
+    <string name="markdown_notes_sort_by_size">Grootte</string>
+    <string name="markdown_notes_sort_folders_first">Mappen bovenaan</string>
+    <string name="markdown_notes_sort_reverse">Omgekeerde volgorde</string>
+    <string name="markdown_notes_sort_show_gmd">.g.md-bestanden tonen</string>
     <string name="settings_markdown_notes_pinned_bar">Vastgezette balk</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Vastgezette balk weergeven</string>
     <string name="settings_markdown_notes_max_pinned">Max. aantal vastgezette items</string>

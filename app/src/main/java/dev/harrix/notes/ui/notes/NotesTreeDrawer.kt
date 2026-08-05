@@ -36,7 +36,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.harrix.notes.NotesEntry
 import dev.harrix.notes.NotesListDensity
+import dev.harrix.notes.NotesListingOptions
 import dev.harrix.notes.NotesPathSegment
+import dev.harrix.notes.NotesSortBy
+import dev.harrix.notes.NotesViewerPreferences
 import dev.harrix.notes.R
 import dev.harrix.notes.ui.adaptiveDrawerWidth
 
@@ -254,6 +257,10 @@ fun buildVisibleNotesTreeRows(
     root: NotesPathSegment,
     childrenByFolderId: Map<String, List<NotesEntry>>,
     expandedFolderIds: Set<String>,
+    sortBy: NotesSortBy = NotesSortBy.Default,
+    foldersFirst: Boolean = NotesViewerPreferences.DEFAULT_FOLDERS_FIRST,
+    reverseOrder: Boolean = NotesViewerPreferences.DEFAULT_SORT_REVERSE_ORDER,
+    showGmdFiles: Boolean = NotesViewerPreferences.DEFAULT_SHOW_GMD_FILES,
 ): List<NotesTreeRow> {
     val result = ArrayList<NotesTreeRow>()
 
@@ -262,7 +269,14 @@ fun buildVisibleNotesTreeRows(
         pathToDir: List<NotesPathSegment>,
         depth: Int,
     ) {
-        val children = childrenByFolderId[dir.documentId].orEmpty()
+        val children =
+            NotesListingOptions.apply(
+                entries = childrenByFolderId[dir.documentId].orEmpty(),
+                sortBy = sortBy,
+                foldersFirst = foldersFirst,
+                reverseOrder = reverseOrder,
+                showGmdFiles = showGmdFiles,
+            )
         for (entry in children) {
             result +=
                 NotesTreeRow(

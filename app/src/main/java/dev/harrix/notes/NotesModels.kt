@@ -18,6 +18,8 @@ sealed class NotesEntry {
         val mergedNoteUri: Uri?,
         /** Last modified time from the document provider, if known. */
         val lastModifiedEpochMs: Long? = null,
+        /** Document size in bytes from the provider, if known (often unset for folders). */
+        val sizeBytes: Long? = null,
     ) : NotesEntry() {
         override val sortLabel: String get() = name
     }
@@ -37,6 +39,8 @@ sealed class NotesEntry {
         val containingFolder: NotesPathSegment? = null,
         /** Last modified time from the document provider, if known. */
         val lastModifiedEpochMs: Long? = null,
+        /** Document size in bytes from the provider, if known. */
+        val sizeBytes: Long? = null,
     ) : NotesEntry() {
         override val sortLabel: String get() = displayLabel
     }

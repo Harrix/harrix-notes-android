@@ -77,6 +77,7 @@ import dev.harrix.notes.NotesListDensity
 import dev.harrix.notes.NotesOpenMode
 import dev.harrix.notes.NotesPinnedItem
 import dev.harrix.notes.NotesPinnedKind
+import dev.harrix.notes.NotesSortBy
 import dev.harrix.notes.NotesTitleSource
 import dev.harrix.notes.NotesTreeRepository
 import dev.harrix.notes.NotesViewerPreferences
@@ -396,6 +397,10 @@ private fun GeneralSettingsSection(modifier: Modifier = Modifier) {
     var noteOpenMode by remember { mutableStateOf(preferences.loadNoteOpenMode()) }
     var singleNoteMode by remember { mutableStateOf(preferences.loadSingleNoteMode()) }
     var showNoteDates by remember { mutableStateOf(preferences.loadShowNoteDates()) }
+    var sortBy by remember { mutableStateOf(preferences.loadSortBy()) }
+    var foldersFirst by remember { mutableStateOf(preferences.loadFoldersFirst()) }
+    var sortReverseOrder by remember { mutableStateOf(preferences.loadSortReverseOrder()) }
+    var showGmdFiles by remember { mutableStateOf(preferences.loadShowGmdFiles()) }
     var maxOpenTabs by remember { mutableIntStateOf(preferences.loadMaxOpenTabs()) }
     var pinnedBarEnabled by remember { mutableStateOf(preferences.loadPinnedBarEnabled()) }
     var maxPinnedItems by remember { mutableIntStateOf(preferences.loadMaxPinnedItems()) }
@@ -423,6 +428,12 @@ private fun GeneralSettingsSection(modifier: Modifier = Modifier) {
         listOf(
             NotesOpenMode.Preview to R.string.settings_markdown_notes_open_mode_preview,
             NotesOpenMode.Edit to R.string.settings_markdown_notes_open_mode_edit,
+        )
+    val sortByOptions =
+        listOf(
+            NotesSortBy.Name to R.string.markdown_notes_sort_by_name,
+            NotesSortBy.Date to R.string.markdown_notes_sort_by_date,
+            NotesSortBy.Size to R.string.markdown_notes_sort_by_size,
         )
 
     fun persistPinned(items: List<NotesPinnedItem>) {
@@ -499,6 +510,72 @@ private fun GeneralSettingsSection(modifier: Modifier = Modifier) {
                 preferences.saveTitleSource(source)
             },
         )
+        SettingsChoiceRow(
+            label = stringResource(R.string.settings_markdown_notes_sort_by),
+            options = sortByOptions,
+            selected = sortBy,
+            onSelect = { value ->
+                sortBy = value
+                preferences.saveSortBy(value)
+            },
+        )
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.markdown_notes_sort_folders_first),
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f),
+                )
+                Switch(
+                    checked = foldersFirst,
+                    onCheckedChange = { enabled ->
+                        foldersFirst = enabled
+                        preferences.saveFoldersFirst(enabled)
+                    },
+                )
+            }
+        }
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.markdown_notes_sort_reverse),
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f),
+                )
+                Switch(
+                    checked = sortReverseOrder,
+                    onCheckedChange = { enabled ->
+                        sortReverseOrder = enabled
+                        preferences.saveSortReverseOrder(enabled)
+                    },
+                )
+            }
+        }
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.markdown_notes_sort_show_gmd),
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f),
+                )
+                Switch(
+                    checked = showGmdFiles,
+                    onCheckedChange = { enabled ->
+                        showGmdFiles = enabled
+                        preferences.saveShowGmdFiles(enabled)
+                    },
+                )
+            }
+        }
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier.fillMaxWidth(),

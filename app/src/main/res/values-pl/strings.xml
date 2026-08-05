@@ -67,6 +67,13 @@
     <string name="settings_markdown_notes_single_note_mode_hint">Otwarcie notatki zamyka poprzednią</string>
     <string name="settings_markdown_notes_show_note_dates">Pokazuj daty</string>
     <string name="settings_markdown_notes_show_note_dates_hint">Pokazuj datę modyfikacji pod tytułami na liście folderu</string>
+    <string name="settings_markdown_notes_sort_by">Sortuj według</string>
+    <string name="markdown_notes_sort_by_name">Nazwa</string>
+    <string name="markdown_notes_sort_by_date">Data</string>
+    <string name="markdown_notes_sort_by_size">Rozmiar</string>
+    <string name="markdown_notes_sort_folders_first">Foldery na górze</string>
+    <string name="markdown_notes_sort_reverse">Odwrotna kolejność</string>
+    <string name="markdown_notes_sort_show_gmd">Pokazuj pliki .g.md</string>
     <string name="settings_markdown_notes_pinned_bar">Przypięty pasek</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Pokaż przypięty pasek</string>
     <string name="settings_markdown_notes_max_pinned">Maksymalna liczba przypiętych elementów</string>

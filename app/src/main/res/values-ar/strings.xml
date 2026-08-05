@@ -67,6 +67,13 @@
     <string name="settings_markdown_notes_single_note_mode_hint">فتح ملاحظة يغلق السابقة</string>
     <string name="settings_markdown_notes_show_note_dates">إظهار التواريخ</string>
     <string name="settings_markdown_notes_show_note_dates_hint">إظهار تاريخ التعديل تحت العناوين في قائمة المجلد</string>
+    <string name="settings_markdown_notes_sort_by">ترتيب حسب</string>
+    <string name="markdown_notes_sort_by_name">الاسم</string>
+    <string name="markdown_notes_sort_by_date">التاريخ</string>
+    <string name="markdown_notes_sort_by_size">الحجم</string>
+    <string name="markdown_notes_sort_folders_first">المجلدات في الأعلى</string>
+    <string name="markdown_notes_sort_reverse">ترتيب عكسي</string>
+    <string name="markdown_notes_sort_show_gmd">إظهار ملفات .g.md</string>
     <string name="settings_markdown_notes_pinned_bar">شريط مثبت</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">إظهار الشريط المثبت</string>
     <string name="settings_markdown_notes_max_pinned">الحد الأقصى للعناصر المثبتة</string>

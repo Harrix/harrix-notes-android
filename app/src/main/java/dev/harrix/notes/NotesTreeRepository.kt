@@ -79,9 +79,10 @@ class NotesTreeRepository(
                         mergedNoteDocumentId = null,
                         mergedNoteUri = null,
                         lastModifiedEpochMs = entry.lastModifiedEpochMs,
+                        sizeBytes = entry.sizeBytes,
                     ),
                 )
-            } else if (isMd(entry.name) && !isMergedTemplateGmd(entry.name, dirName)) {
+            } else if (isMd(entry.name)) {
                 items.add(
                     NotesEntry.Note(
                         documentId = entry.documentId,
@@ -90,6 +91,7 @@ class NotesTreeRepository(
                         displayLabel = resolvedDisplayLabel(entry.documentId, entry.name),
                         displayIcon = resolvedDisplayIcon(entry.documentId),
                         lastModifiedEpochMs = entry.lastModifiedEpochMs,
+                        sizeBytes = entry.sizeBytes,
                     ),
                 )
             }
@@ -139,9 +141,7 @@ class NotesTreeRepository(
             }
         val mdFiles =
             entries.filter { entry ->
-                !entry.isDirectory &&
-                    isMd(entry.name) &&
-                    !isMergedTemplateGmd(entry.name, dirName)
+                !entry.isDirectory && isMd(entry.name)
             }
 
         val folderChildMap =
@@ -225,6 +225,7 @@ class NotesTreeRepository(
                         mergedNoteDocumentId = merged?.documentId,
                         mergedNoteUri = merged?.uri,
                         lastModifiedEpochMs = folder.lastModifiedEpochMs,
+                        sizeBytes = folder.sizeBytes,
                     ),
                 )
             }
@@ -244,6 +245,7 @@ class NotesTreeRepository(
         displayLabel = resolvedDisplayLabel(raw.documentId, raw.name),
         displayIcon = resolvedDisplayIcon(raw.documentId),
         lastModifiedEpochMs = raw.lastModifiedEpochMs,
+        sizeBytes = raw.sizeBytes,
     )
 
     private fun resolvedDisplayLabel(
@@ -560,6 +562,7 @@ class NotesTreeRepository(
                     DocumentsContract.Document.COLUMN_DISPLAY_NAME,
                     DocumentsContract.Document.COLUMN_MIME_TYPE,
                     DocumentsContract.Document.COLUMN_LAST_MODIFIED,
+                    DocumentsContract.Document.COLUMN_SIZE,
                 ),
                 null,
                 null,
@@ -570,6 +573,7 @@ class NotesTreeRepository(
                 val mimeIndex = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_MIME_TYPE)
                 val lastModifiedIndex =
                     cursor.getColumnIndex(DocumentsContract.Document.COLUMN_LAST_MODIFIED)
+                val sizeIndex = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_SIZE)
                 while (cursor.moveToNext()) {
                     val documentId = cursor.getString(idIndex)
                     val name = cursor.getString(nameIndex)
@@ -582,6 +586,12 @@ class NotesTreeRepository(
                             } else {
                                 null
                             }
+                        val sizeBytes =
+                            if (sizeIndex >= 0 && !cursor.isNull(sizeIndex)) {
+                                cursor.getLong(sizeIndex).takeIf { it >= 0L }
+                            } else {
+                                null
+                            }
                         result.add(
                             RawEntry(
                                 documentId = documentId,
@@ -589,6 +599,7 @@ class NotesTreeRepository(
                                 uri = uri,
                                 isDirectory = mime == DocumentsContract.Document.MIME_TYPE_DIR,
                                 lastModifiedEpochMs = lastModified,
+                                sizeBytes = sizeBytes,
                             ),
                         )
                     }
@@ -684,6 +695,7 @@ class NotesTreeRepository(
         val uri: Uri,
         val isDirectory: Boolean,
         val lastModifiedEpochMs: Long? = null,
+        val sizeBytes: Long? = null,
     )
 
     companion object {

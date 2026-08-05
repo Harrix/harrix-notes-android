@@ -46,6 +46,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DragHandle
@@ -61,6 +62,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -107,10 +109,12 @@ import dev.harrix.notes.NotesBrowseLayout
 import dev.harrix.notes.NotesDateFormats
 import dev.harrix.notes.NotesEntry
 import dev.harrix.notes.NotesListDensity
+import dev.harrix.notes.NotesListingOptions
 import dev.harrix.notes.NotesOpenMode
 import dev.harrix.notes.NotesPathSegment
 import dev.harrix.notes.NotesPinnedItem
 import dev.harrix.notes.NotesPinnedKind
+import dev.harrix.notes.NotesSortBy
 import dev.harrix.notes.NotesTitleSource
 import dev.harrix.notes.NotesTreeRepository
 import dev.harrix.notes.NotesViewerPreferences
@@ -181,6 +185,10 @@ fun NotesViewerScreen(
     var maxOpenTabs by viewModel.maxOpenTabs
     var singleNoteMode by viewModel.singleNoteMode
     var showNoteDates by viewModel.showNoteDates
+    var sortBy by viewModel.sortBy
+    var foldersFirst by viewModel.foldersFirst
+    var sortReverseOrder by viewModel.sortReverseOrder
+    var showGmdFiles by viewModel.showGmdFiles
     var pinnedBarEnabled by viewModel.pinnedBarEnabled
     var maxPinnedItems by viewModel.maxPinnedItems
     var pinnedItems by viewModel.pinnedItems
@@ -205,6 +213,10 @@ fun NotesViewerScreen(
         maxOpenTabs = preferences.loadMaxOpenTabs()
         singleNoteMode = preferences.loadSingleNoteMode()
         showNoteDates = preferences.loadShowNoteDates()
+        sortBy = preferences.loadSortBy()
+        foldersFirst = preferences.loadFoldersFirst()
+        sortReverseOrder = preferences.loadSortReverseOrder()
+        showGmdFiles = preferences.loadShowGmdFiles()
         pinnedBarEnabled = preferences.loadPinnedBarEnabled()
         maxPinnedItems = preferences.loadMaxPinnedItems()
     }
@@ -1271,12 +1283,35 @@ fun NotesViewerScreen(
     }
 
     val treeRows =
-        remember(treeRoot, treeChildrenByFolderId, treeExpandedFolderIds) {
+        remember(
+            treeRoot,
+            treeChildrenByFolderId,
+            treeExpandedFolderIds,
+            sortBy,
+            foldersFirst,
+            sortReverseOrder,
+            showGmdFiles,
+        ) {
             val root = treeRoot ?: return@remember emptyList()
             buildVisibleNotesTreeRows(
                 root = root,
                 childrenByFolderId = treeChildrenByFolderId,
                 expandedFolderIds = treeExpandedFolderIds,
+                sortBy = sortBy,
+                foldersFirst = foldersFirst,
+                reverseOrder = sortReverseOrder,
+                showGmdFiles = showGmdFiles,
+            )
+        }
+
+    val visibleEntries =
+        remember(entries, sortBy, foldersFirst, sortReverseOrder, showGmdFiles) {
+            NotesListingOptions.apply(
+                entries = entries,
+                sortBy = sortBy,
+                foldersFirst = foldersFirst,
+                reverseOrder = sortReverseOrder,
+                showGmdFiles = showGmdFiles,
             )
         }
     ModalNavigationDrawer(
@@ -1363,6 +1398,26 @@ fun NotesViewerScreen(
                     },
                     menuExpanded = menuExpanded,
                     onMenuExpandedChange = { menuExpanded = it },
+                    sortBy = sortBy,
+                    foldersFirst = foldersFirst,
+                    sortReverseOrder = sortReverseOrder,
+                    showGmdFiles = showGmdFiles,
+                    onSortByChange = { value ->
+                        sortBy = value
+                        preferences.saveSortBy(value)
+                    },
+                    onFoldersFirstChange = { value ->
+                        foldersFirst = value
+                        preferences.saveFoldersFirst(value)
+                    },
+                    onSortReverseOrderChange = { value ->
+                        sortReverseOrder = value
+                        preferences.saveSortReverseOrder(value)
+                    },
+                    onShowGmdFilesChange = { value ->
+                        showGmdFiles = value
+                        preferences.saveShowGmdFiles(value)
+                    },
                     onOpenSettings = onOpenSettings,
                     onOpenAbout = onOpenAbout,
                 )
@@ -1455,7 +1510,7 @@ fun NotesViewerScreen(
 
                             else -> {
                                 NotesFolderList(
-                                    entries = entries,
+                                    entries = visibleEntries,
                                     statusMessage = statusMessage,
                                     density = listDensity,
                                     layout = browseLayout,
@@ -1559,6 +1614,14 @@ private fun NotesTopChrome(
     onSegmentClick: (Int) -> Unit,
     menuExpanded: Boolean,
     onMenuExpandedChange: (Boolean) -> Unit,
+    sortBy: NotesSortBy,
+    foldersFirst: Boolean,
+    sortReverseOrder: Boolean,
+    showGmdFiles: Boolean,
+    onSortByChange: (NotesSortBy) -> Unit,
+    onFoldersFirstChange: (Boolean) -> Unit,
+    onSortReverseOrderChange: (Boolean) -> Unit,
+    onShowGmdFilesChange: (Boolean) -> Unit,
     onOpenSettings: () -> Unit,
     onOpenAbout: () -> Unit,
 ) {
@@ -1603,6 +1666,72 @@ private fun NotesTopChrome(
                 expanded = menuExpanded,
                 onDismissRequest = { onMenuExpandedChange(false) },
             ) {
+                NotesSortBy.entries.forEach { option ->
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = stringResource(sortByLabelRes(option)),
+                                maxLines = 2,
+                            )
+                        },
+                        onClick = { onSortByChange(option) },
+                        leadingIcon = {
+                            if (sortBy == option) {
+                                Icon(
+                                    imageVector = Icons.Filled.Check,
+                                    contentDescription = null,
+                                )
+                            }
+                        },
+                    )
+                }
+                HorizontalDivider()
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = stringResource(R.string.markdown_notes_sort_folders_first),
+                            maxLines = 2,
+                        )
+                    },
+                    onClick = { onFoldersFirstChange(!foldersFirst) },
+                    trailingIcon = {
+                        Checkbox(
+                            checked = foldersFirst,
+                            onCheckedChange = null,
+                        )
+                    },
+                )
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = stringResource(R.string.markdown_notes_sort_reverse),
+                            maxLines = 2,
+                        )
+                    },
+                    onClick = { onSortReverseOrderChange(!sortReverseOrder) },
+                    trailingIcon = {
+                        Checkbox(
+                            checked = sortReverseOrder,
+                            onCheckedChange = null,
+                        )
+                    },
+                )
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = stringResource(R.string.markdown_notes_sort_show_gmd),
+                            maxLines = 2,
+                        )
+                    },
+                    onClick = { onShowGmdFilesChange(!showGmdFiles) },
+                    trailingIcon = {
+                        Checkbox(
+                            checked = showGmdFiles,
+                            onCheckedChange = null,
+                        )
+                    },
+                )
+                HorizontalDivider()
                 DropdownMenuItem(
                     text = {
                         Text(
@@ -1642,6 +1771,12 @@ private fun NotesTopChrome(
             }
         }
     }
+}
+
+private fun sortByLabelRes(sortBy: NotesSortBy): Int = when (sortBy) {
+    NotesSortBy.Name -> R.string.markdown_notes_sort_by_name
+    NotesSortBy.Date -> R.string.markdown_notes_sort_by_date
+    NotesSortBy.Size -> R.string.markdown_notes_sort_by_size
 }
 
 @OptIn(ExperimentalFoundationApi::class)

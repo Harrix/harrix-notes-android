@@ -67,6 +67,13 @@
     <string name="settings_markdown_notes_single_note_mode_hint">Отварањем белешке претходна се затвара</string>
     <string name="settings_markdown_notes_show_note_dates">Прикажи датуме</string>
     <string name="settings_markdown_notes_show_note_dates_hint">Прикажи датум измене испод наслова у листи фасцикле</string>
+    <string name="settings_markdown_notes_sort_by">Сортирај по</string>
+    <string name="markdown_notes_sort_by_name">Име</string>
+    <string name="markdown_notes_sort_by_date">Датум</string>
+    <string name="markdown_notes_sort_by_size">Величина</string>
+    <string name="markdown_notes_sort_folders_first">Фасцикле на врху</string>
+    <string name="markdown_notes_sort_reverse">Обрнути редослед</string>
+    <string name="markdown_notes_sort_show_gmd">Прикажи .g.md датотеке</string>
     <string name="settings_markdown_notes_pinned_bar">Трака са закаченим ставкама</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Прикажи траку са закаченим ставкама</string>
     <string name="settings_markdown_notes_max_pinned">Максималан број закачених ставки</string>

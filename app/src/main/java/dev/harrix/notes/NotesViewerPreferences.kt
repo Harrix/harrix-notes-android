@@ -132,6 +132,30 @@ class NotesViewerPreferences(
         prefs.edit().putBoolean(KEY_SHOW_NOTE_DATES, enabled).apply()
     }
 
+    fun loadSortBy(): NotesSortBy = NotesSortBy.fromStorageKey(prefs.getString(KEY_SORT_BY, null))
+
+    fun saveSortBy(sortBy: NotesSortBy) {
+        prefs.edit().putString(KEY_SORT_BY, sortBy.name).apply()
+    }
+
+    fun loadFoldersFirst(): Boolean = prefs.getBoolean(KEY_FOLDERS_FIRST, DEFAULT_FOLDERS_FIRST)
+
+    fun saveFoldersFirst(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_FOLDERS_FIRST, enabled).apply()
+    }
+
+    fun loadSortReverseOrder(): Boolean = prefs.getBoolean(KEY_SORT_REVERSE_ORDER, DEFAULT_SORT_REVERSE_ORDER)
+
+    fun saveSortReverseOrder(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_SORT_REVERSE_ORDER, enabled).apply()
+    }
+
+    fun loadShowGmdFiles(): Boolean = prefs.getBoolean(KEY_SHOW_GMD_FILES, DEFAULT_SHOW_GMD_FILES)
+
+    fun saveShowGmdFiles(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_SHOW_GMD_FILES, enabled).apply()
+    }
+
     fun loadPinnedBarEnabled(): Boolean = prefs.getBoolean(KEY_PINNED_BAR_ENABLED, DEFAULT_PINNED_BAR_ENABLED)
 
     fun savePinnedBarEnabled(enabled: Boolean) {
@@ -227,6 +251,10 @@ class NotesViewerPreferences(
             .remove(KEY_MAX_OPEN_TABS)
             .remove(KEY_SINGLE_NOTE_MODE)
             .remove(KEY_SHOW_NOTE_DATES)
+            .remove(KEY_SORT_BY)
+            .remove(KEY_FOLDERS_FIRST)
+            .remove(KEY_SORT_REVERSE_ORDER)
+            .remove(KEY_SHOW_GMD_FILES)
             .remove(KEY_OPEN_TABS_SESSION)
             .remove(KEY_PINNED_BAR_ENABLED)
             .remove(KEY_MAX_PINNED_ITEMS)
@@ -249,6 +277,10 @@ class NotesViewerPreferences(
         private const val KEY_MAX_OPEN_TABS = "max_open_tabs"
         private const val KEY_SINGLE_NOTE_MODE = "single_note_mode"
         private const val KEY_SHOW_NOTE_DATES = "show_note_dates"
+        private const val KEY_SORT_BY = "sort_by"
+        private const val KEY_FOLDERS_FIRST = "folders_first"
+        private const val KEY_SORT_REVERSE_ORDER = "sort_reverse_order"
+        private const val KEY_SHOW_GMD_FILES = "show_gmd_files"
         private const val KEY_OPEN_TABS_SESSION = "open_tabs_session"
         private const val KEY_PINNED_BAR_ENABLED = "pinned_bar_enabled"
         private const val KEY_MAX_PINNED_ITEMS = "max_pinned_items"
@@ -261,6 +293,10 @@ class NotesViewerPreferences(
         const val DEFAULT_SINGLE_NOTE_MODE = false
 
         const val DEFAULT_SHOW_NOTE_DATES = false
+
+        const val DEFAULT_FOLDERS_FIRST = true
+        const val DEFAULT_SORT_REVERSE_ORDER = false
+        const val DEFAULT_SHOW_GMD_FILES = false
 
         const val DEFAULT_PINNED_BAR_ENABLED = true
         const val DEFAULT_MAX_PINNED_ITEMS = 5

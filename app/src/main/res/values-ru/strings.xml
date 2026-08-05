@@ -67,6 +67,13 @@
     <string name="settings_markdown_notes_single_note_mode_hint">При открытии заметки предыдущая закрывается</string>
     <string name="settings_markdown_notes_show_note_dates">Показывать даты</string>
     <string name="settings_markdown_notes_show_note_dates_hint">Дата изменения под названием в списке папки</string>
+    <string name="settings_markdown_notes_sort_by">Сортировка</string>
+    <string name="markdown_notes_sort_by_name">Имя</string>
+    <string name="markdown_notes_sort_by_date">Дата</string>
+    <string name="markdown_notes_sort_by_size">Размер</string>
+    <string name="markdown_notes_sort_folders_first">Папки наверху</string>
+    <string name="markdown_notes_sort_reverse">В обратном порядке</string>
+    <string name="markdown_notes_sort_show_gmd">Показывать .g.md файлы</string>
     <string name="settings_markdown_notes_pinned_bar">Панель закреплений</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Показывать панель закреплений</string>
     <string name="settings_markdown_notes_max_pinned">Макс. закреплений</string>

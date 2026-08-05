@@ -67,6 +67,13 @@
     <string name="settings_markdown_notes_single_note_mode_hint">Mở ghi chú sẽ đóng ghi chú trước</string>
     <string name="settings_markdown_notes_show_note_dates">Hiện ngày</string>
     <string name="settings_markdown_notes_show_note_dates_hint">Hiện ngày sửa dưới tiêu đề trong danh sách thư mục</string>
+    <string name="settings_markdown_notes_sort_by">Sắp xếp theo</string>
+    <string name="markdown_notes_sort_by_name">Tên</string>
+    <string name="markdown_notes_sort_by_date">Ngày</string>
+    <string name="markdown_notes_sort_by_size">Kích thước</string>
+    <string name="markdown_notes_sort_folders_first">Thư mục lên trên</string>
+    <string name="markdown_notes_sort_reverse">Thứ tự ngược</string>
+    <string name="markdown_notes_sort_show_gmd">Hiện tệp .g.md</string>
     <string name="settings_markdown_notes_pinned_bar">Thanh ghim</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Hiển thị thanh được ghim</string>
     <string name="settings_markdown_notes_max_pinned">Các mục được ghim tối đa</string>

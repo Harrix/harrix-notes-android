@@ -66,7 +66,14 @@
     <string name="settings_markdown_notes_single_note_mode">Modalità nota singola</string>
     <string name="settings_markdown_notes_single_note_mode_hint">Aprendo una nota si chiude la precedente</string>
     <string name="settings_markdown_notes_show_note_dates">Mostra date</string>
-    <string name="settings_markdown_notes_show_note_dates_hint">Mostra la data di modifica sotto i titoli nell'elenco cartelle</string>
+    <string name="settings_markdown_notes_show_note_dates_hint">Mostra la data di modifica sotto i titoli nell\'elenco cartelle</string>
+    <string name="settings_markdown_notes_sort_by">Ordina per</string>
+    <string name="markdown_notes_sort_by_name">Nome</string>
+    <string name="markdown_notes_sort_by_date">Data</string>
+    <string name="markdown_notes_sort_by_size">Dimensione</string>
+    <string name="markdown_notes_sort_folders_first">Cartelle in alto</string>
+    <string name="markdown_notes_sort_reverse">Ordine inverso</string>
+    <string name="markdown_notes_sort_show_gmd">Mostra file .g.md</string>
     <string name="settings_markdown_notes_pinned_bar">Barra degli elementi fissati</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Mostra la barra degli elementi fissati</string>
     <string name="settings_markdown_notes_max_pinned">Max elementi fissati</string>

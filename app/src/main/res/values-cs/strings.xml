@@ -67,6 +67,13 @@
     <string name="settings_markdown_notes_single_note_mode_hint">Otevřením poznámky se předchozí zavře</string>
     <string name="settings_markdown_notes_show_note_dates">Zobrazit data</string>
     <string name="settings_markdown_notes_show_note_dates_hint">Zobrazit datum změny pod názvy v seznamu složky</string>
+    <string name="settings_markdown_notes_sort_by">Řadit podle</string>
+    <string name="markdown_notes_sort_by_name">Název</string>
+    <string name="markdown_notes_sort_by_date">Datum</string>
+    <string name="markdown_notes_sort_by_size">Velikost</string>
+    <string name="markdown_notes_sort_folders_first">Složky nahoře</string>
+    <string name="markdown_notes_sort_reverse">Obrácené pořadí</string>
+    <string name="markdown_notes_sort_show_gmd">Zobrazit soubory .g.md</string>
     <string name="settings_markdown_notes_pinned_bar">Připnutá lišta</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Zobrazit připnutý pruh</string>
     <string name="settings_markdown_notes_max_pinned">Maximální počet připnutých položek</string>

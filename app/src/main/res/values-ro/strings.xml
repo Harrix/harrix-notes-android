@@ -67,6 +67,13 @@
     <string name="settings_markdown_notes_single_note_mode_hint">Deschiderea unei note o închide pe cea anterioară</string>
     <string name="settings_markdown_notes_show_note_dates">Afișează datele</string>
     <string name="settings_markdown_notes_show_note_dates_hint">Afișează data modificării sub titluri în lista folderului</string>
+    <string name="settings_markdown_notes_sort_by">Sortează după</string>
+    <string name="markdown_notes_sort_by_name">Nume</string>
+    <string name="markdown_notes_sort_by_date">Dată</string>
+    <string name="markdown_notes_sort_by_size">Dimensiune</string>
+    <string name="markdown_notes_sort_folders_first">Dosare deasupra</string>
+    <string name="markdown_notes_sort_reverse">Ordine inversă</string>
+    <string name="markdown_notes_sort_show_gmd">Afișează fișiere .g.md</string>
     <string name="settings_markdown_notes_pinned_bar">Bară fixată</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Afișează bara fixată</string>
     <string name="settings_markdown_notes_max_pinned">Numărul maxim de articole fixate</string>

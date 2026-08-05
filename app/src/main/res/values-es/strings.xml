@@ -67,6 +67,13 @@
     <string name="settings_markdown_notes_single_note_mode_hint">Al abrir una nota se cierra la anterior</string>
     <string name="settings_markdown_notes_show_note_dates">Mostrar fechas</string>
     <string name="settings_markdown_notes_show_note_dates_hint">Mostrar la fecha de modificación bajo los títulos en la lista</string>
+    <string name="settings_markdown_notes_sort_by">Ordenar por</string>
+    <string name="markdown_notes_sort_by_name">Nombre</string>
+    <string name="markdown_notes_sort_by_date">Fecha</string>
+    <string name="markdown_notes_sort_by_size">Tamaño</string>
+    <string name="markdown_notes_sort_folders_first">Carpetas arriba</string>
+    <string name="markdown_notes_sort_reverse">Orden inverso</string>
+    <string name="markdown_notes_sort_show_gmd">Mostrar archivos .g.md</string>
     <string name="settings_markdown_notes_pinned_bar">Barra de fijados</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Mostrar barra de fijados</string>
     <string name="settings_markdown_notes_max_pinned">Máx. elementos fijados</string>

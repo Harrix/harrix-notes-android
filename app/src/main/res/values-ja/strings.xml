@@ -67,6 +67,13 @@
     <string name="settings_markdown_notes_single_note_mode_hint">ノートを開くと前のノートが閉じます</string>
     <string name="settings_markdown_notes_show_note_dates">日付を表示</string>
     <string name="settings_markdown_notes_show_note_dates_hint">フォルダ一覧のタイトルの下に更新日時を表示</string>
+    <string name="settings_markdown_notes_sort_by">並べ替え</string>
+    <string name="markdown_notes_sort_by_name">名前</string>
+    <string name="markdown_notes_sort_by_date">日付</string>
+    <string name="markdown_notes_sort_by_size">サイズ</string>
+    <string name="markdown_notes_sort_folders_first">フォルダを上に</string>
+    <string name="markdown_notes_sort_reverse">逆順</string>
+    <string name="markdown_notes_sort_show_gmd">.g.md ファイルを表示</string>
     <string name="settings_markdown_notes_pinned_bar">ピン留めバー</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">ピン留めバーを表示</string>
     <string name="settings_markdown_notes_max_pinned">最大ピン留め数</string>
