@@ -1,5 +1,7 @@
 package dev.harrix.notes.ui.notes
 
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -13,27 +15,40 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlinx.coroutines.delay
 
-/** Wide touch target so the scrollbar is usable with a finger on a phone. */
-private val NotesFingerScrollbarTrackWidth = 28.dp
-private val NotesFingerScrollbarThumbWidth = 10.dp
-private val NotesFingerScrollbarMinThumbHeight = 48.dp
-private val NotesFingerScrollbarThumbCorner = 5.dp
+/** Idle / “normal” thin scrollbar (matches system-style bars). */
+private val NotesScrollbarCompactTrackWidth = 4.dp
+private val NotesScrollbarCompactThumbWidth = 3.dp
+
+/** Finger-friendly size while the user is scrolling or scrubbing. */
+private val NotesScrollbarExpandedTrackWidth = 28.dp
+private val NotesScrollbarExpandedThumbWidth = 10.dp
+
+private val NotesScrollbarMinThumbHeight = 48.dp
+private val NotesScrollbarThumbCorner = 5.dp
+private val NotesScrollbarExpandAnimMs = 160
+private const val NotesScrollbarCollapseDelayMs = 1_200L
 
 /**
- * Always-visible vertical scrollbar with a large drag hit area.
- *
- * [scrollOffset] / [maxScrollOffset] are in the same units as the underlying
- * scroller (pixels). [viewportSize] and [contentSize] size the thumb.
+ * Vertical scrollbar that stays thin at rest and expands to a wide, draggable
+ * control while the content is scrolling (or while the thumb is dragged).
+ * After scrolling stops it collapses again after a short delay.
  */
 @Composable
 fun NotesFingerScrollbar(
@@ -43,14 +58,55 @@ fun NotesFingerScrollbar(
     contentSize: Float,
     onScrollOffsetChange: (Float) -> Unit,
     modifier: Modifier = Modifier,
-    trackWidth: Dp = NotesFingerScrollbarTrackWidth,
-    thumbWidth: Dp = NotesFingerScrollbarThumbWidth,
     thumbColor: Color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f),
     trackColor: Color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.12f),
 ) {
     if (contentSize <= viewportSize || maxScrollOffset <= 0f || viewportSize <= 0f) {
         return
     }
+
+    var expanded by remember { mutableStateOf(false) }
+    var dragging by remember { mutableStateOf(false) }
+    var previousScrollOffset by remember { mutableFloatStateOf(Float.NaN) }
+
+    LaunchedEffect(scrollOffset, dragging) {
+        if (dragging) {
+            expanded = true
+            return@LaunchedEffect
+        }
+        val previous = previousScrollOffset
+        previousScrollOffset = scrollOffset
+        if (!previous.isNaN() && abs(previous - scrollOffset) > 0.5f) {
+            expanded = true
+        }
+        if (!expanded) {
+            return@LaunchedEffect
+        }
+        delay(NotesScrollbarCollapseDelayMs)
+        expanded = false
+    }
+
+    val trackWidth by animateDpAsState(
+        targetValue =
+        if (expanded) {
+            NotesScrollbarExpandedTrackWidth
+        } else {
+            NotesScrollbarCompactTrackWidth
+        },
+        animationSpec = tween(NotesScrollbarExpandAnimMs),
+        label = "notesScrollbarTrackWidth",
+    )
+    val thumbWidth by animateDpAsState(
+        targetValue =
+        if (expanded) {
+            NotesScrollbarExpandedThumbWidth
+        } else {
+            NotesScrollbarCompactThumbWidth
+        },
+        animationSpec = tween(NotesScrollbarExpandAnimMs),
+        label = "notesScrollbarThumbWidth",
+    )
+
     val density = LocalDensity.current
     BoxWithConstraints(
         modifier =
@@ -59,7 +115,14 @@ fun NotesFingerScrollbar(
             .fillMaxHeight(),
     ) {
         val trackHeightPx = with(density) { maxHeight.toPx() }
-        val minThumbPx = with(density) { NotesFingerScrollbarMinThumbHeight.toPx() }
+        val minThumbPx =
+            with(density) {
+                if (expanded) {
+                    NotesScrollbarMinThumbHeight.toPx()
+                } else {
+                    24.dp.toPx()
+                }
+            }
         val thumbHeightPx =
             (trackHeightPx * (viewportSize / contentSize))
                 .coerceIn(minThumbPx, trackHeightPx)
@@ -81,36 +144,57 @@ fun NotesFingerScrollbar(
                 .fillMaxWidth()
                 .fillMaxHeight()
                 .clip(RoundedCornerShape(trackWidth / 2))
-                .background(trackColor)
-                .pointerInput(maxScrollOffset, travelPx, thumbHeightPx) {
-                    detectTapGestures { offset ->
-                        seekToTrackY(offset.y)
-                    }
-                }
-                .pointerInput(maxScrollOffset, travelPx, thumbHeightPx) {
-                    var dragThumbTop = thumbOffsetPx
-                    detectVerticalDragGestures(
-                        onDragStart = { offset ->
-                            val onThumb =
-                                offset.y in thumbOffsetPx..(thumbOffsetPx + thumbHeightPx)
-                            dragThumbTop =
-                                if (onThumb) {
-                                    thumbOffsetPx
-                                } else {
+                .background(
+                    if (expanded) {
+                        trackColor
+                    } else {
+                        Color.Transparent
+                    },
+                )
+                .then(
+                    if (expanded) {
+                        Modifier
+                            .pointerInput(maxScrollOffset, travelPx, thumbHeightPx) {
+                                detectTapGestures { offset ->
                                     seekToTrackY(offset.y)
-                                    (offset.y - thumbHeightPx / 2f).coerceIn(0f, travelPx)
                                 }
-                        },
-                        onVerticalDrag = { change, dragAmount ->
-                            change.consume()
-                            if (travelPx <= 0f) {
-                                return@detectVerticalDragGestures
                             }
-                            dragThumbTop = (dragThumbTop + dragAmount).coerceIn(0f, travelPx)
-                            onScrollOffsetChange((dragThumbTop / travelPx) * maxScrollOffset)
-                        },
-                    )
-                },
+                            .pointerInput(maxScrollOffset, travelPx, thumbHeightPx) {
+                                var dragThumbTop = thumbOffsetPx
+                                detectVerticalDragGestures(
+                                    onDragStart = { offset ->
+                                        dragging = true
+                                        val onThumb =
+                                            offset.y in
+                                                thumbOffsetPx..(thumbOffsetPx + thumbHeightPx)
+                                        dragThumbTop =
+                                            if (onThumb) {
+                                                thumbOffsetPx
+                                            } else {
+                                                seekToTrackY(offset.y)
+                                                (offset.y - thumbHeightPx / 2f)
+                                                    .coerceIn(0f, travelPx)
+                                            }
+                                    },
+                                    onDragEnd = { dragging = false },
+                                    onDragCancel = { dragging = false },
+                                    onVerticalDrag = { change, dragAmount ->
+                                        change.consume()
+                                        if (travelPx <= 0f) {
+                                            return@detectVerticalDragGestures
+                                        }
+                                        dragThumbTop =
+                                            (dragThumbTop + dragAmount).coerceIn(0f, travelPx)
+                                        onScrollOffsetChange(
+                                            (dragThumbTop / travelPx) * maxScrollOffset,
+                                        )
+                                    },
+                                )
+                            }
+                    } else {
+                        Modifier
+                    },
+                ),
         ) {
             Box(
                 modifier =
@@ -120,8 +204,13 @@ fun NotesFingerScrollbar(
                     .height(with(density) { thumbHeightPx.toDp() })
                     .offset(y = with(density) { thumbOffsetPx.toDp() })
                     .background(
-                        color = thumbColor,
-                        shape = RoundedCornerShape(NotesFingerScrollbarThumbCorner),
+                        color =
+                        if (expanded) {
+                            thumbColor
+                        } else {
+                            thumbColor.copy(alpha = thumbColor.alpha * 0.85f)
+                        },
+                        shape = RoundedCornerShape(NotesScrollbarThumbCorner),
                     ),
             )
         }
