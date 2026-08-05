@@ -19,7 +19,8 @@ object SimpleMarkdownToHtml {
     private val ORDERED_ITEM_REGEX = Regex("^(\\d+)[.]\\s+(.+)$")
     private val BLOCKQUOTE_REGEX = Regex("^>\\s?(.*)$")
     private val HR_REGEX = Regex("^(\\*{3,}|-{3,}|_{3,})\\s*$")
-    private val FENCE_OPEN_REGEX = Regex("^```([^\\s`]*)\\s*$")
+    /** Opening fence: 3+ backticks or tildes, optional info string (no highlighting yet). */
+    private val FENCE_OPEN_REGEX = Regex("^(`{3,}|~{3,})([^`]*)$")
     private val DETAILS_OPEN_REGEX = Regex("^<details\\b[^>]*>\\s*$", RegexOption.IGNORE_CASE)
     private val DETAILS_CLOSE_REGEX = Regex("^</details\\s*>\\s*$", RegexOption.IGNORE_CASE)
     private val SUMMARY_LINE_REGEX =
@@ -102,7 +103,13 @@ object SimpleMarkdownToHtml {
             return appendDetails(lines, start, out, slugCounts)
         }
         FENCE_OPEN_REGEX.matchEntire(trimmed)?.let { fence ->
-            return appendFence(lines, start, fence.groupValues[1], out)
+            return appendFence(
+                lines = lines,
+                start = start,
+                marker = fence.groupValues[1],
+                info = fence.groupValues[2].trim(),
+                out = out,
+            )
         }
         HEADING_REGEX.matchEntire(trimmed)?.let { heading ->
             val level = heading.groupValues[1].length
@@ -343,21 +350,27 @@ object SimpleMarkdownToHtml {
     private fun appendFence(
         lines: List<String>,
         start: Int,
-        lang: String,
+        marker: String,
+        info: String,
         out: StringBuilder,
     ): Int {
+        val fenceChar = marker[0]
+        val fenceLen = marker.length
         val code = StringBuilder()
         var i = start + 1
-        while (i < lines.size && !lines[i].trim().startsWith("```")) {
+        while (i < lines.size) {
+            val trimmed = lines[i].trim()
+            if (isFenceClose(trimmed, fenceChar, fenceLen)) {
+                i += 1
+                break
+            }
             if (code.isNotEmpty()) {
                 code.append('\n')
             }
             code.append(lines[i])
             i += 1
         }
-        if (i < lines.size) {
-            i += 1
-        }
+        val lang = info.substringBefore(' ').trim()
         out.append("<pre><code")
         if (lang.isNotEmpty()) {
             out.append(" class=\"language-").append(escapeHtml(lang)).append('"')
@@ -366,6 +379,25 @@ object SimpleMarkdownToHtml {
         out.append(escapeHtml(code.toString()))
         out.append("</code></pre>\n")
         return i
+    }
+
+    /** Closing fence: same character, at least as many markers, optional trailing spaces. */
+    private fun isFenceClose(
+        trimmed: String,
+        fenceChar: Char,
+        fenceLen: Int,
+    ): Boolean {
+        if (trimmed.isEmpty() || trimmed[0] != fenceChar) {
+            return false
+        }
+        var count = 0
+        while (count < trimmed.length && trimmed[count] == fenceChar) {
+            count += 1
+        }
+        if (count < fenceLen) {
+            return false
+        }
+        return trimmed.substring(count).isBlank()
     }
 
     private fun appendBlockquote(

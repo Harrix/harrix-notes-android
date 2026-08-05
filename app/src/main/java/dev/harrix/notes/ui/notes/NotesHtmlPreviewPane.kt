@@ -443,10 +443,14 @@ private fun wrapPreviewHtml(
         padding: 12px;
         border-radius: 6px;
         overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
       }
       pre code {
         background: transparent;
         padding: 0;
+        font-size: 0.92em;
+        white-space: inherit;
       }
       img {
         max-width: 100%;
