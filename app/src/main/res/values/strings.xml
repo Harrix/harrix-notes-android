@@ -122,6 +122,13 @@
     <string name="markdown_notes_preview">Preview note</string>
     <string name="markdown_notes_saved">Saved</string>
     <string name="markdown_notes_new_note">+ New Note</string>
+    <string name="markdown_notes_create_note_title">New note</string>
+    <string name="markdown_notes_create_note_name_label">Note title</string>
+    <string name="markdown_notes_create_note_file_label">File name</string>
+    <string name="markdown_notes_create_note_extension">.md</string>
+    <string name="markdown_notes_create_note_sync_file_name">Create file name from note title</string>
+    <string name="markdown_notes_create_note_confirm">Create</string>
+    <string name="markdown_notes_create_note_cancel">Cancel</string>
     <string name="markdown_notes_create_failed">Could not create note</string>
     <string name="loading_elapsed_seconds">%1$d s</string>
 </resources>

@@ -644,19 +644,22 @@ class NotesTreeRepository(
     }
 
     /**
-     * Creates an empty Markdown file in [parentDocumentId] with a unique `Untitled.md` name.
+     * Creates a Markdown file in [parentDocumentId].
+     * [fileStem] is the name without `.md`; [noteTitle] is written as YAML `title:`.
      * Uses `text/markdown` when the provider accepts it, otherwise `text/plain`.
      */
     fun createMarkdownNote(
         treeUri: Uri,
         parentDocumentId: String,
+        fileStem: String,
+        noteTitle: String,
     ): NotesEntry.Note {
         val parentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, parentDocumentId)
         val existingNames =
             queryChildren(treeUri, parentDocumentId)
                 .map { it.name.lowercase(Locale.ROOT) }
                 .toSet()
-        val displayName = nextUntitledMarkdownName(existingNames)
+        val displayName = uniqueMarkdownDisplayName(fileStem, existingNames)
         val created =
             DocumentsContract.createDocument(
                 resolver,
@@ -669,17 +672,19 @@ class NotesTreeRepository(
                 "text/plain",
                 displayName,
             ) ?: error("Could not create note")
-        runCatching { writeText(created, "") }
+        val initialContent = initialMarkdownContent(noteTitle)
+        runCatching { writeText(created, initialContent) }
         val documentId = DocumentsContract.getDocumentId(created)
         val noteUri =
             runCatching {
                 DocumentsContract.buildDocumentUriUsingTree(treeUri, documentId)
             }.getOrDefault(created)
         invalidateDirectory(treeUri, parentDocumentId)
-        val label =
-            displayName
-                .removeSuffix(".md")
-                .removeSuffix(".MD")
+        val contentTitle = NoteTitleExtractor.extract(initialContent).ifEmpty { noteTitle.trim() }
+        val label = contentTitle.ifEmpty { noteDisplayLabel(displayName) }
+        if (contentTitle.isNotEmpty()) {
+            titleByDocumentId[documentId] = contentTitle
+        }
         return NotesEntry.Note(
             documentId = documentId,
             name = displayName,
@@ -749,19 +754,71 @@ class NotesTreeRepository(
 
         fun isGMd(fileName: String): Boolean = fileName.lowercase(Locale.ROOT).endsWith(".g.md")
 
-        fun nextUntitledMarkdownName(existingLowercaseNames: Set<String>): String {
-            if ("untitled.md" !in existingLowercaseNames) {
-                return "Untitled.md"
+        /** Turns a note title into a file stem: spaces become hyphens. */
+        fun fileStemFromNoteTitle(title: String): String {
+            val trimmed = title.trim()
+            if (trimmed.isEmpty()) {
+                return ""
+            }
+            return trimmed
+                .replace(Regex("\\s+"), "-")
+                .replace(Regex("[\\\\/:*?\"<>|]"), "")
+                .trim('-')
+        }
+
+        fun normalizeMarkdownFileStem(raw: String): String {
+            var stem = raw.trim()
+            while (stem.endsWith(".md", ignoreCase = true)) {
+                stem = stem.dropLast(3).trimEnd()
+            }
+            stem =
+                stem
+                    .replace(Regex("[\\\\/:*?\"<>|]"), "")
+                    .trim()
+                    .trim('.')
+            return stem
+        }
+
+        fun uniqueMarkdownDisplayName(
+            fileStem: String,
+            existingLowercaseNames: Set<String>,
+        ): String {
+            val base =
+                normalizeMarkdownFileStem(fileStem).ifEmpty {
+                    "Untitled"
+                }
+            val first = "$base.md"
+            if (first.lowercase(Locale.ROOT) !in existingLowercaseNames) {
+                return first
             }
             var index = 2
             while (true) {
-                val candidate = "Untitled $index.md"
+                val candidate = "$base-$index.md"
                 if (candidate.lowercase(Locale.ROOT) !in existingLowercaseNames) {
                     return candidate
                 }
                 index += 1
             }
         }
+
+        fun initialMarkdownContent(noteTitle: String): String {
+            val title = noteTitle.trim()
+            if (title.isEmpty()) {
+                return ""
+            }
+            return "---\ntitle: ${yamlQuotedScalar(title)}\n---\n\n"
+        }
+
+        private fun yamlQuotedScalar(value: String): String {
+            val escaped =
+                value
+                    .replace("\\", "\\\\")
+                    .replace("\"", "\\\"")
+            return "\"$escaped\""
+        }
+
+        fun nextUntitledMarkdownName(existingLowercaseNames: Set<String>): String =
+            uniqueMarkdownDisplayName("Untitled", existingLowercaseNames)
 
         fun isMergedTemplateGmd(
             fileName: String,

@@ -157,6 +157,7 @@ fun NotesViewerScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     var notesTreeUri by viewModel.notesTreeUri
     var menuExpanded by remember { mutableStateOf(false) }
+    var showCreateNoteDialog by remember { mutableStateOf(false) }
     var folderPath by viewModel.folderPath
     var entries by viewModel.entries
     var isLoading by viewModel.isLoading
@@ -858,7 +859,10 @@ fun NotesViewerScreen(
         }
     }
 
-    fun createNewNote() {
+    fun createNewNote(
+        fileStem: String,
+        noteTitle: String,
+    ) {
         val tree = notesTreeUri ?: return
         val treeUri = Uri.parse(tree)
         val currentTab = openTabs.firstOrNull { it.documentId == selectedTabDocumentId }
@@ -876,7 +880,12 @@ fun NotesViewerScreen(
             val note =
                 withContext(Dispatchers.IO) {
                     runCatching {
-                        repository.createMarkdownNote(treeUri, dir.documentId)
+                        repository.createMarkdownNote(
+                            treeUri = treeUri,
+                            parentDocumentId = dir.documentId,
+                            fileStem = fileStem,
+                            noteTitle = noteTitle,
+                        )
                     }
                 }.getOrElse { error ->
                     statusMessage =
@@ -904,6 +913,13 @@ fun NotesViewerScreen(
             autoEditDocumentId = note.documentId
             openNote(note, path)
         }
+    }
+
+    fun requestCreateNewNote() {
+        if (notesTreeUri == null) {
+            return
+        }
+        showCreateNoteDialog = true
     }
 
     fun openPinnedItem(item: NotesPinnedItem) {
@@ -1448,7 +1464,7 @@ fun NotesViewerScreen(
                             onSelectTab = { selectTab(it) },
                             onCloseTab = { closeTab(it) },
                             onReorderTabs = { from, to -> reorderTabs(from, to) },
-                            onCreateNote = { createNewNote() },
+                            onCreateNote = { requestCreateNewNote() },
                             showEditActions = selectedTab != null && !noteLoading && noteContent != null,
                             isEditing = isEditing,
                             isSaving = isSaving,
@@ -1586,7 +1602,7 @@ fun NotesViewerScreen(
                             // Hide FAB over note preview/editor so it does not cover content.
                             if (selectedTab == null) {
                                 FloatingActionButton(
-                                    onClick = { createNewNote() },
+                                    onClick = { requestCreateNewNote() },
                                     modifier =
                                     Modifier
                                         .align(Alignment.BottomEnd)
@@ -1612,6 +1628,16 @@ fun NotesViewerScreen(
                 }
             }
         }
+    }
+
+    if (showCreateNoteDialog) {
+        NotesCreateNoteDialog(
+            onDismiss = { showCreateNoteDialog = false },
+            onConfirm = { fileStem, noteTitle ->
+                showCreateNoteDialog = false
+                createNewNote(fileStem = fileStem, noteTitle = noteTitle)
+            },
+        )
     }
 }
 
