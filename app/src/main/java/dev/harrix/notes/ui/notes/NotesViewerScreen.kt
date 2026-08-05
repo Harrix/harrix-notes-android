@@ -1580,17 +1580,20 @@ fun NotesViewerScreen(
                                     }
                                 }
                             }
-                            FloatingActionButton(
-                                onClick = { createNewNote() },
-                                modifier =
-                                Modifier
-                                    .align(Alignment.BottomEnd)
-                                    .padding(16.dp),
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Add,
-                                    contentDescription = stringResource(R.string.markdown_notes_new_note),
-                                )
+                            // Hide FAB over note preview/editor so it does not cover content.
+                            if (selectedTab == null) {
+                                FloatingActionButton(
+                                    onClick = { createNewNote() },
+                                    modifier =
+                                    Modifier
+                                        .align(Alignment.BottomEnd)
+                                        .padding(16.dp),
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Add,
+                                        contentDescription = stringResource(R.string.markdown_notes_new_note),
+                                    )
+                                }
                             }
                         }
                         if (pinnedBarEnabled) {
