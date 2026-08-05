@@ -3,10 +3,11 @@ package dev.harrix.notes
 /**
  * Minimal Markdown → HTML converter for note preview.
  *
- * Supports headings (with anchor ids), paragraphs, emphasis, links, images,
- * inline/fenced code, lists, blockquotes, GFM pipe tables, thematic breaks,
- * and raw `<details>` / `<summary>` HTML blocks. YAML front matter is wrapped
- * in `<details>` (collapsed). No formulas or footnotes.
+ * Supports headings (with anchor ids), paragraphs, emphasis, links, autolinks
+ * (`<https://…>`), images, inline/fenced code, lists, blockquotes, GFM pipe
+ * tables, thematic breaks, and raw `<details>` / `<summary>` HTML blocks.
+ * YAML front matter is wrapped in `<details>` (collapsed). No formulas or
+ * footnotes.
  *
  * Relative image URLs are rewritten to `/__notes_local__/…` tokens and then
  * embedded as `data:` URIs by the preview pane (SAF cannot be loaded directly).
@@ -31,6 +32,8 @@ object SimpleMarkdownToHtml {
     private val INLINE_CODE_REGEX = Regex("`([^`]+)`")
     private val IMAGE_REGEX = Regex("!\\[([^\\]]*)]\\(([^)]+)\\)")
     private val LINK_REGEX = Regex("\\[([^\\]]+)]\\(([^)]+)\\)")
+    /** CommonMark URI autolink: `<https://example.com/>`. */
+    private val AUTOLINK_REGEX = Regex("<((?:https?|ftp)://[^\\s<>]+)>", RegexOption.IGNORE_CASE)
     private val BOLD_REGEX = Regex("(\\*\\*|__)(.+?)\\1")
     private val ITALIC_STAR_REGEX = Regex("\\*([^*]+)\\*")
     private val ITALIC_UNDERSCORE_REGEX = Regex("_([^_]+)_")
@@ -532,6 +535,12 @@ object SimpleMarkdownToHtml {
             LINK_REGEX.replace(work) { match ->
                 val label = escapeHtml(match.groupValues[1])
                 val href = rewriteLinkHref(match.groupValues[2].trim())
+                stash("""<a href="$href">$label</a>""")
+            }
+        work =
+            AUTOLINK_REGEX.replace(work) { match ->
+                val href = rewriteLinkHref(match.groupValues[1].trim())
+                val label = escapeHtml(match.groupValues[1].trim())
                 stash("""<a href="$href">$label</a>""")
             }
         work = escapeHtml(work)
