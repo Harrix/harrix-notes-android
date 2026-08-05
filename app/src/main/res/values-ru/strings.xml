@@ -143,6 +143,7 @@
     <string name="markdown_notes_note_info_unknown">—</string>
     <string name="markdown_notes_note_info_ok">OK</string>
     <string name="markdown_notes_max_open_tabs_warning">Достигнуто максимальное число вкладок. Самая старая вкладка закрыта</string>
+    <string name="markdown_notes_preview_simplified">Упрощённый просмотр: изображения скрыты</string>
     <string name="markdown_notes_create_failed">Не удалось создать заметку</string>
     <string name="loading_elapsed_seconds">%1$d с</string>
 </resources>

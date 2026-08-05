@@ -9,6 +9,7 @@ import android.os.SystemClock
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,6 +39,7 @@ import dev.harrix.notes.AppPreferences
 import dev.harrix.notes.NotesPathSegment
 import dev.harrix.notes.NotesRelativeDocuments
 import dev.harrix.notes.NotesViewerPreferences
+import dev.harrix.notes.R
 import dev.harrix.notes.SimpleMarkdownToHtml
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
@@ -129,6 +131,7 @@ fun NotesHtmlPreviewPane(
     var html by remember { mutableStateOf<String?>(null) }
     var scrollMetrics by remember { mutableStateOf(NotesScrollMetrics()) }
     var previewWebView by remember { mutableStateOf<NotesPreviewWebView?>(null) }
+    var simplifiedNotifiedFor by remember { mutableStateOf<String?>(null) }
     val onScrollMetrics by rememberUpdatedState<(NotesScrollMetrics) -> Unit> { metrics ->
         scrollMetrics = metrics
     }
@@ -146,6 +149,7 @@ fun NotesHtmlPreviewPane(
         if (content == null) {
             html = null
             scrollMetrics = NotesScrollMetrics()
+            simplifiedNotifiedFor = null
             return@LaunchedEffect
         }
         val showSpinner = html == null
@@ -164,7 +168,19 @@ fun NotesHtmlPreviewPane(
                     palette = palette,
                 )
             }
-        html = built
+        html = built.html
+        if (built.simplified) {
+            val notifyKey = noteDocumentId ?: content
+            if (simplifiedNotifiedFor != notifyKey) {
+                simplifiedNotifiedFor = notifyKey
+                Toast
+                    .makeText(
+                        context,
+                        R.string.markdown_notes_preview_simplified,
+                        Toast.LENGTH_LONG,
+                    ).show()
+            }
+        }
     }
 
     Box(modifier = modifier.fillMaxSize().clipToBounds()) {
@@ -355,6 +371,11 @@ private class PreviewWebViewClient(
     }
 }
 
+private data class PreviewHtmlBuild(
+    val html: String,
+    val simplified: Boolean,
+)
+
 private suspend fun buildPreviewHtml(
     source: String,
     fontSizeSp: Int,
@@ -363,7 +384,7 @@ private suspend fun buildPreviewHtml(
     folderPath: List<NotesPathSegment>,
     noteDocumentId: String?,
     palette: NotesPreviewPalette,
-): String {
+): PreviewHtmlBuild {
     val size =
         fontSizeSp.coerceIn(AppPreferences.MIN_FONT_SIZE_SP, AppPreferences.MAX_FONT_SIZE_SP)
     val startedAt = SystemClock.elapsedRealtime()
@@ -374,13 +395,19 @@ private suspend fun buildPreviewHtml(
         val forceSimplified =
             source.length >= PREVIEW_FULL_MAX_SOURCE_CHARS ||
                 elapsedMs >= PREVIEW_BUILD_TIMEOUT_MS
-        val body =
+        val embedded =
             when {
                 forceSimplified ->
-                    SimpleMarkdownToHtml.replaceImagesWithPlaceholder(bodyBeforeEmbed)
+                    PreviewBody(
+                        html = SimpleMarkdownToHtml.replaceImagesWithPlaceholder(bodyBeforeEmbed),
+                        simplified = true,
+                    )
 
                 treeUri == null ->
-                    SimpleMarkdownToHtml.replaceLocalImagesWithPlaceholder(bodyBeforeEmbed)
+                    PreviewBody(
+                        html = SimpleMarkdownToHtml.replaceLocalImagesWithPlaceholder(bodyBeforeEmbed),
+                        simplified = false,
+                    )
 
                 else ->
                     embedImagesWithLimits(
@@ -393,7 +420,10 @@ private suspend fun buildPreviewHtml(
                         (PREVIEW_BUILD_TIMEOUT_MS - elapsedMs).coerceAtLeast(1L),
                     )
             }
-        wrapPreviewHtml(body, size, palette)
+        PreviewHtmlBuild(
+            html = wrapPreviewHtml(embedded.html, size, palette),
+            simplified = embedded.simplified,
+        )
     } catch (_: OutOfMemoryError) {
         System.gc()
         val snippet = source.take(200_000)
@@ -405,9 +435,17 @@ private suspend fun buildPreviewHtml(
             }.getOrElse {
                 "<p>${SimpleMarkdownToHtml.escapeHtml(snippet)}</p>"
             }
-        wrapPreviewHtml(body, size, palette)
+        PreviewHtmlBuild(
+            html = wrapPreviewHtml(body, size, palette),
+            simplified = true,
+        )
     }
 }
+
+private data class PreviewBody(
+    val html: String,
+    val simplified: Boolean,
+)
 
 private fun markdownBodyWithoutEmbeddedImages(source: String): String {
     var body = SimpleMarkdownToHtml.convert(source)
@@ -422,7 +460,7 @@ private suspend fun embedImagesWithLimits(
     folderPath: List<NotesPathSegment>,
     noteDocumentId: String?,
     timeoutMs: Long,
-): String {
+): PreviewBody {
     val deadlineMs = SystemClock.elapsedRealtime() + timeoutMs
     val budget =
         PreviewEmbedBudget(
@@ -460,19 +498,31 @@ private suspend fun embedImagesWithLimits(
                 }
             when {
                 hitLimit ->
-                    SimpleMarkdownToHtml.replaceImagesWithPlaceholder(bodyBeforeEmbed)
+                    PreviewBody(
+                        html = SimpleMarkdownToHtml.replaceImagesWithPlaceholder(bodyBeforeEmbed),
+                        simplified = true,
+                    )
 
                 embedded.contains(SimpleMarkdownToHtml.LOCAL_IMAGE_PATH_PREFIX) ->
-                    SimpleMarkdownToHtml.replaceLocalImagesWithPlaceholder(embedded)
+                    PreviewBody(
+                        html = SimpleMarkdownToHtml.replaceLocalImagesWithPlaceholder(embedded),
+                        simplified = false,
+                    )
 
-                else -> embedded
+                else -> PreviewBody(html = embedded, simplified = false)
             }
         }
     } catch (_: TimeoutCancellationException) {
-        SimpleMarkdownToHtml.replaceImagesWithPlaceholder(bodyBeforeEmbed)
+        PreviewBody(
+            html = SimpleMarkdownToHtml.replaceImagesWithPlaceholder(bodyBeforeEmbed),
+            simplified = true,
+        )
     } catch (_: OutOfMemoryError) {
         System.gc()
-        SimpleMarkdownToHtml.replaceImagesWithPlaceholder(bodyBeforeEmbed)
+        PreviewBody(
+            html = SimpleMarkdownToHtml.replaceImagesWithPlaceholder(bodyBeforeEmbed),
+            simplified = true,
+        )
     }
 }
 
