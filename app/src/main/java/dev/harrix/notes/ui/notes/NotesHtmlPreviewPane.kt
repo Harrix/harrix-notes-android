@@ -3,6 +3,7 @@ package dev.harrix.notes.ui.notes
 import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.os.SystemClock
 import android.webkit.WebResourceRequest
@@ -175,16 +176,32 @@ private class PreviewWebViewClient : WebViewClient() {
         val isPreviewHost =
             url.scheme.equals("https", ignoreCase = true) &&
                 url.host.equals(PREVIEW_HOST, ignoreCase = true)
-        if (isPreviewHost && !fragment.isNullOrEmpty()) {
-            scrollToAnchor(view, fragment)
+        if (isPreviewHost) {
+            if (!fragment.isNullOrEmpty()) {
+                scrollToAnchor(view, fragment)
+            }
             return true
         }
         if (url.scheme.equals("http", ignoreCase = true) ||
             url.scheme.equals("https", ignoreCase = true)
         ) {
-            return false
+            openInBrowser(view.context, url)
+            return true
         }
         return true
+    }
+
+    private fun openInBrowser(
+        context: Context,
+        url: Uri,
+    ) {
+        runCatching {
+            val intent =
+                Intent(Intent.ACTION_VIEW, url).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+            context.startActivity(intent)
+        }
     }
 
     private fun scrollToAnchor(
