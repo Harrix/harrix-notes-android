@@ -5,9 +5,9 @@ package dev.harrix.notes
  *
  * Supports headings (with anchor ids), paragraphs, emphasis, links, autolinks
  * (`<https://…>`), images, inline/fenced code, lists, blockquotes, GFM pipe
- * tables, thematic breaks, and raw `<details>` / `<summary>` HTML blocks.
- * YAML front matter is wrapped in `<details>` (collapsed). No formulas or
- * footnotes.
+ * tables, thematic breaks, HTML comments (`<!-- … -->`), and raw
+ * `<details>` / `<summary>` HTML blocks. YAML front matter is wrapped in
+ * `<details>` (collapsed). No formulas or footnotes.
  *
  * Relative image URLs are rewritten to `/__notes_local__/…` tokens and then
  * embedded as `data:` URIs by the preview pane (SAF cannot be loaded directly).
@@ -28,6 +28,9 @@ object SimpleMarkdownToHtml {
         Regex("^<summary\\b[^>]*>([\\s\\S]*?)</summary\\s*>\\s*$", RegexOption.IGNORE_CASE)
     private val HTML_IMG_SRC_REGEX =
         Regex("""(?i)(<img\b[^>]*?\bsrc\s*=\s*)(["'])([^"']+)\2""")
+
+    /** HTML comments; stripped outside fenced code (kept inside fences). */
+    private val HTML_COMMENT_REGEX = Regex("<!--[\\s\\S]*?-->")
 
     private val INLINE_CODE_REGEX = Regex("`([^`]+)`")
     private val IMAGE_REGEX = Regex("!\\[([^\\]]*)]\\(([^)]+)\\)")
@@ -74,7 +77,59 @@ object SimpleMarkdownToHtml {
             out.append(escapeHtml(frontmatter.groupValues[1]))
             out.append("</pre></details>\n")
         }
-        out.append(parseBlocks(body, slugCounts))
+        out.append(parseBlocks(removeHtmlCommentsPreservingFences(body), slugCounts))
+        return out.toString()
+    }
+
+    /**
+     * Removes `<!-- … -->` outside fenced code blocks so comments are not shown
+     * as escaped text in the preview.
+     */
+    private fun removeHtmlCommentsPreservingFences(text: String): String {
+        if (!text.contains("<!--")) {
+            return text
+        }
+        val lines = text.replace("\r\n", "\n").replace('\r', '\n').split('\n')
+        val out = StringBuilder(text.length)
+        var inFence = false
+        var fenceChar = '`'
+        var fenceLen = 3
+        var index = 0
+        while (index < lines.size) {
+            if (out.isNotEmpty()) {
+                out.append('\n')
+            }
+            val line = lines[index]
+            val trimmed = line.trim()
+            if (inFence) {
+                out.append(line)
+                if (isFenceClose(trimmed, fenceChar, fenceLen)) {
+                    inFence = false
+                }
+                index += 1
+                continue
+            }
+            val open = FENCE_OPEN_REGEX.matchEntire(trimmed)
+            if (open != null) {
+                inFence = true
+                fenceChar = open.groupValues[1][0]
+                fenceLen = open.groupValues[1].length
+                out.append(line)
+                index += 1
+                continue
+            }
+            val chunk = StringBuilder(line)
+            index += 1
+            while (index < lines.size) {
+                val nextTrimmed = lines[index].trim()
+                if (FENCE_OPEN_REGEX.matches(nextTrimmed)) {
+                    break
+                }
+                chunk.append('\n').append(lines[index])
+                index += 1
+            }
+            out.append(HTML_COMMENT_REGEX.replace(chunk.toString(), ""))
+        }
         return out.toString()
     }
 
