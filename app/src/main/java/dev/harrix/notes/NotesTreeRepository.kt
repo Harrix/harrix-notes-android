@@ -620,6 +620,64 @@ class NotesTreeRepository(
             )?.use { cursor -> cursor.moveToFirst() } == true
     }.getOrDefault(false)
 
+    /** Display name, size, and last-modified for a single document URI. */
+    fun queryDocumentInfo(uri: Uri): NotesDocumentInfo? =
+        runCatching {
+            resolver
+                .query(
+                    uri,
+                    arrayOf(
+                        DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                        DocumentsContract.Document.COLUMN_SIZE,
+                        DocumentsContract.Document.COLUMN_LAST_MODIFIED,
+                        DocumentsContract.Document.COLUMN_MIME_TYPE,
+                    ),
+                    null,
+                    null,
+                    null,
+                )?.use { cursor ->
+                    if (!cursor.moveToFirst()) {
+                        return@use null
+                    }
+                    val nameIndex =
+                        cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME)
+                    val sizeIndex = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_SIZE)
+                    val modifiedIndex =
+                        cursor.getColumnIndex(DocumentsContract.Document.COLUMN_LAST_MODIFIED)
+                    val mimeIndex = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_MIME_TYPE)
+                    val name =
+                        if (nameIndex >= 0 && !cursor.isNull(nameIndex)) {
+                            cursor.getString(nameIndex)
+                        } else {
+                            null
+                        }
+                    val size =
+                        if (sizeIndex >= 0 && !cursor.isNull(sizeIndex)) {
+                            cursor.getLong(sizeIndex).takeIf { it >= 0 }
+                        } else {
+                            null
+                        }
+                    val modified =
+                        if (modifiedIndex >= 0 && !cursor.isNull(modifiedIndex)) {
+                            cursor.getLong(modifiedIndex).takeIf { it > 0 }
+                        } else {
+                            null
+                        }
+                    val mime =
+                        if (mimeIndex >= 0 && !cursor.isNull(mimeIndex)) {
+                            cursor.getString(mimeIndex)
+                        } else {
+                            null
+                        }
+                    NotesDocumentInfo(
+                        displayName = name.orEmpty(),
+                        sizeBytes = size,
+                        lastModifiedEpochMs = modified,
+                        mimeType = mime,
+                    )
+                }
+        }.getOrNull()
+
     fun readText(uri: Uri): String = resolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
         ?: error("Could not open note")
 

@@ -132,6 +132,16 @@
     <string name="markdown_notes_create_note_sync_file_name">Создавать имя файла из названия заметки</string>
     <string name="markdown_notes_create_note_confirm">Создать</string>
     <string name="markdown_notes_create_note_cancel">Отмена</string>
+    <string name="markdown_notes_note_info">О заметке</string>
+    <string name="markdown_notes_note_info_title">Название</string>
+    <string name="markdown_notes_note_info_file_name">Имя файла</string>
+    <string name="markdown_notes_note_info_size">Размер</string>
+    <string name="markdown_notes_note_info_modified">Изменён</string>
+    <string name="markdown_notes_note_info_location">Расположение</string>
+    <string name="markdown_notes_note_info_mime">Тип</string>
+    <string name="markdown_notes_note_info_external">Открыта вне папки заметок</string>
+    <string name="markdown_notes_note_info_unknown">—</string>
+    <string name="markdown_notes_note_info_ok">OK</string>
     <string name="markdown_notes_max_open_tabs_warning">Достигнуто максимальное число вкладок. Самая старая вкладка закрыта</string>
     <string name="markdown_notes_create_failed">Не удалось создать заметку</string>
     <string name="loading_elapsed_seconds">%1$d с</string>

@@ -109,6 +109,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.harrix.notes.NoteMetaUpdates
 import dev.harrix.notes.NotesBrowseLayout
 import dev.harrix.notes.NotesDateFormats
+import dev.harrix.notes.NotesDocumentInfo
 import dev.harrix.notes.NotesEntry
 import dev.harrix.notes.NotesListDensity
 import dev.harrix.notes.NotesListingOptions
@@ -163,6 +164,8 @@ fun NotesViewerScreen(
     var notesTreeUri by viewModel.notesTreeUri
     var menuExpanded by remember { mutableStateOf(false) }
     var showCreateNoteDialog by remember { mutableStateOf(false) }
+    var showNoteInfoDialog by remember { mutableStateOf(false) }
+    var noteInfoDocument by remember { mutableStateOf<NotesDocumentInfo?>(null) }
     var createNoteUntitledStem by remember { mutableStateOf("Untitled_01") }
     var folderPath by viewModel.folderPath
     var entries by viewModel.entries
@@ -1589,6 +1592,19 @@ fun NotesViewerScreen(
                         showNoteDates = value
                         preferences.saveShowNoteDates(value)
                     },
+                    noteOpen = selectedTab != null,
+                    onOpenNoteInfo = {
+                        val tab = selectedTab
+                        if (tab != null) {
+                            scope.launch {
+                                noteInfoDocument =
+                                    withContext(Dispatchers.IO) {
+                                        repository.queryDocumentInfo(tab.uri)
+                                    }
+                                showNoteInfoDialog = true
+                            }
+                        }
+                    },
                     onOpenSettings = onOpenSettings,
                     onOpenAbout = onOpenAbout,
                 )
@@ -1791,6 +1807,25 @@ fun NotesViewerScreen(
             },
         )
     }
+    if (showNoteInfoDialog) {
+        val infoTab = selectedTab
+        if (infoTab != null) {
+            NotesNoteInfoDialog(
+                tab = infoTab,
+                documentInfo = noteInfoDocument,
+                onDismiss = {
+                    showNoteInfoDialog = false
+                    noteInfoDocument = null
+                },
+            )
+        }
+    }
+    LaunchedEffect(showNoteInfoDialog, selectedTabDocumentId) {
+        if (showNoteInfoDialog && selectedTabDocumentId == null) {
+            showNoteInfoDialog = false
+            noteInfoDocument = null
+        }
+    }
 }
 
 private const val AutosaveDelayMs = 800L
@@ -1831,6 +1866,8 @@ private fun NotesTopChrome(
     onSortReverseOrderChange: (Boolean) -> Unit,
     onShowGmdFilesChange: (Boolean) -> Unit,
     onShowNoteDatesChange: (Boolean) -> Unit,
+    noteOpen: Boolean,
+    onOpenNoteInfo: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenAbout: () -> Unit,
 ) {
@@ -1875,75 +1912,97 @@ private fun NotesTopChrome(
                 expanded = menuExpanded,
                 onDismissRequest = { onMenuExpandedChange(false) },
             ) {
-                NotesSortBy.entries.forEach { option ->
+                if (noteOpen) {
                     NotesDropdownMenuItem(
                         text = {
                             Text(
-                                text = stringResource(sortByLabelRes(option)),
+                                text = stringResource(R.string.markdown_notes_note_info),
                                 maxLines = 2,
                             )
                         },
-                        onClick = { onSortByChange(option) },
+                        onClick = {
+                            onMenuExpandedChange(false)
+                            onOpenNoteInfo()
+                        },
                         leadingIcon = {
-                            if (sortBy == option) {
-                                Icon(
-                                    imageVector = Icons.Filled.Check,
-                                    contentDescription = null,
-                                )
-                            }
+                            Icon(
+                                imageVector = Icons.Filled.Description,
+                                contentDescription = null,
+                            )
                         },
                     )
+                    HorizontalDivider()
+                } else {
+                    NotesSortBy.entries.forEach { option ->
+                        NotesDropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = stringResource(sortByLabelRes(option)),
+                                    maxLines = 2,
+                                )
+                            },
+                            onClick = { onSortByChange(option) },
+                            leadingIcon = {
+                                if (sortBy == option) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Check,
+                                        contentDescription = null,
+                                    )
+                                }
+                            },
+                        )
+                    }
+                    HorizontalDivider()
+                    NotesDropdownMenuItem(
+                        text = {
+                            Text(
+                                text = stringResource(R.string.markdown_notes_sort_folders_first),
+                                maxLines = 2,
+                            )
+                        },
+                        onClick = { onFoldersFirstChange(!foldersFirst) },
+                        trailingIcon = {
+                            NotesMenuCheckbox(checked = foldersFirst)
+                        },
+                    )
+                    NotesDropdownMenuItem(
+                        text = {
+                            Text(
+                                text = stringResource(R.string.markdown_notes_sort_reverse),
+                                maxLines = 2,
+                            )
+                        },
+                        onClick = { onSortReverseOrderChange(!sortReverseOrder) },
+                        trailingIcon = {
+                            NotesMenuCheckbox(checked = sortReverseOrder)
+                        },
+                    )
+                    NotesDropdownMenuItem(
+                        text = {
+                            Text(
+                                text = stringResource(R.string.markdown_notes_sort_show_gmd),
+                                maxLines = 2,
+                            )
+                        },
+                        onClick = { onShowGmdFilesChange(!showGmdFiles) },
+                        trailingIcon = {
+                            NotesMenuCheckbox(checked = showGmdFiles)
+                        },
+                    )
+                    NotesDropdownMenuItem(
+                        text = {
+                            Text(
+                                text = stringResource(R.string.settings_markdown_notes_show_note_dates),
+                                maxLines = 2,
+                            )
+                        },
+                        onClick = { onShowNoteDatesChange(!showNoteDates) },
+                        trailingIcon = {
+                            NotesMenuCheckbox(checked = showNoteDates)
+                        },
+                    )
+                    HorizontalDivider()
                 }
-                HorizontalDivider()
-                NotesDropdownMenuItem(
-                    text = {
-                        Text(
-                            text = stringResource(R.string.markdown_notes_sort_folders_first),
-                            maxLines = 2,
-                        )
-                    },
-                    onClick = { onFoldersFirstChange(!foldersFirst) },
-                    trailingIcon = {
-                        NotesMenuCheckbox(checked = foldersFirst)
-                    },
-                )
-                NotesDropdownMenuItem(
-                    text = {
-                        Text(
-                            text = stringResource(R.string.markdown_notes_sort_reverse),
-                            maxLines = 2,
-                        )
-                    },
-                    onClick = { onSortReverseOrderChange(!sortReverseOrder) },
-                    trailingIcon = {
-                        NotesMenuCheckbox(checked = sortReverseOrder)
-                    },
-                )
-                NotesDropdownMenuItem(
-                    text = {
-                        Text(
-                            text = stringResource(R.string.markdown_notes_sort_show_gmd),
-                            maxLines = 2,
-                        )
-                    },
-                    onClick = { onShowGmdFilesChange(!showGmdFiles) },
-                    trailingIcon = {
-                        NotesMenuCheckbox(checked = showGmdFiles)
-                    },
-                )
-                NotesDropdownMenuItem(
-                    text = {
-                        Text(
-                            text = stringResource(R.string.settings_markdown_notes_show_note_dates),
-                            maxLines = 2,
-                        )
-                    },
-                    onClick = { onShowNoteDatesChange(!showNoteDates) },
-                    trailingIcon = {
-                        NotesMenuCheckbox(checked = showNoteDates)
-                    },
-                )
-                HorizontalDivider()
                 NotesDropdownMenuItem(
                     text = {
                         Text(

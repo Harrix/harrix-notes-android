@@ -69,6 +69,14 @@ data class NoteMetaUpdates(
     val isEmpty: Boolean get() = titles.isEmpty() && icons.isEmpty()
 }
 
+/** Metadata for the note info dialog (SAF / content URI query). */
+data class NotesDocumentInfo(
+    val displayName: String,
+    val sizeBytes: Long? = null,
+    val lastModifiedEpochMs: Long? = null,
+    val mimeType: String? = null,
+)
+
 /** One segment in the folder navigation / breadcrumb path. */
 data class NotesPathSegment(
     val documentId: String,

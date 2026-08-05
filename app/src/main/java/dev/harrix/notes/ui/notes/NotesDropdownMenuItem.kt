@@ -14,12 +14,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 private val NotesMenuItemHorizontalPadding = 12.dp
-private val NotesMenuItemVerticalPadding = 0.dp
-private val NotesMenuItemMinHeight = 28.dp
-private val NotesMenuItemMaxHeight = 32.dp
-private val NotesMenuCheckboxSize = 20.dp
+private val NotesMenuItemVerticalPadding = 6.dp
+private val NotesMenuItemMinHeight = 40.dp
+private val NotesMenuItemMaxHeight = 48.dp
+private val NotesMenuCheckboxSize = 24.dp
 
-/** Tighter than Material3 defaults so overflow menus feel denser. */
+/** Comfortable tap targets; a bit denser than full Material 48dp rows. */
 val NotesMenuItemContentPadding =
     PaddingValues(
         horizontal = NotesMenuItemHorizontalPadding,
@@ -35,7 +35,6 @@ fun NotesDropdownMenuItem(
     trailingIcon: @Composable (() -> Unit)? = null,
     enabled: Boolean = true,
 ) {
-    // Skip the 48.dp Material touch-target inflation so rows can stay compact.
     CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
         DropdownMenuItem(
             text = text,
@@ -54,7 +53,7 @@ fun NotesDropdownMenuItem(
     }
 }
 
-/** Compact checkbox for dense dropdown rows. */
+/** Compact checkbox for dropdown rows (still larger than the ultra-dense variant). */
 @Composable
 fun NotesMenuCheckbox(
     checked: Boolean,
