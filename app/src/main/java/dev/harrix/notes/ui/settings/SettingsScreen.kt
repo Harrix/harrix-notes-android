@@ -29,7 +29,6 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -84,6 +83,7 @@ import dev.harrix.notes.NotesViewerPreferences
 import dev.harrix.notes.R
 import dev.harrix.notes.pinnedDisplayLabels
 import dev.harrix.notes.ui.adaptiveContentWidth
+import dev.harrix.notes.ui.notes.NotesDropdownMenuItem
 import dev.harrix.notes.ui.notes.NotesFolderPathControls
 import dev.harrix.notes.ui.notes.NotesNoteGlyph
 import dev.harrix.notes.ui.theme.AppLanguage
@@ -841,7 +841,7 @@ private fun EssentialSettingsSection(
                         } else {
                             language.nativeLabel
                         }
-                    DropdownMenuItem(
+                    NotesDropdownMenuItem(
                         text = {
                             Text(
                                 text = optionLabel,

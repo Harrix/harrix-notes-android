@@ -30,7 +30,6 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -272,7 +271,7 @@ private fun NotesPinnedBarItem(
             expanded = menuExpanded,
             onDismissRequest = { menuExpanded = false },
         ) {
-            DropdownMenuItem(
+            NotesDropdownMenuItem(
                 text = {
                     Text(
                         text = stringResource(R.string.markdown_notes_unpin),

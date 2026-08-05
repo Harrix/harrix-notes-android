@@ -63,10 +63,8 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.Button
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -1404,6 +1402,7 @@ fun NotesViewerScreen(
                     foldersFirst = foldersFirst,
                     sortReverseOrder = sortReverseOrder,
                     showGmdFiles = showGmdFiles,
+                    showNoteDates = showNoteDates,
                     onSortByChange = { value ->
                         sortBy = value
                         preferences.saveSortBy(value)
@@ -1419,6 +1418,10 @@ fun NotesViewerScreen(
                     onShowGmdFilesChange = { value ->
                         showGmdFiles = value
                         preferences.saveShowGmdFiles(value)
+                    },
+                    onShowNoteDatesChange = { value ->
+                        showNoteDates = value
+                        preferences.saveShowNoteDates(value)
                     },
                     onOpenSettings = onOpenSettings,
                     onOpenAbout = onOpenAbout,
@@ -1644,10 +1647,12 @@ private fun NotesTopChrome(
     foldersFirst: Boolean,
     sortReverseOrder: Boolean,
     showGmdFiles: Boolean,
+    showNoteDates: Boolean,
     onSortByChange: (NotesSortBy) -> Unit,
     onFoldersFirstChange: (Boolean) -> Unit,
     onSortReverseOrderChange: (Boolean) -> Unit,
     onShowGmdFilesChange: (Boolean) -> Unit,
+    onShowNoteDatesChange: (Boolean) -> Unit,
     onOpenSettings: () -> Unit,
     onOpenAbout: () -> Unit,
 ) {
@@ -1693,7 +1698,7 @@ private fun NotesTopChrome(
                 onDismissRequest = { onMenuExpandedChange(false) },
             ) {
                 NotesSortBy.entries.forEach { option ->
-                    DropdownMenuItem(
+                    NotesDropdownMenuItem(
                         text = {
                             Text(
                                 text = stringResource(sortByLabelRes(option)),
@@ -1712,7 +1717,7 @@ private fun NotesTopChrome(
                     )
                 }
                 HorizontalDivider()
-                DropdownMenuItem(
+                NotesDropdownMenuItem(
                     text = {
                         Text(
                             text = stringResource(R.string.markdown_notes_sort_folders_first),
@@ -1721,13 +1726,10 @@ private fun NotesTopChrome(
                     },
                     onClick = { onFoldersFirstChange(!foldersFirst) },
                     trailingIcon = {
-                        Checkbox(
-                            checked = foldersFirst,
-                            onCheckedChange = null,
-                        )
+                        NotesMenuCheckbox(checked = foldersFirst)
                     },
                 )
-                DropdownMenuItem(
+                NotesDropdownMenuItem(
                     text = {
                         Text(
                             text = stringResource(R.string.markdown_notes_sort_reverse),
@@ -1736,13 +1738,10 @@ private fun NotesTopChrome(
                     },
                     onClick = { onSortReverseOrderChange(!sortReverseOrder) },
                     trailingIcon = {
-                        Checkbox(
-                            checked = sortReverseOrder,
-                            onCheckedChange = null,
-                        )
+                        NotesMenuCheckbox(checked = sortReverseOrder)
                     },
                 )
-                DropdownMenuItem(
+                NotesDropdownMenuItem(
                     text = {
                         Text(
                             text = stringResource(R.string.markdown_notes_sort_show_gmd),
@@ -1751,14 +1750,23 @@ private fun NotesTopChrome(
                     },
                     onClick = { onShowGmdFilesChange(!showGmdFiles) },
                     trailingIcon = {
-                        Checkbox(
-                            checked = showGmdFiles,
-                            onCheckedChange = null,
+                        NotesMenuCheckbox(checked = showGmdFiles)
+                    },
+                )
+                NotesDropdownMenuItem(
+                    text = {
+                        Text(
+                            text = stringResource(R.string.settings_markdown_notes_show_note_dates),
+                            maxLines = 2,
                         )
+                    },
+                    onClick = { onShowNoteDatesChange(!showNoteDates) },
+                    trailingIcon = {
+                        NotesMenuCheckbox(checked = showNoteDates)
                     },
                 )
                 HorizontalDivider()
-                DropdownMenuItem(
+                NotesDropdownMenuItem(
                     text = {
                         Text(
                             text = stringResource(R.string.markdown_notes_settings),
@@ -1776,7 +1784,7 @@ private fun NotesTopChrome(
                         )
                     },
                 )
-                DropdownMenuItem(
+                NotesDropdownMenuItem(
                     text = {
                         Text(
                             text = stringResource(R.string.markdown_notes_about),
@@ -2754,7 +2762,7 @@ private fun NotesEntryContextMenu(
         onDismissRequest = onDismiss,
     ) {
         if (showMergedNote) {
-            DropdownMenuItem(
+            NotesDropdownMenuItem(
                 text = {
                     Text(
                         text = stringResource(R.string.markdown_notes_show_merged),
@@ -2773,7 +2781,7 @@ private fun NotesEntryContextMenu(
                 },
             )
         }
-        DropdownMenuItem(
+        NotesDropdownMenuItem(
             text = {
                 Text(
                     text =
