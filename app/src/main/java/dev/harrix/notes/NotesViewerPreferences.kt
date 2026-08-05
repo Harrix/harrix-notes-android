@@ -294,7 +294,7 @@ class NotesViewerPreferences(
 
         const val DEFAULT_SHOW_NOTE_DATES = false
 
-        const val DEFAULT_FOLDERS_FIRST = true
+        const val DEFAULT_FOLDERS_FIRST = false
         const val DEFAULT_SORT_REVERSE_ORDER = false
         const val DEFAULT_SHOW_GMD_FILES = false
 
