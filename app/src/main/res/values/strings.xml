@@ -129,6 +129,7 @@
     <string name="markdown_notes_create_note_sync_file_name">Create file name from note title</string>
     <string name="markdown_notes_create_note_confirm">Create</string>
     <string name="markdown_notes_create_note_cancel">Cancel</string>
+    <string name="markdown_notes_max_open_tabs_warning">Maximum open tabs reached. The oldest tab was closed</string>
     <string name="markdown_notes_create_failed">Could not create note</string>
     <string name="loading_elapsed_seconds">%1$d s</string>
 </resources>

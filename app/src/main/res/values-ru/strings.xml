@@ -129,6 +129,7 @@
     <string name="markdown_notes_create_note_sync_file_name">Создавать имя файла из названия заметки</string>
     <string name="markdown_notes_create_note_confirm">Создать</string>
     <string name="markdown_notes_create_note_cancel">Отмена</string>
+    <string name="markdown_notes_max_open_tabs_warning">Достигнуто максимальное число вкладок. Самая старая вкладка закрыта</string>
     <string name="markdown_notes_create_failed">Не удалось создать заметку</string>
     <string name="loading_elapsed_seconds">%1$d с</string>
 </resources>

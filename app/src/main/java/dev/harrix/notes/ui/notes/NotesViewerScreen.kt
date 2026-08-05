@@ -811,6 +811,7 @@ fun NotesViewerScreen(
     }
 
     fun appendOpenTab(tab: OpenNoteTab) {
+        val previousIds = openTabs.map { it.documentId }.toSet()
         openTabs =
             if (singleNoteMode) {
                 listOf(tab)
@@ -818,6 +819,18 @@ fun NotesViewerScreen(
                 openTabs + tab
             }
         ensureMaxOpenTabs(preferredSelectedId = tab.documentId)
+        val closedPrevious =
+            previousIds.any { id ->
+                openTabs.none { it.documentId == id }
+            }
+        if (closedPrevious) {
+            Toast
+                .makeText(
+                    context,
+                    R.string.markdown_notes_max_open_tabs_warning,
+                    Toast.LENGTH_LONG,
+                ).show()
+        }
     }
 
     fun openNote(
