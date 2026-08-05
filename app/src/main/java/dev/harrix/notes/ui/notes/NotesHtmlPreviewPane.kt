@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -69,11 +71,47 @@ private const val PREVIEW_MIN_FREE_HEAP_BYTES = 24L * 1024 * 1024
 /**
  * Note **preview** mode: simple custom Markdown → HTML in a WebView.
  *
- * White page background; YAML front matter is collapsed in `<details>`.
- * Local images are embedded as `data:` URIs (SAF cannot be loaded by WebView
- * as plain file/content URLs). Huge notes fall back to simplified preview
- * without images to avoid OOM.
+ * Colors follow the app light/dark theme. YAML front matter is collapsed in
+ * `<details>`. Local images are embedded as `data:` URIs (SAF cannot be loaded
+ * by WebView as plain file/content URLs). Huge notes fall back to simplified
+ * preview without images to avoid OOM.
  */
+@Immutable
+private data class NotesPreviewPalette(
+    val dark: Boolean,
+    val background: Color,
+    val foreground: Color,
+    val muted: Color,
+    val border: Color,
+    val codeBackground: Color,
+    val quoteBorder: Color,
+    val link: Color,
+    val placeholderBackground: Color,
+    val placeholderForeground: Color,
+    val detailsBackground: Color,
+)
+
+@Composable
+private fun rememberNotesPreviewPalette(): NotesPreviewPalette {
+    val scheme = MaterialTheme.colorScheme
+    val dark = scheme.background.luminance() < 0.5f
+    return remember(dark, scheme.surface, scheme.onSurface, scheme.primary) {
+        NotesPreviewPalette(
+            dark = dark,
+            background = scheme.surface,
+            foreground = scheme.onSurface,
+            muted = scheme.onSurfaceVariant,
+            border = scheme.outlineVariant,
+            codeBackground = scheme.surfaceVariant,
+            quoteBorder = scheme.outline,
+            link = scheme.primary,
+            placeholderBackground = scheme.surfaceVariant,
+            placeholderForeground = scheme.onSurfaceVariant,
+            detailsBackground = scheme.surfaceVariant.copy(alpha = if (dark) 0.55f else 0.65f),
+        )
+    }
+}
+
 @Composable
 fun NotesHtmlPreviewPane(
     isLoading: Boolean,
@@ -87,6 +125,7 @@ fun NotesHtmlPreviewPane(
 ) {
     val context = LocalContext.current
     val resolver = remember(context) { context.applicationContext.contentResolver }
+    val palette = rememberNotesPreviewPalette()
     var html by remember { mutableStateOf<String?>(null) }
     var scrollMetrics by remember { mutableStateOf(NotesScrollMetrics()) }
     var previewWebView by remember { mutableStateOf<NotesPreviewWebView?>(null) }
@@ -101,7 +140,7 @@ fun NotesHtmlPreviewPane(
         }
     scrollMetricsSink.emit = onScrollMetrics
 
-    LaunchedEffect(content, fontSizeSp, treeUri, folderPath, noteDocumentId) {
+    LaunchedEffect(content, fontSizeSp, treeUri, folderPath, noteDocumentId, palette) {
         // Do not build from null content: that left a non-null empty HTML and hid
         // the spinner when the real note arrived (first open from the browser).
         if (content == null) {
@@ -109,9 +148,11 @@ fun NotesHtmlPreviewPane(
             scrollMetrics = NotesScrollMetrics()
             return@LaunchedEffect
         }
-        html = null
-        scrollMetrics = NotesScrollMetrics()
-        html =
+        val showSpinner = html == null
+        if (showSpinner) {
+            scrollMetrics = NotesScrollMetrics()
+        }
+        val built =
             withContext(Dispatchers.IO) {
                 buildPreviewHtml(
                     source = content,
@@ -120,8 +161,10 @@ fun NotesHtmlPreviewPane(
                     treeUri = treeUri,
                     folderPath = folderPath,
                     noteDocumentId = noteDocumentId,
+                    palette = palette,
                 )
             }
+        html = built
     }
 
     Box(modifier = modifier.fillMaxSize().clipToBounds()) {
@@ -145,12 +188,17 @@ fun NotesHtmlPreviewPane(
                 BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                     AndroidView(
                         factory = { ctx ->
-                            createPreviewWebView(ctx) { metrics ->
-                                scrollMetricsSink.emit(metrics)
-                            }.also { previewWebView = it }
+                            createPreviewWebView(
+                                context = ctx,
+                                background = palette.background,
+                                onScrollMetrics = { metrics ->
+                                    scrollMetricsSink.emit(metrics)
+                                },
+                            ).also { previewWebView = it }
                         },
                         update = { webView ->
                             previewWebView = webView as NotesPreviewWebView
+                            webView.setBackgroundColor(palette.background.toArgb())
                             val tag = webView.tag as? String
                             if (tag != document) {
                                 webView.tag = document
@@ -198,6 +246,7 @@ fun NotesHtmlPreviewPane(
 @SuppressLint("SetJavaScriptEnabled")
 private fun createPreviewWebView(
     context: Context,
+    background: Color,
     onScrollMetrics: (NotesScrollMetrics) -> Unit,
 ): NotesPreviewWebView =
     NotesPreviewWebView(context).apply {
@@ -208,7 +257,7 @@ private fun createPreviewWebView(
         // Native bar is too thin for fingers; Compose overlay handles scrubbing.
         isVerticalScrollBarEnabled = false
         isHorizontalScrollBarEnabled = false
-        setBackgroundColor(Color.White.toArgb())
+        setBackgroundColor(background.toArgb())
         webViewClient =
             PreviewWebViewClient(
                 onContentReady = { view ->
@@ -315,6 +364,7 @@ private suspend fun buildPreviewHtml(
     treeUri: Uri?,
     folderPath: List<NotesPathSegment>,
     noteDocumentId: String?,
+    palette: NotesPreviewPalette,
 ): String {
     val size =
         fontSizeSp.coerceIn(AppPreferences.MIN_FONT_SIZE_SP, AppPreferences.MAX_FONT_SIZE_SP)
@@ -345,7 +395,7 @@ private suspend fun buildPreviewHtml(
                         (PREVIEW_BUILD_TIMEOUT_MS - elapsedMs).coerceAtLeast(1L),
                     )
             }
-        wrapPreviewHtml(body, size)
+        wrapPreviewHtml(body, size, palette)
     } catch (_: OutOfMemoryError) {
         System.gc()
         val snippet = source.take(200_000)
@@ -357,7 +407,7 @@ private suspend fun buildPreviewHtml(
             }.getOrElse {
                 "<p>${SimpleMarkdownToHtml.escapeHtml(snippet)}</p>"
             }
-        wrapPreviewHtml(body, size)
+        wrapPreviewHtml(body, size, palette)
     }
 }
 
@@ -472,19 +522,34 @@ private class PreviewEmbedBudget(
 private fun wrapPreviewHtml(
     body: String,
     fontSizePx: Int,
-): String = """
+    palette: NotesPreviewPalette,
+): String {
+    val bg = palette.background.toCssHex()
+    val fg = palette.foreground.toCssHex()
+    val muted = palette.muted.toCssHex()
+    val border = palette.border.toCssHex()
+    val codeBg = palette.codeBackground.toCssHex()
+    val quoteBorder = palette.quoteBorder.toCssHex()
+    val link = palette.link.toCssHex()
+    val placeholderBg = palette.placeholderBackground.toCssHex()
+    val placeholderFg = palette.placeholderForeground.toCssHex()
+    val detailsBg = palette.detailsBackground.toCssHex()
+    val colorScheme = if (palette.dark) "dark" else "light"
+    return """
     <!DOCTYPE html>
     <html>
     <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta name="color-scheme" content="$colorScheme"/>
     <style>
       html, body {
         margin: 0;
         padding: 0;
-        background: #ffffff;
-        color: #1a1a1a;
+        background: $bg;
+        color: $fg;
         height: 100%;
+        color-scheme: $colorScheme;
       }
       body {
         padding: 16px;
@@ -507,9 +572,9 @@ private fun wrapPreviewHtml(
       }
       ul, ol { padding-left: 1.4em; }
       blockquote {
-        border-left: 3px solid #cccccc;
+        border-left: 3px solid $quoteBorder;
         padding-left: 0.8em;
-        color: #444444;
+        color: $muted;
       }
       .table-wrap {
         overflow-x: auto;
@@ -521,23 +586,23 @@ private fun wrapPreviewHtml(
         font-size: 0.95em;
       }
       th, td {
-        border: 1px solid #dddddd;
+        border: 1px solid $border;
         padding: 6px 10px;
         vertical-align: top;
       }
       th {
-        background: #f3f3f3;
+        background: $codeBg;
         font-weight: 600;
       }
       code {
         font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
         font-size: 0.92em;
-        background: #f3f3f3;
+        background: $codeBg;
         padding: 0.1em 0.35em;
         border-radius: 3px;
       }
       pre {
-        background: #f3f3f3;
+        background: $codeBg;
         padding: 12px;
         border-radius: 6px;
         overflow-x: auto;
@@ -557,28 +622,28 @@ private fun wrapPreviewHtml(
         margin: 0.6em 0;
       }
       .img-placeholder {
-        background: #e0e0e0;
-        color: #555555;
+        background: $placeholderBg;
+        color: $placeholderFg;
         padding: 12px 16px;
         margin: 0.6em 0;
         border-radius: 4px;
         font-size: 0.9em;
         text-align: center;
       }
-      a { color: #0b57d0; }
+      a { color: $link; }
       hr {
         border: none;
-        border-top: 1px solid #dddddd;
+        border-top: 1px solid $border;
         margin: 1.2em 0;
       }
       details {
-        background: #f7f7f7;
-        border: 1px solid #e4e4e4;
+        background: $detailsBg;
+        border: 1px solid $border;
         border-radius: 6px;
         padding: 8px 12px;
       }
       details.frontmatter {
-        color: #555555;
+        color: $muted;
       }
       details summary {
         cursor: pointer;
@@ -595,7 +660,8 @@ private fun wrapPreviewHtml(
     </head>
     <body>$body</body>
     </html>
-""".trimIndent()
+    """.trimIndent()
+}
 
 private fun loadLocalImage(
     resolver: ContentResolver,
