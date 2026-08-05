@@ -11,13 +11,13 @@ object NotesDateFormats {
 
     fun formatListDateTime(epochMs: Long): String = listDateTime.format(Instant.ofEpochMilli(epochMs))
 
-    fun formatByteSize(bytes: Long): String =
-        when {
-            bytes < 1024L -> "$bytes B"
-            bytes < 1024L * 1024L ->
-                String.format(java.util.Locale.ROOT, "%.1f KB", bytes / 1024.0)
+    fun formatByteSize(bytes: Long): String = when {
+        bytes < 1024L -> "$bytes B"
 
-            else ->
-                String.format(java.util.Locale.ROOT, "%.2f MB", bytes / (1024.0 * 1024.0))
-        }
+        bytes < 1024L * 1024L ->
+            String.format(java.util.Locale.ROOT, "%.1f KB", bytes / 1024.0)
+
+        else ->
+            String.format(java.util.Locale.ROOT, "%.2f MB", bytes / (1024.0 * 1024.0))
+    }
 }

@@ -248,38 +248,36 @@ private fun createPreviewWebView(
     context: Context,
     background: Color,
     onScrollMetrics: (NotesScrollMetrics) -> Unit,
-): NotesPreviewWebView =
-    NotesPreviewWebView(context).apply {
-        settings.javaScriptEnabled = true
-        settings.domStorageEnabled = false
-        settings.loadsImagesAutomatically = true
-        settings.blockNetworkImage = false
-        // Native bar is too thin for fingers; Compose overlay handles scrubbing.
-        isVerticalScrollBarEnabled = false
-        isHorizontalScrollBarEnabled = false
-        setBackgroundColor(background.toArgb())
-        webViewClient =
-            PreviewWebViewClient(
-                onContentReady = { view ->
-                    view.post { onScrollMetrics(view.notesScrollMetrics()) }
-                },
-            )
-        setOnScrollChangeListener { view, _, _, _, _ ->
-            onScrollMetrics((view as NotesPreviewWebView).notesScrollMetrics())
-        }
-        tag = ""
+): NotesPreviewWebView = NotesPreviewWebView(context).apply {
+    settings.javaScriptEnabled = true
+    settings.domStorageEnabled = false
+    settings.loadsImagesAutomatically = true
+    settings.blockNetworkImage = false
+    // Native bar is too thin for fingers; Compose overlay handles scrubbing.
+    isVerticalScrollBarEnabled = false
+    isHorizontalScrollBarEnabled = false
+    setBackgroundColor(background.toArgb())
+    webViewClient =
+        PreviewWebViewClient(
+            onContentReady = { view ->
+                view.post { onScrollMetrics(view.notesScrollMetrics()) }
+            },
+        )
+    setOnScrollChangeListener { view, _, _, _, _ ->
+        onScrollMetrics((view as NotesPreviewWebView).notesScrollMetrics())
     }
+    tag = ""
+}
 
 /** Exposes protected scroll-range APIs for the Compose finger scrollbar. */
 private class NotesPreviewWebView(
     context: Context,
 ) : WebView(context) {
-    fun notesScrollMetrics(): NotesScrollMetrics =
-        NotesScrollMetrics.fromWebView(
-            scrollY = scrollY,
-            computeVerticalScrollRange = computeVerticalScrollRange(),
-            computeVerticalScrollExtent = computeVerticalScrollExtent(),
-        )
+    fun notesScrollMetrics(): NotesScrollMetrics = NotesScrollMetrics.fromWebView(
+        scrollY = scrollY,
+        computeVerticalScrollRange = computeVerticalScrollRange(),
+        computeVerticalScrollExtent = computeVerticalScrollExtent(),
+    )
 }
 
 private class PreviewWebViewClient(

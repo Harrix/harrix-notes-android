@@ -305,7 +305,7 @@ private fun SettingsCategoryHeader(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier =
         Modifier
             .fillMaxWidth()
@@ -318,7 +318,7 @@ private fun SettingsSectionHeader(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier =
         Modifier
             .fillMaxWidth()
@@ -454,288 +454,288 @@ private fun GeneralSettingsSection(modifier: Modifier = Modifier) {
     }
 
     CompositionLocalProvider(LocalNotesIconStyle provides iconStyle) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        SettingsSectionHeader(text = stringResource(R.string.settings_category_location))
-        NotesFolderPathControls(
-            treeUri = treeUri,
-            onTreeUriChange = {
-                treeUri = it
-                pinnedItems = loadPinnedItemsForSettings(preferences, repository, it)
-            },
-        )
-
-        SettingsSectionHeader(text = stringResource(R.string.settings_category_opening))
-        SettingsChoiceRow(
-            label = stringResource(R.string.settings_markdown_notes_open_mode),
-            options = openModeOptions,
-            selected = noteOpenMode,
-            onSelect = { mode ->
-                noteOpenMode = mode
-                preferences.saveNoteOpenMode(mode)
-            },
-        )
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.settings_markdown_notes_single_note_mode),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.weight(1f),
-                )
-                Switch(
-                    checked = singleNoteMode,
-                    onCheckedChange = { enabled ->
-                        singleNoteMode = enabled
-                        preferences.saveSingleNoteMode(enabled)
-                    },
-                )
-            }
-            Text(
-                text = stringResource(R.string.settings_markdown_notes_single_note_mode_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-
-        SettingsSectionHeader(text = stringResource(R.string.settings_category_file_browser))
-        SettingsChoiceRow(
-            label = stringResource(R.string.settings_markdown_notes_browse_layout),
-            options = layoutOptions,
-            selected = browseLayout,
-            onSelect = { layout ->
-                browseLayout = layout
-                preferences.saveBrowseLayout(layout)
-            },
-        )
-        SettingsChoiceRow(
-            label = stringResource(R.string.settings_markdown_notes_icon_style),
-            options = iconStyleOptions,
-            selected = iconStyle,
-            onSelect = { style ->
-                iconStyle = style
-                preferences.saveIconStyle(style)
-            },
-        )
-        SettingsChoiceRow(
-            label = stringResource(R.string.settings_markdown_notes_title_source),
-            options = titleSourceOptions,
-            selected = titleSource,
-            onSelect = { source ->
-                titleSource = source
-                preferences.saveTitleSource(source)
-            },
-        )
-        SettingsChoiceRow(
-            label = stringResource(R.string.settings_markdown_notes_sort_by),
-            options = sortByOptions,
-            selected = sortBy,
-            onSelect = { value ->
-                sortBy = value
-                preferences.saveSortBy(value)
-            },
-        )
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.markdown_notes_sort_folders_first),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.weight(1f),
-                )
-                Switch(
-                    checked = foldersFirst,
-                    onCheckedChange = { enabled ->
-                        foldersFirst = enabled
-                        preferences.saveFoldersFirst(enabled)
-                    },
-                )
-            }
-        }
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.markdown_notes_sort_reverse),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.weight(1f),
-                )
-                Switch(
-                    checked = sortReverseOrder,
-                    onCheckedChange = { enabled ->
-                        sortReverseOrder = enabled
-                        preferences.saveSortReverseOrder(enabled)
-                    },
-                )
-            }
-        }
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.markdown_notes_sort_show_gmd),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.weight(1f),
-                )
-                Switch(
-                    checked = showGmdFiles,
-                    onCheckedChange = { enabled ->
-                        showGmdFiles = enabled
-                        preferences.saveShowGmdFiles(enabled)
-                    },
-                )
-            }
-        }
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.settings_markdown_notes_show_note_dates),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.weight(1f),
-                )
-                Switch(
-                    checked = showNoteDates,
-                    onCheckedChange = { enabled ->
-                        showNoteDates = enabled
-                        preferences.saveShowNoteDates(enabled)
-                    },
-                )
-            }
-            Text(
-                text = stringResource(R.string.settings_markdown_notes_show_note_dates_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        if (!singleNoteMode) {
-            IntSliderSetting(
-                label = stringResource(R.string.settings_markdown_notes_max_open_tabs),
-                value = maxOpenTabs,
-                valueRange = NotesViewerPreferences.MIN_OPEN_TABS..NotesViewerPreferences.MAX_OPEN_TABS,
-                hint = stringResource(R.string.settings_markdown_notes_max_open_tabs_hint),
-                onValueChange = { value ->
-                    maxOpenTabs = value
-                    preferences.saveMaxOpenTabs(value)
-                },
-            )
-        }
-        NotesDensitySettingRow(
-            labelRes = R.string.settings_markdown_notes_list_density,
-            selected = listDensity,
-            options = densityOptions,
-            onSelect = { density ->
-                listDensity = density
-                preferences.saveListDensity(density)
-            },
-        )
-        NotesDensitySettingRow(
-            labelRes = R.string.settings_markdown_notes_tree_density,
-            selected = treeDensity,
-            options = densityOptions,
-            onSelect = { density ->
-                treeDensity = density
-                preferences.saveTreeDensity(density)
-            },
-        )
-
-        SettingsSectionHeader(text = stringResource(R.string.settings_category_pinned_bar))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
+        Column(
+            modifier = modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(
-                text = stringResource(R.string.settings_markdown_notes_pinned_bar_enabled),
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.weight(1f),
-            )
-            Switch(
-                checked = pinnedBarEnabled,
-                onCheckedChange = { enabled ->
-                    pinnedBarEnabled = enabled
-                    preferences.savePinnedBarEnabled(enabled)
+            SettingsSectionHeader(text = stringResource(R.string.settings_category_location))
+            NotesFolderPathControls(
+                treeUri = treeUri,
+                onTreeUriChange = {
+                    treeUri = it
+                    pinnedItems = loadPinnedItemsForSettings(preferences, repository, it)
                 },
             )
-        }
-        IntSliderSetting(
-            label = stringResource(R.string.settings_markdown_notes_max_pinned),
-            value = maxPinnedItems,
-            valueRange = NotesViewerPreferences.MIN_PINNED_ITEMS..NotesViewerPreferences.MAX_PINNED_ITEMS,
-            hint = stringResource(R.string.settings_markdown_notes_max_pinned_hint),
-            onValueChange = { value ->
-                maxPinnedItems = value
-                preferences.saveMaxPinnedItems(value)
-                persistPinned(pinnedItems)
-            },
-        )
-        NotesDensitySettingRow(
-            labelRes = R.string.settings_markdown_notes_pinned_bar_density,
-            selected = pinnedBarDensity,
-            options = densityOptions,
-            onSelect = { density ->
-                pinnedBarDensity = density
-                preferences.savePinnedBarDensity(density)
-            },
-        )
-        Text(
-            text = stringResource(R.string.settings_markdown_notes_pinned_items),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        if (treeUri.isNullOrBlank()) {
-            Text(
-                text = stringResource(R.string.settings_markdown_notes_pinned_items_need_folder),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+
+            SettingsSectionHeader(text = stringResource(R.string.settings_category_opening))
+            SettingsChoiceRow(
+                label = stringResource(R.string.settings_markdown_notes_open_mode),
+                options = openModeOptions,
+                selected = noteOpenMode,
+                onSelect = { mode ->
+                    noteOpenMode = mode
+                    preferences.saveNoteOpenMode(mode)
+                },
             )
-        } else if (pinnedItems.isEmpty()) {
-            Text(
-                text = stringResource(R.string.settings_markdown_notes_pinned_items_empty),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        } else {
-            val homeLabel = stringResource(R.string.nav_drawer_home)
-            val displayLabels =
-                remember(pinnedItems, homeLabel) {
-                    pinnedDisplayLabels(pinnedItems, homeLabel)
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.settings_markdown_notes_single_note_mode),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Switch(
+                        checked = singleNoteMode,
+                        onCheckedChange = { enabled ->
+                            singleNoteMode = enabled
+                            preferences.saveSingleNoteMode(enabled)
+                        },
+                    )
                 }
-            pinnedItems.forEachIndexed { index, item ->
-                SettingsPinnedItemRow(
-                    item = item,
-                    label = displayLabels[item.id].orEmpty().ifBlank { item.title },
-                    onRemove = {
-                        persistPinned(pinnedItems.filterNot { it.id == item.id })
-                    },
-                    onReorderBySteps = { steps ->
-                        if (steps == 0) {
-                            return@SettingsPinnedItemRow
-                        }
-                        val toIndex = (index + steps).coerceIn(0, pinnedItems.lastIndex)
-                        if (toIndex == index) {
-                            return@SettingsPinnedItemRow
-                        }
-                        val mutable = pinnedItems.toMutableList()
-                        val moved = mutable.removeAt(index)
-                        mutable.add(toIndex, moved)
-                        persistPinned(mutable)
+                Text(
+                    text = stringResource(R.string.settings_markdown_notes_single_note_mode_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            SettingsSectionHeader(text = stringResource(R.string.settings_category_file_browser))
+            SettingsChoiceRow(
+                label = stringResource(R.string.settings_markdown_notes_browse_layout),
+                options = layoutOptions,
+                selected = browseLayout,
+                onSelect = { layout ->
+                    browseLayout = layout
+                    preferences.saveBrowseLayout(layout)
+                },
+            )
+            SettingsChoiceRow(
+                label = stringResource(R.string.settings_markdown_notes_icon_style),
+                options = iconStyleOptions,
+                selected = iconStyle,
+                onSelect = { style ->
+                    iconStyle = style
+                    preferences.saveIconStyle(style)
+                },
+            )
+            SettingsChoiceRow(
+                label = stringResource(R.string.settings_markdown_notes_title_source),
+                options = titleSourceOptions,
+                selected = titleSource,
+                onSelect = { source ->
+                    titleSource = source
+                    preferences.saveTitleSource(source)
+                },
+            )
+            SettingsChoiceRow(
+                label = stringResource(R.string.settings_markdown_notes_sort_by),
+                options = sortByOptions,
+                selected = sortBy,
+                onSelect = { value ->
+                    sortBy = value
+                    preferences.saveSortBy(value)
+                },
+            )
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.markdown_notes_sort_folders_first),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Switch(
+                        checked = foldersFirst,
+                        onCheckedChange = { enabled ->
+                            foldersFirst = enabled
+                            preferences.saveFoldersFirst(enabled)
+                        },
+                    )
+                }
+            }
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.markdown_notes_sort_reverse),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Switch(
+                        checked = sortReverseOrder,
+                        onCheckedChange = { enabled ->
+                            sortReverseOrder = enabled
+                            preferences.saveSortReverseOrder(enabled)
+                        },
+                    )
+                }
+            }
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.markdown_notes_sort_show_gmd),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Switch(
+                        checked = showGmdFiles,
+                        onCheckedChange = { enabled ->
+                            showGmdFiles = enabled
+                            preferences.saveShowGmdFiles(enabled)
+                        },
+                    )
+                }
+            }
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.settings_markdown_notes_show_note_dates),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Switch(
+                        checked = showNoteDates,
+                        onCheckedChange = { enabled ->
+                            showNoteDates = enabled
+                            preferences.saveShowNoteDates(enabled)
+                        },
+                    )
+                }
+                Text(
+                    text = stringResource(R.string.settings_markdown_notes_show_note_dates_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (!singleNoteMode) {
+                IntSliderSetting(
+                    label = stringResource(R.string.settings_markdown_notes_max_open_tabs),
+                    value = maxOpenTabs,
+                    valueRange = NotesViewerPreferences.MIN_OPEN_TABS..NotesViewerPreferences.MAX_OPEN_TABS,
+                    hint = stringResource(R.string.settings_markdown_notes_max_open_tabs_hint),
+                    onValueChange = { value ->
+                        maxOpenTabs = value
+                        preferences.saveMaxOpenTabs(value)
                     },
                 )
             }
+            NotesDensitySettingRow(
+                labelRes = R.string.settings_markdown_notes_list_density,
+                selected = listDensity,
+                options = densityOptions,
+                onSelect = { density ->
+                    listDensity = density
+                    preferences.saveListDensity(density)
+                },
+            )
+            NotesDensitySettingRow(
+                labelRes = R.string.settings_markdown_notes_tree_density,
+                selected = treeDensity,
+                options = densityOptions,
+                onSelect = { density ->
+                    treeDensity = density
+                    preferences.saveTreeDensity(density)
+                },
+            )
+
+            SettingsSectionHeader(text = stringResource(R.string.settings_category_pinned_bar))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.settings_markdown_notes_pinned_bar_enabled),
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f),
+                )
+                Switch(
+                    checked = pinnedBarEnabled,
+                    onCheckedChange = { enabled ->
+                        pinnedBarEnabled = enabled
+                        preferences.savePinnedBarEnabled(enabled)
+                    },
+                )
+            }
+            IntSliderSetting(
+                label = stringResource(R.string.settings_markdown_notes_max_pinned),
+                value = maxPinnedItems,
+                valueRange = NotesViewerPreferences.MIN_PINNED_ITEMS..NotesViewerPreferences.MAX_PINNED_ITEMS,
+                hint = stringResource(R.string.settings_markdown_notes_max_pinned_hint),
+                onValueChange = { value ->
+                    maxPinnedItems = value
+                    preferences.saveMaxPinnedItems(value)
+                    persistPinned(pinnedItems)
+                },
+            )
+            NotesDensitySettingRow(
+                labelRes = R.string.settings_markdown_notes_pinned_bar_density,
+                selected = pinnedBarDensity,
+                options = densityOptions,
+                onSelect = { density ->
+                    pinnedBarDensity = density
+                    preferences.savePinnedBarDensity(density)
+                },
+            )
+            Text(
+                text = stringResource(R.string.settings_markdown_notes_pinned_items),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if (treeUri.isNullOrBlank()) {
+                Text(
+                    text = stringResource(R.string.settings_markdown_notes_pinned_items_need_folder),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else if (pinnedItems.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.settings_markdown_notes_pinned_items_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                val homeLabel = stringResource(R.string.nav_drawer_home)
+                val displayLabels =
+                    remember(pinnedItems, homeLabel) {
+                        pinnedDisplayLabels(pinnedItems, homeLabel)
+                    }
+                pinnedItems.forEachIndexed { index, item ->
+                    SettingsPinnedItemRow(
+                        item = item,
+                        label = displayLabels[item.id].orEmpty().ifBlank { item.title },
+                        onRemove = {
+                            persistPinned(pinnedItems.filterNot { it.id == item.id })
+                        },
+                        onReorderBySteps = { steps ->
+                            if (steps == 0) {
+                                return@SettingsPinnedItemRow
+                            }
+                            val toIndex = (index + steps).coerceIn(0, pinnedItems.lastIndex)
+                            if (toIndex == index) {
+                                return@SettingsPinnedItemRow
+                            }
+                            val mutable = pinnedItems.toMutableList()
+                            val moved = mutable.removeAt(index)
+                            mutable.add(toIndex, moved)
+                            persistPinned(mutable)
+                        },
+                    )
+                }
+            }
         }
-    }
     }
 }
 

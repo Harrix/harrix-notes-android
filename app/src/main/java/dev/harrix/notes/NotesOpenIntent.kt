@@ -22,16 +22,19 @@ object NotesOpenIntent {
         }
         return when (intent.action) {
             Intent.ACTION_VIEW -> intent.data
+
             Intent.ACTION_SEND -> {
                 @Suppress("DEPRECATION")
                 intent.getParcelableExtra(Intent.EXTRA_STREAM) as? Uri
                     ?: intent.clipData?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.uri
             }
+
             Intent.ACTION_SEND_MULTIPLE -> {
                 @Suppress("DEPRECATION")
                 (intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM))?.firstOrNull()
                     ?: intent.clipData?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.uri
             }
+
             else -> intent.data
         }
     }
@@ -75,7 +78,7 @@ object NotesOpenIntent {
                 (
                     Intent.FLAG_GRANT_READ_URI_PERMISSION or
                         Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                )
+                    )
         if (takeFlags == 0) {
             return
         }

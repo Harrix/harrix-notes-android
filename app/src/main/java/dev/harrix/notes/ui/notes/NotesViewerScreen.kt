@@ -1483,318 +1483,318 @@ fun NotesViewerScreen(
             )
         }
     CompositionLocalProvider(LocalNotesIconStyle provides iconStyle) {
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        modifier = modifier,
-        // Allow dismiss by swipe/scrim when open. Block edge-swipe open on welcome and while a
-        // note is open: both preview and editor are WebViews, whose touch events Compose does
-        // not consume, so the drawer would steal vertical/diagonal scroll swipes.
-        gesturesEnabled =
-        drawerState.isOpen ||
-            (!notesTreeUri.isNullOrBlank() && selectedTab == null),
-        drawerContent = {
-            NotesTreeDrawerContent(
-                rows = treeRows,
-                expandedFolderIds = treeExpandedFolderIds,
-                selectedNoteDocumentId = selectedTabDocumentId,
-                isLoadingRoot = treeLoadingRoot,
-                density = treeDensity,
-                onToggleFolder = { toggleTreeFolder(it) },
-                onOpenFolder = { folder, parentPath ->
-                    scope.launch { drawerState.close() }
-                    openFolderList(
-                        parentPath +
-                            NotesPathSegment(
-                                documentId = folder.documentId,
-                                name = folder.name,
-                                uri = folder.uri,
-                            ),
-                    )
-                },
-                onOpenNote = { note, parentPath ->
-                    scope.launch { drawerState.close() }
-                    openNote(note, noteAssetFolderPath(parentPath, note))
-                },
-                onOpenSettings = {
-                    scope.launch {
-                        drawerState.close()
-                        onOpenSettings()
-                    }
-                },
-            )
-        },
-    ) {
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            containerColor = MaterialTheme.colorScheme.background,
-            contentWindowInsets = WindowInsets.safeDrawing,
-        ) { innerPadding ->
-            Column(
-                modifier =
-                Modifier
-                    .padding(innerPadding)
-                    .fillMaxSize(),
-            ) {
-                NotesTopChrome(
-                    onOpenDrawer = {
-                        scope.launch { drawerState.open() }
-                    },
-                    breadcrumbSegments =
-                    if (notesTreeUri.isNullOrBlank()) {
-                        null
-                    } else if (selectedTab != null) {
-                        selectedTab.folderPath +
-                            NotesPathSegment(
-                                documentId = selectedTab.documentId,
-                                name = selectedTab.title,
-                                uri = selectedTab.uri,
-                            )
-                    } else {
-                        folderPath
-                    },
-                    lastIsNote = selectedTab != null,
-                    onSegmentClick = { index ->
-                        val path =
-                            if (selectedTab != null) {
-                                selectedTab.folderPath
-                            } else {
-                                folderPath
-                            }
-                        val targetIndex = index.coerceAtMost(path.lastIndex)
-                        if (targetIndex >= 0) {
-                            openFolderList(path.take(targetIndex + 1))
-                        }
-                    },
-                    menuExpanded = menuExpanded,
-                    onMenuExpandedChange = { menuExpanded = it },
-                    sortBy = sortBy,
-                    foldersFirst = foldersFirst,
-                    sortReverseOrder = sortReverseOrder,
-                    showGmdFiles = showGmdFiles,
-                    showNoteDates = showNoteDates,
-                    onSortByChange = { value ->
-                        sortBy = value
-                        preferences.saveSortBy(value)
-                    },
-                    onFoldersFirstChange = { value ->
-                        foldersFirst = value
-                        preferences.saveFoldersFirst(value)
-                    },
-                    onSortReverseOrderChange = { value ->
-                        sortReverseOrder = value
-                        preferences.saveSortReverseOrder(value)
-                    },
-                    onShowGmdFilesChange = { value ->
-                        showGmdFiles = value
-                        preferences.saveShowGmdFiles(value)
-                    },
-                    onShowNoteDatesChange = { value ->
-                        showNoteDates = value
-                        preferences.saveShowNoteDates(value)
-                    },
-                    noteOpen = selectedTab != null,
-                    onOpenNoteInfo = {
-                        val tab = selectedTab
-                        if (tab != null) {
-                            scope.launch {
-                                noteInfoDocument =
-                                    withContext(Dispatchers.IO) {
-                                        repository.queryDocumentInfo(tab.uri)
-                                    }
-                                showNoteInfoDialog = true
-                            }
-                        }
-                    },
-                    onOpenSettings = onOpenSettings,
-                    onOpenAbout = onOpenAbout,
-                )
-                if (notesTreeUri.isNullOrBlank()) {
-                    Box(
-                        modifier = Modifier.weight(1f).fillMaxWidth(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        NotesPathWelcomeContent(
-                            onChooseFolder = { folderPicker.launch(null) },
-                            modifier =
-                            Modifier
-                                .adaptiveContentWidth()
-                                .padding(24.dp),
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            modifier = modifier,
+            // Allow dismiss by swipe/scrim when open. Block edge-swipe open on welcome and while a
+            // note is open: both preview and editor are WebViews, whose touch events Compose does
+            // not consume, so the drawer would steal vertical/diagonal scroll swipes.
+            gesturesEnabled =
+            drawerState.isOpen ||
+                (!notesTreeUri.isNullOrBlank() && selectedTab == null),
+            drawerContent = {
+                NotesTreeDrawerContent(
+                    rows = treeRows,
+                    expandedFolderIds = treeExpandedFolderIds,
+                    selectedNoteDocumentId = selectedTabDocumentId,
+                    isLoadingRoot = treeLoadingRoot,
+                    density = treeDensity,
+                    onToggleFolder = { toggleTreeFolder(it) },
+                    onOpenFolder = { folder, parentPath ->
+                        scope.launch { drawerState.close() }
+                        openFolderList(
+                            parentPath +
+                                NotesPathSegment(
+                                    documentId = folder.documentId,
+                                    name = folder.name,
+                                    uri = folder.uri,
+                                ),
                         )
-                    }
-                } else {
-                    Column(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                        NotesNavigationRow(
-                            onBack = { navigateBack() },
-                            openTabs = openTabs,
-                            selectedTabDocumentId = selectedTabDocumentId,
-                            onSelectTab = { selectTab(it) },
-                            onCloseTab = { closeTab(it) },
-                            onReorderTabs = { from, to -> reorderTabs(from, to) },
-                            onCreateNote = { requestCreateNewNote() },
-                            showEditActions = selectedTab != null && !noteLoading && noteContent != null,
-                            isEditing = isEditing,
-                            isSaving = isSaving,
-                            onPreview = {
-                                persistCurrentDraft {
-                                    isEditing = false
+                    },
+                    onOpenNote = { note, parentPath ->
+                        scope.launch { drawerState.close() }
+                        openNote(note, noteAssetFolderPath(parentPath, note))
+                    },
+                    onOpenSettings = {
+                        scope.launch {
+                            drawerState.close()
+                            onOpenSettings()
+                        }
+                    },
+                )
+            },
+        ) {
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                containerColor = MaterialTheme.colorScheme.background,
+                contentWindowInsets = WindowInsets.safeDrawing,
+            ) { innerPadding ->
+                Column(
+                    modifier =
+                    Modifier
+                        .padding(innerPadding)
+                        .fillMaxSize(),
+                ) {
+                    NotesTopChrome(
+                        onOpenDrawer = {
+                            scope.launch { drawerState.open() }
+                        },
+                        breadcrumbSegments =
+                        if (notesTreeUri.isNullOrBlank()) {
+                            null
+                        } else if (selectedTab != null) {
+                            selectedTab.folderPath +
+                                NotesPathSegment(
+                                    documentId = selectedTab.documentId,
+                                    name = selectedTab.title,
+                                    uri = selectedTab.uri,
+                                )
+                        } else {
+                            folderPath
+                        },
+                        lastIsNote = selectedTab != null,
+                        onSegmentClick = { index ->
+                            val path =
+                                if (selectedTab != null) {
+                                    selectedTab.folderPath
+                                } else {
+                                    folderPath
+                                }
+                            val targetIndex = index.coerceAtMost(path.lastIndex)
+                            if (targetIndex >= 0) {
+                                openFolderList(path.take(targetIndex + 1))
+                            }
+                        },
+                        menuExpanded = menuExpanded,
+                        onMenuExpandedChange = { menuExpanded = it },
+                        sortBy = sortBy,
+                        foldersFirst = foldersFirst,
+                        sortReverseOrder = sortReverseOrder,
+                        showGmdFiles = showGmdFiles,
+                        showNoteDates = showNoteDates,
+                        onSortByChange = { value ->
+                            sortBy = value
+                            preferences.saveSortBy(value)
+                        },
+                        onFoldersFirstChange = { value ->
+                            foldersFirst = value
+                            preferences.saveFoldersFirst(value)
+                        },
+                        onSortReverseOrderChange = { value ->
+                            sortReverseOrder = value
+                            preferences.saveSortReverseOrder(value)
+                        },
+                        onShowGmdFilesChange = { value ->
+                            showGmdFiles = value
+                            preferences.saveShowGmdFiles(value)
+                        },
+                        onShowNoteDatesChange = { value ->
+                            showNoteDates = value
+                            preferences.saveShowNoteDates(value)
+                        },
+                        noteOpen = selectedTab != null,
+                        onOpenNoteInfo = {
+                            val tab = selectedTab
+                            if (tab != null) {
+                                scope.launch {
+                                    noteInfoDocument =
+                                        withContext(Dispatchers.IO) {
+                                            repository.queryDocumentInfo(tab.uri)
+                                        }
+                                    showNoteInfoDialog = true
+                                }
+                            }
+                        },
+                        onOpenSettings = onOpenSettings,
+                        onOpenAbout = onOpenAbout,
+                    )
+                    if (notesTreeUri.isNullOrBlank()) {
+                        Box(
+                            modifier = Modifier.weight(1f).fillMaxWidth(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            NotesPathWelcomeContent(
+                                onChooseFolder = { folderPicker.launch(null) },
+                                modifier =
+                                Modifier
+                                    .adaptiveContentWidth()
+                                    .padding(24.dp),
+                            )
+                        }
+                    } else {
+                        Column(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                            NotesNavigationRow(
+                                onBack = { navigateBack() },
+                                openTabs = openTabs,
+                                selectedTabDocumentId = selectedTabDocumentId,
+                                onSelectTab = { selectTab(it) },
+                                onCloseTab = { closeTab(it) },
+                                onReorderTabs = { from, to -> reorderTabs(from, to) },
+                                onCreateNote = { requestCreateNewNote() },
+                                showEditActions = selectedTab != null && !noteLoading && noteContent != null,
+                                isEditing = isEditing,
+                                isSaving = isSaving,
+                                onPreview = {
+                                    persistCurrentDraft {
+                                        isEditing = false
+                                        draftText = noteContent.orEmpty()
+                                        lastSavedText = noteContent
+                                    }
+                                },
+                                onEdit = {
+                                    isEditing = true
                                     draftText = noteContent.orEmpty()
                                     lastSavedText = noteContent
-                                }
-                            },
-                            onEdit = {
-                                isEditing = true
-                                draftText = noteContent.orEmpty()
-                                lastSavedText = noteContent
-                            },
-                            showCloseNote = selectedTab != null,
-                            onCloseNote = {
-                                selectedTab?.let { closeTab(it.documentId) }
-                            },
-                        )
-                        HorizontalDivider()
-                        Box(
-                            modifier =
-                            Modifier
-                                .weight(1f)
-                                .fillMaxWidth(),
-                        ) {
+                                },
+                                showCloseNote = selectedTab != null,
+                                onCloseNote = {
+                                    selectedTab?.let { closeTab(it.documentId) }
+                                },
+                            )
+                            HorizontalDivider()
                             Box(
                                 modifier =
                                 Modifier
-                                    .fillMaxSize()
-                                    .clipToBounds()
-                                    .background(MaterialTheme.colorScheme.surface),
+                                    .weight(1f)
+                                    .fillMaxWidth(),
                             ) {
-                                when {
-                                    selectedTab != null -> {
-                                        if (isEditing) {
-                                            NotesMarkdownEditorPane(
-                                                isLoading = noteLoading,
-                                                docKey = selectedTab.documentId,
-                                                text = draftText,
-                                                errorMessage = statusMessage,
-                                                hasContent = noteContent != null,
-                                                fontSizeSp = editorFontSizeSp,
-                                                highlightMaxChars =
-                                                NotesViewerPreferences.highlightMaxChars(highlightMaxMb),
-                                                controller = editorController,
-                                                onTextChange = { value ->
-                                                    draftText = value
-                                                    scheduleAutosave()
+                                Box(
+                                    modifier =
+                                    Modifier
+                                        .fillMaxSize()
+                                        .clipToBounds()
+                                        .background(MaterialTheme.colorScheme.surface),
+                                ) {
+                                    when {
+                                        selectedTab != null -> {
+                                            if (isEditing) {
+                                                NotesMarkdownEditorPane(
+                                                    isLoading = noteLoading,
+                                                    docKey = selectedTab.documentId,
+                                                    text = draftText,
+                                                    errorMessage = statusMessage,
+                                                    hasContent = noteContent != null,
+                                                    fontSizeSp = editorFontSizeSp,
+                                                    highlightMaxChars =
+                                                    NotesViewerPreferences.highlightMaxChars(highlightMaxMb),
+                                                    controller = editorController,
+                                                    onTextChange = { value ->
+                                                        draftText = value
+                                                        scheduleAutosave()
+                                                    },
+                                                )
+                                            } else {
+                                                // Preview mode: simple Markdown → HTML.
+                                                NotesHtmlPreviewPane(
+                                                    isLoading = noteLoading,
+                                                    content = noteContent,
+                                                    errorMessage = statusMessage,
+                                                    fontSizeSp = previewFontSizeSp,
+                                                    treeUri = notesTreeUri?.let { Uri.parse(it) },
+                                                    folderPath = selectedTab.folderPath,
+                                                    noteDocumentId = selectedTab.documentId,
+                                                )
+                                            }
+                                        }
+
+                                        isLoading -> {
+                                            NotesLoadingIndicator(modifier = Modifier.align(Alignment.Center))
+                                        }
+
+                                        else -> {
+                                            NotesFolderList(
+                                                entries = visibleEntries,
+                                                statusMessage = statusMessage,
+                                                density = listDensity,
+                                                layout = browseLayout,
+                                                showNoteDates = showNoteDates,
+                                                pinnedDocumentIds =
+                                                pinnedItems
+                                                    .filter { it.kind != NotesPinnedKind.Home }
+                                                    .map { it.documentId }
+                                                    .toSet(),
+                                                listFirstVisibleIndex = viewModel.folderListFirstVisibleIndex,
+                                                listFirstVisibleOffset = viewModel.folderListFirstVisibleOffset,
+                                                gridFirstVisibleIndex = viewModel.folderGridFirstVisibleIndex,
+                                                gridFirstVisibleOffset = viewModel.folderGridFirstVisibleOffset,
+                                                onListScrollPositionChange = { index, offset ->
+                                                    viewModel.folderListFirstVisibleIndex = index
+                                                    viewModel.folderListFirstVisibleOffset = offset
                                                 },
-                                            )
-                                        } else {
-                                            // Preview mode: simple Markdown → HTML.
-                                            NotesHtmlPreviewPane(
-                                                isLoading = noteLoading,
-                                                content = noteContent,
-                                                errorMessage = statusMessage,
-                                                fontSizeSp = previewFontSizeSp,
-                                                treeUri = notesTreeUri?.let { Uri.parse(it) },
-                                                folderPath = selectedTab.folderPath,
-                                                noteDocumentId = selectedTab.documentId,
+                                                onGridScrollPositionChange = { index, offset ->
+                                                    viewModel.folderGridFirstVisibleIndex = index
+                                                    viewModel.folderGridFirstVisibleOffset = offset
+                                                },
+                                                onOpenFolder = { folder ->
+                                                    openFolderList(
+                                                        folderPath +
+                                                            NotesPathSegment(
+                                                                documentId = folder.documentId,
+                                                                name = folder.name,
+                                                                uri = folder.uri,
+                                                            ),
+                                                    )
+                                                },
+                                                onOpenNote = { note ->
+                                                    openNote(note, noteAssetFolderPath(folderPath, note))
+                                                },
+                                                onShowMergedNote = { folder ->
+                                                    openMergedNote(folder, folderPath)
+                                                },
+                                                onPinFolder = { folder ->
+                                                    pinFolder(
+                                                        folder,
+                                                        folderPath +
+                                                            NotesPathSegment(
+                                                                documentId = folder.documentId,
+                                                                name = folder.name,
+                                                                uri = folder.uri,
+                                                            ),
+                                                    )
+                                                },
+                                                onUnpinFolder = { folder ->
+                                                    unpinByDocumentId(folder.documentId)
+                                                },
+                                                onPinNote = { note ->
+                                                    pinNote(note, noteAssetFolderPath(folderPath, note))
+                                                },
+                                                onUnpinNote = { note ->
+                                                    unpinByDocumentId(note.documentId)
+                                                },
                                             )
                                         }
                                     }
-
-                                    isLoading -> {
-                                        NotesLoadingIndicator(modifier = Modifier.align(Alignment.Center))
-                                    }
-
-                                    else -> {
-                                        NotesFolderList(
-                                            entries = visibleEntries,
-                                            statusMessage = statusMessage,
-                                            density = listDensity,
-                                            layout = browseLayout,
-                                            showNoteDates = showNoteDates,
-                                            pinnedDocumentIds =
-                                            pinnedItems
-                                                .filter { it.kind != NotesPinnedKind.Home }
-                                                .map { it.documentId }
-                                                .toSet(),
-                                            listFirstVisibleIndex = viewModel.folderListFirstVisibleIndex,
-                                            listFirstVisibleOffset = viewModel.folderListFirstVisibleOffset,
-                                            gridFirstVisibleIndex = viewModel.folderGridFirstVisibleIndex,
-                                            gridFirstVisibleOffset = viewModel.folderGridFirstVisibleOffset,
-                                            onListScrollPositionChange = { index, offset ->
-                                                viewModel.folderListFirstVisibleIndex = index
-                                                viewModel.folderListFirstVisibleOffset = offset
-                                            },
-                                            onGridScrollPositionChange = { index, offset ->
-                                                viewModel.folderGridFirstVisibleIndex = index
-                                                viewModel.folderGridFirstVisibleOffset = offset
-                                            },
-                                            onOpenFolder = { folder ->
-                                                openFolderList(
-                                                    folderPath +
-                                                        NotesPathSegment(
-                                                            documentId = folder.documentId,
-                                                            name = folder.name,
-                                                            uri = folder.uri,
-                                                        ),
-                                                )
-                                            },
-                                            onOpenNote = { note ->
-                                                openNote(note, noteAssetFolderPath(folderPath, note))
-                                            },
-                                            onShowMergedNote = { folder ->
-                                                openMergedNote(folder, folderPath)
-                                            },
-                                            onPinFolder = { folder ->
-                                                pinFolder(
-                                                    folder,
-                                                    folderPath +
-                                                        NotesPathSegment(
-                                                            documentId = folder.documentId,
-                                                            name = folder.name,
-                                                            uri = folder.uri,
-                                                        ),
-                                                )
-                                            },
-                                            onUnpinFolder = { folder ->
-                                                unpinByDocumentId(folder.documentId)
-                                            },
-                                            onPinNote = { note ->
-                                                pinNote(note, noteAssetFolderPath(folderPath, note))
-                                            },
-                                            onUnpinNote = { note ->
-                                                unpinByDocumentId(note.documentId)
-                                            },
+                                }
+                                // Hide FAB over note preview/editor so it does not cover content.
+                                if (selectedTab == null) {
+                                    FloatingActionButton(
+                                        onClick = { requestCreateNewNote() },
+                                        modifier =
+                                        Modifier
+                                            .align(Alignment.BottomEnd)
+                                            .padding(16.dp),
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Add,
+                                            contentDescription = stringResource(R.string.markdown_notes_new_note),
                                         )
                                     }
                                 }
                             }
-                            // Hide FAB over note preview/editor so it does not cover content.
-                            if (selectedTab == null) {
-                                FloatingActionButton(
-                                    onClick = { requestCreateNewNote() },
-                                    modifier =
-                                    Modifier
-                                        .align(Alignment.BottomEnd)
-                                        .padding(16.dp),
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Add,
-                                        contentDescription = stringResource(R.string.markdown_notes_new_note),
-                                    )
-                                }
+                            if (pinnedBarEnabled) {
+                                NotesPinnedBar(
+                                    items = pinnedItems,
+                                    maxSlots = maxPinnedItems,
+                                    density = pinnedBarDensity,
+                                    onOpen = { openPinnedItem(it) },
+                                    onUnpin = { unpinItem(it.id) },
+                                )
                             }
-                        }
-                        if (pinnedBarEnabled) {
-                            NotesPinnedBar(
-                                items = pinnedItems,
-                                maxSlots = maxPinnedItems,
-                                density = pinnedBarDensity,
-                                onOpen = { openPinnedItem(it) },
-                                onUnpin = { unpinItem(it.id) },
-                            )
                         }
                     }
                 }
             }
         }
-    }
     }
 
     if (showCreateNoteDialog) {

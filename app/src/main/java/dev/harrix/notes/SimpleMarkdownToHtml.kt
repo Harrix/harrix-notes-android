@@ -20,6 +20,7 @@ object SimpleMarkdownToHtml {
     private val ORDERED_ITEM_REGEX = Regex("^(\\d+)[.]\\s+(.+)$")
     private val BLOCKQUOTE_REGEX = Regex("^>\\s?(.*)$")
     private val HR_REGEX = Regex("^(\\*{3,}|-{3,}|_{3,})\\s*$")
+
     /** Opening fence: 3+ backticks or tildes, optional info string (no highlighting yet). */
     private val FENCE_OPEN_REGEX = Regex("^(`{3,}|~{3,})([^`]*)$")
     private val DETAILS_OPEN_REGEX = Regex("^<details\\b[^>]*>\\s*$", RegexOption.IGNORE_CASE)
@@ -35,6 +36,7 @@ object SimpleMarkdownToHtml {
     private val INLINE_CODE_REGEX = Regex("`([^`]+)`")
     private val IMAGE_REGEX = Regex("!\\[([^\\]]*)]\\(([^)]+)\\)")
     private val LINK_REGEX = Regex("\\[([^\\]]+)]\\(([^)]+)\\)")
+
     /** CommonMark URI autolink: `<https://example.com/>`. */
     private val AUTOLINK_REGEX = Regex("<((?:https?|ftp)://[^\\s<>]+)>", RegexOption.IGNORE_CASE)
     private val BOLD_REGEX = Regex("(\\*\\*|__)(.+?)\\1")
@@ -673,8 +675,7 @@ object SimpleMarkdownToHtml {
         return LOCAL_IMG_TAG_REGEX.replace(html) { block }
     }
 
-    private fun placeholderHtml(message: String): String =
-        """<div class="img-placeholder">${escapeHtml(message)}</div>"""
+    private fun placeholderHtml(message: String): String = """<div class="img-placeholder">${escapeHtml(message)}</div>"""
 
     fun decodeLocalImagePath(urlPath: String): String? {
         val prefix = LOCAL_IMAGE_PATH_PREFIX

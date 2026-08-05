@@ -14,7 +14,6 @@ enum class NotesIconStyle {
     companion object {
         val Default: NotesIconStyle = Harrix
 
-        fun fromStorageKey(key: String?): NotesIconStyle =
-            entries.firstOrNull { it.name.equals(key, ignoreCase = true) } ?: Default
+        fun fromStorageKey(key: String?): NotesIconStyle = entries.firstOrNull { it.name.equals(key, ignoreCase = true) } ?: Default
     }
 }
