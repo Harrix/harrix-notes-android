@@ -11,6 +11,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -33,6 +34,7 @@ import dev.harrix.notes.R
 
 @Composable
 fun NotesCreateNoteDialog(
+    untitledFileStem: String,
     onDismiss: () -> Unit,
     onConfirm: (fileStem: String, noteTitle: String) -> Unit,
 ) {
@@ -40,6 +42,7 @@ fun NotesCreateNoteDialog(
     var fileStem by remember { mutableStateOf("") }
     var syncFileNameFromTitle by remember { mutableStateOf(true) }
     val titleFocus = remember { FocusRequester() }
+    val untitledFileName = "$untitledFileStem.md"
 
     LaunchedEffect(Unit) {
         titleFocus.requestFocus()
@@ -66,6 +69,10 @@ fun NotesCreateNoteDialog(
         )
     }
 
+    fun confirmUntitled() {
+        onConfirm(untitledFileStem, untitledFileStem)
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.markdown_notes_create_note_title)) },
@@ -74,6 +81,12 @@ fun NotesCreateNoteDialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                OutlinedButton(
+                    onClick = ::confirmUntitled,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(text = untitledFileName)
+                }
                 OutlinedTextField(
                     value = noteTitle,
                     onValueChange = ::applyTitle,

@@ -161,6 +161,7 @@ fun NotesViewerScreen(
     var notesTreeUri by viewModel.notesTreeUri
     var menuExpanded by remember { mutableStateOf(false) }
     var showCreateNoteDialog by remember { mutableStateOf(false) }
+    var createNoteUntitledStem by remember { mutableStateOf("Untitled_01") }
     var folderPath by viewModel.folderPath
     var entries by viewModel.entries
     var isLoading by viewModel.isLoading
@@ -1020,7 +1021,28 @@ fun NotesViewerScreen(
         if (notesTreeUri == null) {
             return
         }
-        showCreateNoteDialog = true
+        val tree = notesTreeUri ?: return
+        val treeUri = Uri.parse(tree)
+        val currentTab = openTabs.firstOrNull { it.documentId == selectedTabDocumentId }
+        val path =
+            when {
+                currentTab != null ->
+                    currentTab.folderPath.ifEmpty { ensureRootPath() ?: return }
+
+                folderPath.isNotEmpty() -> folderPath
+
+                else -> ensureRootPath() ?: return
+            }
+        val dir = path.lastOrNull() ?: return
+        scope.launch {
+            val stem =
+                withContext(Dispatchers.IO) {
+                    val existing = repository.childNamesLowercase(treeUri, dir.documentId)
+                    NotesTreeRepository.nextUntitledNumberedStem(existing)
+                }
+            createNoteUntitledStem = stem
+            showCreateNoteDialog = true
+        }
     }
 
     fun openPinnedItem(item: NotesPinnedItem) {
@@ -1755,6 +1777,7 @@ fun NotesViewerScreen(
 
     if (showCreateNoteDialog) {
         NotesCreateNoteDialog(
+            untitledFileStem = createNoteUntitledStem,
             onDismiss = { showCreateNoteDialog = false },
             onConfirm = { fileStem, noteTitle ->
                 showCreateNoteDialog = false

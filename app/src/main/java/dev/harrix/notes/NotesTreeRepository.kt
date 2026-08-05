@@ -643,6 +643,15 @@ class NotesTreeRepository(
         listingCache.remove(key)
     }
 
+    /** Lowercased display names of direct children (files and folders). */
+    fun childNamesLowercase(
+        treeUri: Uri,
+        parentDocumentId: String,
+    ): Set<String> =
+        queryChildren(treeUri, parentDocumentId)
+            .map { it.name.lowercase(Locale.ROOT) }
+            .toSet()
+
     /**
      * Creates a Markdown file in [parentDocumentId].
      * [fileStem] is the name without `.md`; [noteTitle] is written as YAML `title:`.
@@ -817,8 +826,20 @@ class NotesTreeRepository(
             return "\"$escaped\""
         }
 
+        fun nextUntitledNumberedStem(existingLowercaseNames: Set<String>): String {
+            var index = 1
+            while (true) {
+                val stem = String.format(Locale.ROOT, "Untitled_%02d", index)
+                val fileName = "$stem.md".lowercase(Locale.ROOT)
+                if (fileName !in existingLowercaseNames) {
+                    return stem
+                }
+                index += 1
+            }
+        }
+
         fun nextUntitledMarkdownName(existingLowercaseNames: Set<String>): String =
-            uniqueMarkdownDisplayName("Untitled", existingLowercaseNames)
+            "${nextUntitledNumberedStem(existingLowercaseNames)}.md"
 
         fun isMergedTemplateGmd(
             fileName: String,
