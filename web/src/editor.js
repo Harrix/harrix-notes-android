@@ -199,6 +199,55 @@ function reportScroll() {
   }
 }
 
+/** Keep the HTML shell sized to the Android WebView (IME adjustResize). */
+function setViewportHeight(cssPx) {
+  const value = Number(cssPx);
+  if (!isFinite(value) || value <= 0) {
+    return;
+  }
+  const height = String(value) + "px";
+  document.documentElement.style.height = height;
+  document.body.style.height = height;
+}
+
+/**
+ * After the WebView shrinks for the soft keyboard, remeasure and scroll the
+ * caret back into the visible scroller if it fell below/above the fold.
+ */
+function keepCaretVisible() {
+  if (!view) {
+    return;
+  }
+  view.requestMeasure();
+  const scroller = view.scrollDOM;
+  const rect = scroller.getBoundingClientRect();
+  const head = view.state.selection.main.head;
+  const coords = view.coordsAtPos(head);
+  if (!coords) {
+    requestAnimationFrame(reportScroll);
+    return;
+  }
+  const margin = 28;
+  const above = coords.top < rect.top + margin;
+  const below = coords.bottom > rect.bottom - margin;
+  if (above || below) {
+    view.dispatch({
+      effects: EditorView.scrollIntoView(head, {
+        y: below ? "end" : "start",
+        yMargin: margin,
+      }),
+    });
+  }
+  requestAnimationFrame(reportScroll);
+}
+
+function scheduleKeepCaretVisible() {
+  // Two frames: wait for WebView + CodeMirror layout after IME animation.
+  requestAnimationFrame(function () {
+    requestAnimationFrame(keepCaretVisible);
+  });
+}
+
 function onUpdate(update) {
   if (update.docChanged || update.viewportChanged || update.heightChanged) {
     requestAnimationFrame(reportScroll);
@@ -252,11 +301,7 @@ function boot(viewportHeight) {
       return;
     }
     destroyView();
-    if (Number(viewportHeight) > 0) {
-      const height = String(viewportHeight) + "px";
-      document.documentElement.style.height = height;
-      document.body.style.height = height;
-    }
+    setViewportHeight(viewportHeight);
     config = JSON.parse(host().configJson());
     const doc = readHostText();
     if (doc.length !== Number(config.expectedLength)) {
@@ -346,6 +391,19 @@ window.notesEditor = {
 
   reportScroll: function () {
     reportScroll();
+  },
+
+  /** Called from Kotlin when the WebView height changes (soft keyboard). */
+  onViewportResize: function (cssPx) {
+    setViewportHeight(cssPx);
+    if (!view) {
+      return;
+    }
+    scheduleKeepCaretVisible();
+  },
+
+  keepCaretVisible: function () {
+    scheduleKeepCaretVisible();
   },
 };
 

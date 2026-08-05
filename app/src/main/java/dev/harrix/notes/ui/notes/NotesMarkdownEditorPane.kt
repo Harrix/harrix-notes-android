@@ -192,6 +192,19 @@ class NotesMarkdownEditorController {
         target.evaluateJavascript("window.notesEditor && window.notesEditor.reportScroll();", null)
     }
 
+    /**
+     * Syncs the CodeMirror shell to the WebView height after IME adjustResize
+     * and scrolls the caret back into view when it left the visible area.
+     */
+    fun onViewportHeightChanged(heightCssPx: Float) {
+        val target = webView ?: return
+        if (!ready || heightCssPx <= 0f) return
+        target.evaluateJavascript(
+            "window.notesEditor && window.notesEditor.onViewportResize($heightCssPx);",
+            null,
+        )
+    }
+
     internal fun onPageFinished() {
         pageFinished = true
         tryBoot()
@@ -664,6 +677,15 @@ private fun createEditorWebView(
             }
         addJavascriptInterface(controller, BRIDGE_NAME)
         controller.attach(this)
+        addOnLayoutChangeListener { view, _, top, _, bottom, _, oldTop, _, oldBottom ->
+            val heightPx = bottom - top
+            val oldHeightPx = oldBottom - oldTop
+            if (heightPx <= 0 || heightPx == oldHeightPx) {
+                return@addOnLayoutChangeListener
+            }
+            val heightCssPx = heightPx / view.resources.displayMetrics.density
+            controller.onViewportHeightChanged(heightCssPx)
+        }
     }
 }
 
