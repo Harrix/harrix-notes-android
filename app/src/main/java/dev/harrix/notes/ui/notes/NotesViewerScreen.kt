@@ -110,6 +110,7 @@ import dev.harrix.notes.NotesDateFormats
 import dev.harrix.notes.NotesEntry
 import dev.harrix.notes.NotesListDensity
 import dev.harrix.notes.NotesListingOptions
+import dev.harrix.notes.NotesOpenIntent
 import dev.harrix.notes.NotesOpenMode
 import dev.harrix.notes.NotesPathSegment
 import dev.harrix.notes.NotesPinnedItem
@@ -148,6 +149,8 @@ fun NotesViewerScreen(
     onOpenAbout: () -> Unit,
     modifier: Modifier = Modifier,
     settingsRevision: Int = 0,
+    pendingOpenUri: Uri? = null,
+    onPendingOpenUriConsumed: () -> Unit = {},
     viewModel: NotesViewerViewModel = viewModel(),
 ) {
     val context = LocalContext.current
@@ -394,6 +397,10 @@ fun NotesViewerScreen(
     }
 
     fun expandPathToNote(tab: OpenNoteTab) {
+        if (tab.isExternal) {
+            viewModel.treeExpandedForTabId = tab.documentId
+            return
+        }
         val tree = notesTreeUri ?: return
         val treeUri = Uri.parse(tree)
         val root = treeRoot ?: repository.rootSegment(treeUri).also { treeRoot = it }
@@ -415,6 +422,9 @@ fun NotesViewerScreen(
     }
 
     fun ensurePathFoldersLoaded(tab: OpenNoteTab) {
+        if (tab.isExternal) {
+            return
+        }
         val tree = notesTreeUri ?: return
         val treeUri = Uri.parse(tree)
         val root = treeRoot ?: repository.rootSegment(treeUri).also { treeRoot = it }
@@ -824,6 +834,7 @@ fun NotesViewerScreen(
                         title = note.displayLabel,
                         fileName = note.name,
                         folderPath = pathForNote,
+                        isExternal = false,
                     ),
                 )
             } else {
@@ -832,7 +843,7 @@ fun NotesViewerScreen(
                     openTabs =
                         openTabs.map { tab ->
                             if (tab.documentId == note.documentId) {
-                                tab.copy(folderPath = pathForNote)
+                                tab.copy(folderPath = pathForNote, isExternal = false)
                             } else {
                                 tab
                             }
@@ -856,6 +867,83 @@ fun NotesViewerScreen(
             persistCurrentDraft { applyOpen() }
         } else {
             applyOpen()
+        }
+    }
+
+    fun openTabFromIntent(uri: Uri) {
+        scope.launch {
+            val tab =
+                withContext(Dispatchers.IO) {
+                    NotesOpenIntent.resolveTab(
+                        context = context,
+                        treeUriString = notesTreeUri,
+                        fileUri = uri,
+                    )
+                }
+
+            fun applyOpen() {
+                val existing =
+                    openTabs.firstOrNull { openTab ->
+                        openTab.documentId == tab.documentId || openTab.uri == tab.uri
+                    }
+                if (existing == null) {
+                    appendOpenTab(tab)
+                    if (selectedTabDocumentId != tab.documentId) {
+                        noteLoading = true
+                        noteContent = null
+                        resetEditorState()
+                    }
+                    selectedTabDocumentId = tab.documentId
+                } else {
+                    val merged =
+                        existing.copy(
+                            uri = tab.uri,
+                            title = tab.title.ifBlank { existing.title },
+                            fileName = tab.fileName.ifBlank { existing.fileName },
+                            folderPath =
+                            if (tab.folderPath.isNotEmpty()) {
+                                tab.folderPath
+                            } else {
+                                existing.folderPath
+                            },
+                            isExternal = tab.isExternal,
+                        )
+                    openTabs =
+                        openTabs.map { openTab ->
+                            if (openTab.documentId == existing.documentId) {
+                                merged
+                            } else {
+                                openTab
+                            }
+                        }
+                    if (singleNoteMode && openTabs.size > 1) {
+                        openTabs = listOf(merged)
+                    }
+                    if (selectedTabDocumentId != merged.documentId) {
+                        noteLoading = true
+                        noteContent = null
+                        resetEditorState()
+                    }
+                    selectedTabDocumentId = merged.documentId
+                }
+                if (!tab.isExternal && tab.folderPath.isNotEmpty()) {
+                    openFolderList(tab.folderPath, clearSelection = false)
+                }
+            }
+
+            val closesOthers =
+                singleNoteMode &&
+                    openTabs.any { openTab ->
+                        openTab.documentId != tab.documentId && openTab.uri != tab.uri
+                    }
+            if (closesOthers ||
+                selectedTabDocumentId == null ||
+                openTabs.none { it.documentId == tab.documentId || it.uri == tab.uri }
+            ) {
+                persistCurrentDraft { applyOpen() }
+            } else {
+                applyOpen()
+            }
         }
     }
 
@@ -1186,14 +1274,36 @@ fun NotesViewerScreen(
             viewModel.resetFolderScroll()
             folderPath = emptyList()
             entries = emptyList()
-            openTabs = emptyList()
             pinnedItems = emptyList()
-            selectedTabDocumentId = null
-            noteContent = null
-            noteLoading = false
-            resetEditorState()
+            val keptExternal = openTabs.filter { it.isExternal }
+            openTabs = keptExternal
+            selectedTabDocumentId =
+                keptExternal
+                    .firstOrNull { it.documentId == selectedTabDocumentId }
+                    ?.documentId
+                    ?: keptExternal.lastOrNull()?.documentId
+            if (selectedTabDocumentId == null) {
+                noteContent = null
+                noteLoading = false
+                resetEditorState()
+            } else {
+                noteLoading = true
+                noteContent = null
+                resetEditorState()
+            }
             preferences.clearOpenTabsSession()
         }
+    }
+
+    LaunchedEffect(pendingOpenUri, notesTreeUri, sessionRestoredForTree) {
+        val uri = pendingOpenUri ?: return@LaunchedEffect
+        val tree = notesTreeUri
+        if (tree != null && sessionRestoredForTree != tree) {
+            // Wait until the notes-folder session is restored so we do not race it.
+            return@LaunchedEffect
+        }
+        openTabFromIntent(uri)
+        onPendingOpenUriConsumed()
     }
 
     LaunchedEffect(openTabs, selectedTabDocumentId, notesTreeUri, sessionRestoredForTree) {
@@ -1847,19 +1957,30 @@ private fun NotesTabChip(
     onSelect: () -> Unit,
     onClose: () -> Unit,
     onLongPress: () -> Unit,
+    isExternal: Boolean = false,
 ) {
     val density = LocalDensity.current
     val dismissThresholdPx = with(density) { NotesTabSwipeCloseThreshold.toPx() }
     var offsetY by remember { mutableFloatStateOf(0f) }
+    val colors = MaterialTheme.colorScheme
+    val chipColor =
+        when {
+            selected && isExternal -> colors.tertiaryContainer
+            selected -> colors.secondaryContainer
+            isExternal -> colors.tertiaryContainer.copy(alpha = 0.55f)
+            else -> colors.surfaceContainerHighest
+        }
+    val labelColor =
+        when {
+            selected && isExternal -> colors.onTertiaryContainer
+            selected -> colors.onSecondaryContainer
+            isExternal -> colors.onTertiaryContainer
+            else -> colors.onSurfaceVariant
+        }
 
     Surface(
         shape = MaterialTheme.shapes.large,
-        color =
-        if (selected) {
-            MaterialTheme.colorScheme.secondaryContainer
-        } else {
-            MaterialTheme.colorScheme.surfaceContainerHighest
-        },
+        color = chipColor,
         tonalElevation = if (selected) 1.dp else 0.dp,
         modifier =
         Modifier
@@ -1887,12 +2008,7 @@ private fun NotesTabChip(
             text = title,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            color =
-            if (selected) {
-                MaterialTheme.colorScheme.onSecondaryContainer
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            },
+            color = labelColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier =
@@ -1995,10 +2111,11 @@ private fun NotesOpenTabMenuRow(
             .fillMaxWidth()
             .offset { IntOffset(0, dragOffsetY.roundToInt()) }
             .background(
-                if (selected) {
-                    MaterialTheme.colorScheme.secondaryContainer
-                } else {
-                    MaterialTheme.colorScheme.surface
+                when {
+                    selected && tab.isExternal -> MaterialTheme.colorScheme.tertiaryContainer
+                    selected -> MaterialTheme.colorScheme.secondaryContainer
+                    tab.isExternal -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.45f)
+                    else -> MaterialTheme.colorScheme.surface
                 },
             ).clickable(onClick = onSelect)
             .padding(start = 4.dp, end = 4.dp),
@@ -2189,6 +2306,7 @@ private fun NotesNavigationRow(
                             onSelect = { onSelectTab(tab.documentId) },
                             onClose = { onCloseTab(tab.documentId) },
                             onLongPress = { tabsMenuExpanded = true },
+                            isExternal = tab.isExternal,
                         )
                     }
                     if (openTabs.isEmpty()) {

@@ -1,5 +1,6 @@
 package dev.harrix.notes.ui
 
+import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -25,6 +26,8 @@ fun MainScreen(
     onAppLanguageChange: (AppLanguage) -> Unit,
     onExitApp: () -> Unit,
     modifier: Modifier = Modifier,
+    pendingOpenUri: Uri? = null,
+    onPendingOpenUriConsumed: () -> Unit = {},
 ) {
     // Survive Activity recreation (e.g. landscape rotation).
     var showSettings by rememberSaveable { mutableStateOf(false) }
@@ -37,6 +40,8 @@ fun MainScreen(
             onOpenSettings = { showSettings = true },
             onOpenAbout = { showAbout = true },
             settingsRevision = settingsRevision,
+            pendingOpenUri = pendingOpenUri,
+            onPendingOpenUriConsumed = onPendingOpenUriConsumed,
             modifier = Modifier.fillMaxSize(),
         )
 

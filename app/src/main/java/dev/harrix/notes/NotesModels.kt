@@ -85,4 +85,9 @@ data class OpenNoteTab(
     val fileName: String = "",
     /** Path from notes root through parent folders (excludes the note itself). */
     val folderPath: List<NotesPathSegment>,
+    /**
+     * True when the note was opened from outside the configured notes tree
+     * (Android “Open with” / Share). External tabs use a distinct chip color.
+     */
+    val isExternal: Boolean = false,
 )

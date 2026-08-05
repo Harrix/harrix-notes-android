@@ -1,5 +1,7 @@
 package dev.harrix.notes
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -16,10 +18,13 @@ import dev.harrix.notes.ui.MainScreen
 import dev.harrix.notes.ui.theme.HarrixNotesTheme
 
 class MainActivity : AppCompatActivity() {
+    private var pendingOpenUri by mutableStateOf<Uri?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val preferences = AppPreferences(this)
         preferences.loadAppLanguage().apply()
         super.onCreate(savedInstanceState)
+        consumeOpenIntent(intent)
         enableEdgeToEdge()
         setContent {
             var themeMode by remember { mutableStateOf(preferences.loadThemeMode()) }
@@ -47,10 +52,33 @@ class MainActivity : AppCompatActivity() {
                         appLanguage = language
                         language.apply()
                     },
+                    pendingOpenUri = pendingOpenUri,
+                    onPendingOpenUriConsumed = { pendingOpenUri = null },
                     onExitApp = { finish() },
                     modifier = Modifier.fillMaxSize(),
                 )
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        consumeOpenIntent(intent)
+    }
+
+    private fun consumeOpenIntent(intent: Intent?) {
+        if (intent == null) {
+            return
+        }
+        if (intent.action == Intent.ACTION_MAIN) {
+            return
+        }
+        val uri = NotesOpenIntent.extractUri(intent) ?: return
+        if (!NotesOpenIntent.isLikelyMarkdown(this, uri, intent)) {
+            return
+        }
+        NotesOpenIntent.takeReadWritePermissionIfPossible(this, intent, uri)
+        pendingOpenUri = uri
     }
 }

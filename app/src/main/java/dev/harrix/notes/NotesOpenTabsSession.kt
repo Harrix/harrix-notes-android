@@ -36,6 +36,7 @@ data class NotesOpenTabsSession(
         private const val KEY_FILE_NAME = "fileName"
         private const val KEY_FOLDER_PATH = "folderPath"
         private const val KEY_NAME = "name"
+        private const val KEY_IS_EXTERNAL = "isExternal"
 
         fun fromJson(raw: String): NotesOpenTabsSession? = runCatching {
             val root = JSONObject(raw)
@@ -80,6 +81,7 @@ data class NotesOpenTabsSession(
                 title = title,
                 fileName = fileName,
                 folderPath = folderPath,
+                isExternal = json.optBoolean(KEY_IS_EXTERNAL, false),
             )
         }
 
@@ -100,6 +102,7 @@ data class NotesOpenTabsSession(
             json.put(KEY_URI, uri.toString())
             json.put(KEY_TITLE, title)
             json.put(KEY_FILE_NAME, fileName)
+            json.put(KEY_IS_EXTERNAL, isExternal)
             val pathJson = JSONArray()
             folderPath.forEach { segment ->
                 pathJson.put(segment.toJson())
