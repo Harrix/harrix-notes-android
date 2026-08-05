@@ -22,6 +22,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -87,15 +88,29 @@ fun NotesHtmlPreviewPane(
     val context = LocalContext.current
     val resolver = remember(context) { context.applicationContext.contentResolver }
     var html by remember { mutableStateOf<String?>(null) }
+    var scrollMetrics by remember { mutableStateOf(NotesScrollMetrics()) }
+    var previewWebView by remember { mutableStateOf<NotesPreviewWebView?>(null) }
+    val onScrollMetrics by rememberUpdatedState<(NotesScrollMetrics) -> Unit> { metrics ->
+        scrollMetrics = metrics
+    }
+    val scrollMetricsSink =
+        remember {
+            object {
+                var emit: (NotesScrollMetrics) -> Unit = {}
+            }
+        }
+    scrollMetricsSink.emit = onScrollMetrics
 
     LaunchedEffect(content, fontSizeSp, treeUri, folderPath, noteDocumentId) {
         // Do not build from null content: that left a non-null empty HTML and hid
         // the spinner when the real note arrived (first open from the browser).
         if (content == null) {
             html = null
+            scrollMetrics = NotesScrollMetrics()
             return@LaunchedEffect
         }
         html = null
+        scrollMetrics = NotesScrollMetrics()
         html =
             withContext(Dispatchers.IO) {
                 buildPreviewHtml(
@@ -129,8 +144,13 @@ fun NotesHtmlPreviewPane(
                 val document = html.orEmpty()
                 BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                     AndroidView(
-                        factory = { ctx -> createPreviewWebView(ctx) },
+                        factory = { ctx ->
+                            createPreviewWebView(ctx) { metrics ->
+                                scrollMetricsSink.emit(metrics)
+                            }.also { previewWebView = it }
+                        },
                         update = { webView ->
+                            previewWebView = webView as NotesPreviewWebView
                             val tag = webView.tag as? String
                             if (tag != document) {
                                 webView.tag = document
@@ -143,11 +163,32 @@ fun NotesHtmlPreviewPane(
                                 )
                             }
                         },
+                        onRelease = { webView ->
+                            if (previewWebView === webView) {
+                                previewWebView = null
+                            }
+                            webView.destroy()
+                        },
                         modifier =
                         Modifier
                             .width(maxWidth)
                             .height(maxHeight),
                     )
+                    if (scrollMetrics.canScroll) {
+                        NotesFingerScrollbar(
+                            scrollOffset = scrollMetrics.scrollOffset,
+                            maxScrollOffset = scrollMetrics.maxScrollOffset,
+                            viewportSize = scrollMetrics.viewportSize,
+                            contentSize = scrollMetrics.contentSize,
+                            onScrollOffsetChange = { offset ->
+                                previewWebView?.scrollTo(0, offset.toScrollPxInt())
+                            },
+                            modifier =
+                            Modifier
+                                .align(Alignment.CenterEnd)
+                                .padding(vertical = 8.dp, horizontal = 2.dp),
+                        )
+                    }
                 }
             }
         }
@@ -155,18 +196,57 @@ fun NotesHtmlPreviewPane(
 }
 
 @SuppressLint("SetJavaScriptEnabled")
-private fun createPreviewWebView(context: Context): WebView = WebView(context).apply {
-    settings.javaScriptEnabled = true
-    settings.domStorageEnabled = false
-    settings.loadsImagesAutomatically = true
-    settings.blockNetworkImage = false
-    isVerticalScrollBarEnabled = true
-    setBackgroundColor(Color.White.toArgb())
-    webViewClient = PreviewWebViewClient()
-    tag = ""
+private fun createPreviewWebView(
+    context: Context,
+    onScrollMetrics: (NotesScrollMetrics) -> Unit,
+): NotesPreviewWebView =
+    NotesPreviewWebView(context).apply {
+        settings.javaScriptEnabled = true
+        settings.domStorageEnabled = false
+        settings.loadsImagesAutomatically = true
+        settings.blockNetworkImage = false
+        // Native bar is too thin for fingers; Compose overlay handles scrubbing.
+        isVerticalScrollBarEnabled = false
+        isHorizontalScrollBarEnabled = false
+        setBackgroundColor(Color.White.toArgb())
+        webViewClient =
+            PreviewWebViewClient(
+                onContentReady = { view ->
+                    view.post { onScrollMetrics(view.notesScrollMetrics()) }
+                },
+            )
+        setOnScrollChangeListener { view, _, _, _, _ ->
+            onScrollMetrics((view as NotesPreviewWebView).notesScrollMetrics())
+        }
+        tag = ""
+    }
+
+/** Exposes protected scroll-range APIs for the Compose finger scrollbar. */
+private class NotesPreviewWebView(
+    context: Context,
+) : WebView(context) {
+    fun notesScrollMetrics(): NotesScrollMetrics =
+        NotesScrollMetrics.fromWebView(
+            scrollY = scrollY,
+            computeVerticalScrollRange = computeVerticalScrollRange(),
+            computeVerticalScrollExtent = computeVerticalScrollExtent(),
+        )
 }
 
-private class PreviewWebViewClient : WebViewClient() {
+private class PreviewWebViewClient(
+    private val onContentReady: (NotesPreviewWebView) -> Unit,
+) : WebViewClient() {
+    override fun onPageFinished(
+        view: WebView?,
+        url: String?,
+    ) {
+        val preview = view as? NotesPreviewWebView ?: return
+        onContentReady(preview)
+        // Images / layout can change scroll range after the first paint.
+        preview.postDelayed({ onContentReady(preview) }, 250)
+        preview.postDelayed({ onContentReady(preview) }, 1_000)
+    }
+
     override fun shouldOverrideUrlLoading(
         view: WebView,
         request: WebResourceRequest,
@@ -178,7 +258,7 @@ private class PreviewWebViewClient : WebViewClient() {
                 url.host.equals(PREVIEW_HOST, ignoreCase = true)
         if (isPreviewHost) {
             if (!fragment.isNullOrEmpty()) {
-                scrollToAnchor(view, fragment)
+                scrollToAnchor(view as NotesPreviewWebView, fragment)
             }
             return true
         }
@@ -205,7 +285,7 @@ private class PreviewWebViewClient : WebViewClient() {
     }
 
     private fun scrollToAnchor(
-        view: WebView,
+        view: NotesPreviewWebView,
         rawFragment: String,
     ) {
         val id = SimpleMarkdownToHtml.slugify(Uri.decode(rawFragment))
@@ -222,8 +302,9 @@ private class PreviewWebViewClient : WebViewClient() {
               if (el) { el.scrollIntoView({block:'start'}); }
             })();
             """.trimIndent(),
-            null,
-        )
+        ) {
+            view.post { onContentReady(view) }
+        }
     }
 }
 

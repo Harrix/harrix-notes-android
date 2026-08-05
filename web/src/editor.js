@@ -183,7 +183,26 @@ function buildLanguage() {
   ];
 }
 
+function reportScroll() {
+  try {
+    if (!view) {
+      return;
+    }
+    const scroller = view.scrollDOM;
+    host().onScroll(
+      String(Math.round(scroller.scrollTop)),
+      String(Math.round(scroller.scrollHeight)),
+      String(Math.round(scroller.clientHeight)),
+    );
+  } catch (_) {
+    // Host may not expose onScroll yet.
+  }
+}
+
 function onUpdate(update) {
+  if (update.docChanged || update.viewportChanged || update.heightChanged) {
+    requestAnimationFrame(reportScroll);
+  }
   if (!update.docChanged || suppressPush) {
     return;
   }
@@ -256,6 +275,8 @@ function boot(viewportHeight) {
     });
     // Force a measure after the WebView reports a real size.
     view.requestMeasure();
+    view.scrollDOM.addEventListener("scroll", reportScroll, { passive: true });
+    requestAnimationFrame(reportScroll);
     booted = true;
     host().onReady();
   } catch (error) {
@@ -313,6 +334,18 @@ window.notesEditor = {
     } catch (error) {
       reportError(error);
     }
+  },
+
+  scrollTo: function (y) {
+    if (!view) {
+      return;
+    }
+    view.scrollDOM.scrollTop = Number(y) || 0;
+    reportScroll();
+  },
+
+  reportScroll: function () {
+    reportScroll();
   },
 };
 

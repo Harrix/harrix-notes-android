@@ -118,6 +118,7 @@ class NotesMarkdownEditorController {
     internal var textListener: (String) -> Unit = {}
     internal var readyListener: () -> Unit = {}
     internal var errorListener: (String) -> Unit = {}
+    internal var scrollListener: (NotesScrollMetrics) -> Unit = {}
 
     /**
      * Sends the document to Compose immediately instead of waiting for the
@@ -174,6 +175,21 @@ class NotesMarkdownEditorController {
         if (!ready) return
         val literal = JSONObject.quote(config)
         target.evaluateJavascript("window.notesEditor && window.notesEditor.applyConfig($literal);", null)
+    }
+
+    fun scrollTo(offsetPx: Int) {
+        val target = webView ?: return
+        if (!ready) return
+        target.evaluateJavascript(
+            "window.notesEditor && window.notesEditor.scrollTo(${offsetPx.coerceAtLeast(0)});",
+            null,
+        )
+    }
+
+    fun requestScrollReport() {
+        val target = webView ?: return
+        if (!ready) return
+        target.evaluateJavascript("window.notesEditor && window.notesEditor.reportScroll();", null)
     }
 
     internal fun onPageFinished() {
@@ -290,7 +306,23 @@ class NotesMarkdownEditorController {
         mainHandler.post {
             cancelBootTimeout()
             readyListener()
+            requestScrollReport()
         }
+    }
+
+    @JavascriptInterface
+    fun onScroll(
+        scrollTopStr: String,
+        scrollHeightStr: String,
+        clientHeightStr: String,
+    ) {
+        val metrics =
+            NotesScrollMetrics.fromScroller(
+                scrollTop = scrollTopStr.toIntOrNull() ?: 0,
+                scrollHeight = scrollHeightStr.toIntOrNull() ?: 0,
+                clientHeight = clientHeightStr.toIntOrNull() ?: 0,
+            )
+        mainHandler.post { scrollListener(metrics) }
     }
 
     @JavascriptInterface
@@ -411,6 +443,7 @@ fun NotesMarkdownEditorPane(
         }
     var editorReady by remember { mutableStateOf(false) }
     var editorError by remember { mutableStateOf<String?>(null) }
+    var scrollMetrics by remember { mutableStateOf(NotesScrollMetrics()) }
     val latestText by rememberUpdatedState(text)
     val latestOnTextChange by rememberUpdatedState(onTextChange)
 
@@ -424,12 +457,17 @@ fun NotesMarkdownEditorPane(
         controller.errorListener = { message ->
             editorError = message
             editorReady = false
+            scrollMetrics = NotesScrollMetrics()
             controller.syncVisibility(false)
+        }
+        controller.scrollListener = { metrics ->
+            scrollMetrics = metrics
         }
         onDispose {
             controller.textListener = {}
             controller.readyListener = {}
             controller.errorListener = {}
+            controller.scrollListener = {}
         }
     }
 
@@ -462,6 +500,7 @@ fun NotesMarkdownEditorPane(
                                 loaded.config = config
                                 editorReady = false
                                 editorError = null
+                                scrollMetrics = NotesScrollMetrics()
                                 webView.visibility = View.VISIBLE
                                 webView.alpha = 0f
                                 controller.stage(latestText, config)
@@ -479,6 +518,7 @@ fun NotesMarkdownEditorPane(
                                     loaded.config = config
                                     editorReady = false
                                     editorError = null
+                                    scrollMetrics = NotesScrollMetrics()
                                     webView.alpha = 0f
                                     controller.stage(latestText, config)
                                     loadEditorShell(webView)
@@ -499,6 +539,21 @@ fun NotesMarkdownEditorPane(
                             .width(maxWidth)
                             .height(maxHeight),
                     )
+                    if (editorReady && editorError == null && scrollMetrics.canScroll) {
+                        NotesFingerScrollbar(
+                            scrollOffset = scrollMetrics.scrollOffset,
+                            maxScrollOffset = scrollMetrics.maxScrollOffset,
+                            viewportSize = scrollMetrics.viewportSize,
+                            contentSize = scrollMetrics.contentSize,
+                            onScrollOffsetChange = { offset ->
+                                controller.scrollTo(offset.toScrollPxInt())
+                            },
+                            modifier =
+                            Modifier
+                                .align(Alignment.CenterEnd)
+                                .padding(vertical = 8.dp, horizontal = 2.dp),
+                        )
+                    }
                 }
                 when {
                     editorError != null -> {
