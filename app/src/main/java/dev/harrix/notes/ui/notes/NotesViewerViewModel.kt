@@ -43,6 +43,7 @@ class NotesViewerViewModel(
     val treeDensity = mutableStateOf(preferences.loadTreeDensity())
     val pinnedBarDensity = mutableStateOf(preferences.loadPinnedBarDensity())
     val browseLayout = mutableStateOf(preferences.loadBrowseLayout())
+    val iconStyle = mutableStateOf(preferences.loadIconStyle())
     val titleSource = mutableStateOf(preferences.loadTitleSource())
     val noteOpenMode = mutableStateOf(preferences.loadNoteOpenMode())
     val previewFontSizeSp = mutableIntStateOf(preferences.loadPreviewFontSizeSp())

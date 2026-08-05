@@ -59,6 +59,12 @@ class NotesViewerPreferences(
         prefs.edit().putString(KEY_BROWSE_LAYOUT, layout.name).apply()
     }
 
+    fun loadIconStyle(): NotesIconStyle = NotesIconStyle.fromStorageKey(prefs.getString(KEY_ICON_STYLE, null))
+
+    fun saveIconStyle(style: NotesIconStyle) {
+        prefs.edit().putString(KEY_ICON_STYLE, style.name).apply()
+    }
+
     fun loadTitleSource(): NotesTitleSource = NotesTitleSource.fromStorageKey(prefs.getString(KEY_TITLE_SOURCE, null))
 
     fun saveTitleSource(source: NotesTitleSource) {
@@ -243,6 +249,7 @@ class NotesViewerPreferences(
             .remove(KEY_TREE_DENSITY)
             .remove(KEY_PINNED_BAR_DENSITY)
             .remove(KEY_BROWSE_LAYOUT)
+            .remove(KEY_ICON_STYLE)
             .remove(KEY_TITLE_SOURCE)
             .remove(KEY_NOTE_OPEN_MODE)
             .remove(KEY_PREVIEW_FONT_SIZE_SP)
@@ -269,6 +276,7 @@ class NotesViewerPreferences(
         private const val KEY_TREE_DENSITY = "tree_density"
         private const val KEY_PINNED_BAR_DENSITY = "pinned_bar_density"
         private const val KEY_BROWSE_LAYOUT = "browse_layout"
+        private const val KEY_ICON_STYLE = "icon_style"
         private const val KEY_TITLE_SOURCE = "title_source"
         private const val KEY_NOTE_OPEN_MODE = "note_open_mode"
         private const val KEY_PREVIEW_FONT_SIZE_SP = "preview_font_size_sp"

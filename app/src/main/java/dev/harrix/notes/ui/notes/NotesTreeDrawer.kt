@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -190,12 +189,7 @@ private fun NotesTreeFolderRow(
                     onClick = onToggle,
                 ).padding((expandButtonSize - iconSize) / 2),
         )
-        Icon(
-            imageVector = Icons.Filled.Folder,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(iconSize),
-        )
+        NotesFolderGlyph(size = iconSize)
         Spacer(modifier = Modifier.width(6.dp))
         Text(
             text = folder.name,

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- From assets/icons/it__file-text_01.svg (Harrix Vector Icons) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+    <path
+        android:fillColor="#f4f4f4"
+        android:pathData="M313 0H102C84.3 0 70 14.3 70 32v448c0 17.7 14.3 32 32 32h308c17.7 0 32-14.3 32-32V129L313 0z" />
+    <path
+        android:fillColor="#444444"
+        android:fillAlpha="0.15"
+        android:pathData="M313 0v97c0 17.7 14.3 32 32 32h97L313 0z" />
+    <path
+        android:fillColor="#dddddd"
+        android:pathData="M106 233h300v14H106zm0 32h300v14H106zm0 32h300v14H106zm0 32h300v14H106zm0 32h300v14H106zm0 32h300v14H106zm0 32h300v14H106z" />
+    <path
+        android:fillColor="#df7148"
+        android:pathData="M327 211H185c-4.4 0-8-3.6-8-8v-44c0-4.4 3.6-8 8-8h142c4.4 0 8 3.6 8 8v44c0 4.4-3.6 8-8 8z" />
+    <path
+        android:fillColor="#444444"
+        android:fillAlpha="0.15"
+        android:pathData="M102 0C84.3 0 70 14.3 70 32v448c0 17.7 14.3 32 32 32h154V0H102z" />
+</vector>

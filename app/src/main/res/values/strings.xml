@@ -52,6 +52,9 @@
     <string name="settings_markdown_notes_browse_layout">Folder view</string>
     <string name="settings_markdown_notes_browse_layout_list">List</string>
     <string name="settings_markdown_notes_browse_layout_icons">Icons</string>
+    <string name="settings_markdown_notes_icon_style">Folder and file icons</string>
+    <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
+    <string name="settings_markdown_notes_icon_style_material">Material</string>
     <string name="settings_markdown_notes_list_density">Folder list density</string>
     <string name="settings_markdown_notes_list_density_compact">Compact</string>
     <string name="settings_markdown_notes_list_density_comfortable">Comfortable</string>

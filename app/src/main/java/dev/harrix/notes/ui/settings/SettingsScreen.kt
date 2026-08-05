@@ -50,6 +50,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
@@ -72,6 +73,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import dev.harrix.notes.AppPreferences
 import dev.harrix.notes.NotesBrowseLayout
+import dev.harrix.notes.NotesIconStyle
 import dev.harrix.notes.NotesListDensity
 import dev.harrix.notes.NotesOpenMode
 import dev.harrix.notes.NotesPinnedItem
@@ -83,7 +85,9 @@ import dev.harrix.notes.NotesViewerPreferences
 import dev.harrix.notes.R
 import dev.harrix.notes.pinnedDisplayLabels
 import dev.harrix.notes.ui.adaptiveContentWidth
+import dev.harrix.notes.ui.notes.LocalNotesIconStyle
 import dev.harrix.notes.ui.notes.NotesDropdownMenuItem
+import dev.harrix.notes.ui.notes.NotesFolderGlyph
 import dev.harrix.notes.ui.notes.NotesFolderPathControls
 import dev.harrix.notes.ui.notes.NotesNoteGlyph
 import dev.harrix.notes.ui.theme.AppLanguage
@@ -390,6 +394,7 @@ private fun GeneralSettingsSection(modifier: Modifier = Modifier) {
     val repository = remember { NotesTreeRepository(context.applicationContext) }
     var treeUri by remember { mutableStateOf(preferences.loadNotesTreeUri()) }
     var browseLayout by remember { mutableStateOf(preferences.loadBrowseLayout()) }
+    var iconStyle by remember { mutableStateOf(preferences.loadIconStyle()) }
     var listDensity by remember { mutableStateOf(preferences.loadListDensity()) }
     var treeDensity by remember { mutableStateOf(preferences.loadTreeDensity()) }
     var pinnedBarDensity by remember { mutableStateOf(preferences.loadPinnedBarDensity()) }
@@ -412,6 +417,11 @@ private fun GeneralSettingsSection(modifier: Modifier = Modifier) {
         listOf(
             NotesBrowseLayout.List to R.string.settings_markdown_notes_browse_layout_list,
             NotesBrowseLayout.Icons to R.string.settings_markdown_notes_browse_layout_icons,
+        )
+    val iconStyleOptions =
+        listOf(
+            NotesIconStyle.Harrix to R.string.settings_markdown_notes_icon_style_harrix,
+            NotesIconStyle.Material to R.string.settings_markdown_notes_icon_style_material,
         )
     val densityOptions =
         listOf(
@@ -443,6 +453,7 @@ private fun GeneralSettingsSection(modifier: Modifier = Modifier) {
         preferences.savePinnedItems(uri, limited)
     }
 
+    CompositionLocalProvider(LocalNotesIconStyle provides iconStyle) {
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -499,6 +510,15 @@ private fun GeneralSettingsSection(modifier: Modifier = Modifier) {
             onSelect = { layout ->
                 browseLayout = layout
                 preferences.saveBrowseLayout(layout)
+            },
+        )
+        SettingsChoiceRow(
+            label = stringResource(R.string.settings_markdown_notes_icon_style),
+            options = iconStyleOptions,
+            selected = iconStyle,
+            onSelect = { style ->
+                iconStyle = style
+                preferences.saveIconStyle(style)
             },
         )
         SettingsChoiceRow(
@@ -715,6 +735,7 @@ private fun GeneralSettingsSection(modifier: Modifier = Modifier) {
                 )
             }
         }
+    }
     }
 }
 
@@ -1066,12 +1087,7 @@ private fun SettingsPinnedItemRow(
             }
 
             NotesPinnedKind.Folder -> {
-                Icon(
-                    imageVector = Icons.Filled.Folder,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp),
-                )
+                NotesFolderGlyph(size = 20.dp)
             }
 
             NotesPinnedKind.Note -> {

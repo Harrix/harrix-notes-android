@@ -52,7 +52,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
@@ -77,6 +76,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -182,6 +182,7 @@ fun NotesViewerScreen(
     var treeDensity by viewModel.treeDensity
     var pinnedBarDensity by viewModel.pinnedBarDensity
     var browseLayout by viewModel.browseLayout
+    var iconStyle by viewModel.iconStyle
     var titleSource by viewModel.titleSource
     var noteOpenMode by viewModel.noteOpenMode
     var previewFontSizeSp by viewModel.previewFontSizeSp
@@ -210,6 +211,7 @@ fun NotesViewerScreen(
         treeDensity = preferences.loadTreeDensity()
         pinnedBarDensity = preferences.loadPinnedBarDensity()
         browseLayout = preferences.loadBrowseLayout()
+        iconStyle = preferences.loadIconStyle()
         titleSource = preferences.loadTitleSource()
         noteOpenMode = preferences.loadNoteOpenMode()
         previewFontSizeSp = preferences.loadPreviewFontSizeSp()
@@ -1475,6 +1477,7 @@ fun NotesViewerScreen(
                 showGmdFiles = showGmdFiles,
             )
         }
+    CompositionLocalProvider(LocalNotesIconStyle provides iconStyle) {
     ModalNavigationDrawer(
         drawerState = drawerState,
         modifier = modifier,
@@ -1773,6 +1776,7 @@ fun NotesViewerScreen(
                 }
             }
         }
+    }
     }
 
     if (showCreateNoteDialog) {
@@ -2680,12 +2684,7 @@ private fun NotesFolderRow(
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(
-            imageVector = Icons.Filled.Folder,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(iconSize),
-        )
+        NotesFolderGlyph(size = iconSize)
         Spacer(modifier = Modifier.width(10.dp))
         NotesListTitleBlock(
             title = folder.name,
@@ -2843,12 +2842,7 @@ private fun NotesFolderIconCell(
             density = density,
             icon = {
                 Box {
-                    Icon(
-                        imageVector = Icons.Filled.Folder,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(notesGridIconSize(density)),
-                    )
+                    NotesFolderGlyph(size = notesGridIconSize(density))
                     if (pinned) {
                         Icon(
                             imageVector = Icons.Filled.PushPin,
