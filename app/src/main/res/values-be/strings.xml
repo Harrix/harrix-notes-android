@@ -65,6 +65,8 @@
     <string name="settings_markdown_notes_max_open_tabs_hint">Самая старая ўкладка закрываецца, калі ліміт перавышаны</string>
     <string name="settings_markdown_notes_single_note_mode">Рэжым адной нататкі</string>
     <string name="settings_markdown_notes_single_note_mode_hint">Пры адкрыцці нататкі папярэдняя закрываецца</string>
+    <string name="settings_markdown_notes_show_note_dates">Паказваць даты</string>
+    <string name="settings_markdown_notes_show_note_dates_hint">Дата змены пад назвай у спісе папкі</string>
     <string name="settings_markdown_notes_pinned_bar">Замацаваная панэль</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Паказаць замацаваную панэль</string>
     <string name="settings_markdown_notes_max_pinned">Макс. замацаваных элементаў</string>

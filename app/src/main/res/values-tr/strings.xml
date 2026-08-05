@@ -65,6 +65,8 @@
     <string name="settings_markdown_notes_max_open_tabs_hint">Sınır aşıldığında en eski sekme kapatılır</string>
     <string name="settings_markdown_notes_single_note_mode">Tek not modu</string>
     <string name="settings_markdown_notes_single_note_mode_hint">Bir not açılınca önceki kapanır</string>
+    <string name="settings_markdown_notes_show_note_dates">Tarihleri göster</string>
+    <string name="settings_markdown_notes_show_note_dates_hint">Klasör listesinde başlıkların altında değişiklik tarihini göster</string>
     <string name="settings_markdown_notes_pinned_bar">Sabitlenmiş çubuk</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Sabitlenmiş çubuğu göster</string>
     <string name="settings_markdown_notes_max_pinned">Maksimum sabitlenen öğe</string>

@@ -50,6 +50,7 @@ class NotesViewerViewModel(
     val highlightMaxMb = mutableIntStateOf(preferences.loadHighlightMaxMb())
     val maxOpenTabs = mutableIntStateOf(preferences.loadMaxOpenTabs())
     val singleNoteMode = mutableStateOf(preferences.loadSingleNoteMode())
+    val showNoteDates = mutableStateOf(preferences.loadShowNoteDates())
     val pinnedBarEnabled = mutableStateOf(preferences.loadPinnedBarEnabled())
     val maxPinnedItems = mutableIntStateOf(preferences.loadMaxPinnedItems())
     val pinnedItems = mutableStateOf<List<NotesPinnedItem>>(emptyList())

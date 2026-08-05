@@ -65,6 +65,8 @@
     <string name="settings_markdown_notes_max_open_tabs_hint">Het oudste tabblad sluit wanneer de limiet wordt overschreden</string>
     <string name="settings_markdown_notes_single_note_mode">Enkele-notitiemodus</string>
     <string name="settings_markdown_notes_single_note_mode_hint">Een notitie openen sluit de vorige</string>
+    <string name="settings_markdown_notes_show_note_dates">Datums tonen</string>
+    <string name="settings_markdown_notes_show_note_dates_hint">Toon wijzigingsdatum onder titels in de mappenlijst</string>
     <string name="settings_markdown_notes_pinned_bar">Vastgezette balk</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Vastgezette balk weergeven</string>
     <string name="settings_markdown_notes_max_pinned">Max. aantal vastgezette items</string>

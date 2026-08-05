@@ -78,6 +78,7 @@ class NotesTreeRepository(
                         hasMergedNote = false,
                         mergedNoteDocumentId = null,
                         mergedNoteUri = null,
+                        lastModifiedEpochMs = entry.lastModifiedEpochMs,
                     ),
                 )
             } else if (isMd(entry.name) && !isMergedTemplateGmd(entry.name, dirName)) {
@@ -88,6 +89,7 @@ class NotesTreeRepository(
                         uri = entry.uri,
                         displayLabel = resolvedDisplayLabel(entry.documentId, entry.name),
                         displayIcon = resolvedDisplayIcon(entry.documentId),
+                        lastModifiedEpochMs = entry.lastModifiedEpochMs,
                     ),
                 )
             }
@@ -222,6 +224,7 @@ class NotesTreeRepository(
                         hasMergedNote = merged != null,
                         mergedNoteDocumentId = merged?.documentId,
                         mergedNoteUri = merged?.uri,
+                        lastModifiedEpochMs = folder.lastModifiedEpochMs,
                     ),
                 )
             }
@@ -240,6 +243,7 @@ class NotesTreeRepository(
         uri = raw.uri,
         displayLabel = resolvedDisplayLabel(raw.documentId, raw.name),
         displayIcon = resolvedDisplayIcon(raw.documentId),
+        lastModifiedEpochMs = raw.lastModifiedEpochMs,
     )
 
     private fun resolvedDisplayLabel(
@@ -555,6 +559,7 @@ class NotesTreeRepository(
                     DocumentsContract.Document.COLUMN_DOCUMENT_ID,
                     DocumentsContract.Document.COLUMN_DISPLAY_NAME,
                     DocumentsContract.Document.COLUMN_MIME_TYPE,
+                    DocumentsContract.Document.COLUMN_LAST_MODIFIED,
                 ),
                 null,
                 null,
@@ -563,18 +568,27 @@ class NotesTreeRepository(
                 val idIndex = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DOCUMENT_ID)
                 val nameIndex = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DISPLAY_NAME)
                 val mimeIndex = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_MIME_TYPE)
+                val lastModifiedIndex =
+                    cursor.getColumnIndex(DocumentsContract.Document.COLUMN_LAST_MODIFIED)
                 while (cursor.moveToNext()) {
                     val documentId = cursor.getString(idIndex)
                     val name = cursor.getString(nameIndex)
                     if (documentId != null && name != null) {
                         val mime = cursor.getString(mimeIndex).orEmpty()
                         val uri = DocumentsContract.buildDocumentUriUsingTree(treeUri, documentId)
+                        val lastModified =
+                            if (lastModifiedIndex >= 0 && !cursor.isNull(lastModifiedIndex)) {
+                                cursor.getLong(lastModifiedIndex).takeIf { it > 0L }
+                            } else {
+                                null
+                            }
                         result.add(
                             RawEntry(
                                 documentId = documentId,
                                 name = name,
                                 uri = uri,
                                 isDirectory = mime == DocumentsContract.Document.MIME_TYPE_DIR,
+                                lastModifiedEpochMs = lastModified,
                             ),
                         )
                     }
@@ -660,6 +674,7 @@ class NotesTreeRepository(
             name = displayName,
             uri = noteUri,
             displayLabel = label,
+            lastModifiedEpochMs = System.currentTimeMillis(),
         )
     }
 
@@ -668,6 +683,7 @@ class NotesTreeRepository(
         val name: String,
         val uri: Uri,
         val isDirectory: Boolean,
+        val lastModifiedEpochMs: Long? = null,
     )
 
     companion object {

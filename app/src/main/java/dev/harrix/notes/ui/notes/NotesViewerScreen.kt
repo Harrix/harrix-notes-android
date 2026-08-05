@@ -104,6 +104,7 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.harrix.notes.NoteMetaUpdates
 import dev.harrix.notes.NotesBrowseLayout
+import dev.harrix.notes.NotesDateFormats
 import dev.harrix.notes.NotesEntry
 import dev.harrix.notes.NotesListDensity
 import dev.harrix.notes.NotesOpenMode
@@ -179,6 +180,7 @@ fun NotesViewerScreen(
     var highlightMaxMb by viewModel.highlightMaxMb
     var maxOpenTabs by viewModel.maxOpenTabs
     var singleNoteMode by viewModel.singleNoteMode
+    var showNoteDates by viewModel.showNoteDates
     var pinnedBarEnabled by viewModel.pinnedBarEnabled
     var maxPinnedItems by viewModel.maxPinnedItems
     var pinnedItems by viewModel.pinnedItems
@@ -202,6 +204,7 @@ fun NotesViewerScreen(
         highlightMaxMb = preferences.loadHighlightMaxMb()
         maxOpenTabs = preferences.loadMaxOpenTabs()
         singleNoteMode = preferences.loadSingleNoteMode()
+        showNoteDates = preferences.loadShowNoteDates()
         pinnedBarEnabled = preferences.loadPinnedBarEnabled()
         maxPinnedItems = preferences.loadMaxPinnedItems()
     }
@@ -1456,6 +1459,7 @@ fun NotesViewerScreen(
                                     statusMessage = statusMessage,
                                     density = listDensity,
                                     layout = browseLayout,
+                                    showNoteDates = showNoteDates,
                                     pinnedDocumentIds =
                                     pinnedItems
                                         .filter { it.kind != NotesPinnedKind.Home }
@@ -2146,6 +2150,7 @@ private fun NotesFolderList(
     statusMessage: String?,
     density: NotesListDensity,
     layout: NotesBrowseLayout,
+    showNoteDates: Boolean,
     pinnedDocumentIds: Set<String>,
     listFirstVisibleIndex: Int,
     listFirstVisibleOffset: Int,
@@ -2259,6 +2264,7 @@ private fun NotesFolderList(
                             NotesFolderRow(
                                 folder = entry,
                                 density = density,
+                                showDate = showNoteDates,
                                 pinned = entry.documentId in pinnedDocumentIds,
                                 onOpen = { onOpenFolder(entry) },
                                 onShowMergedNote = { onShowMergedNote(entry) },
@@ -2271,6 +2277,7 @@ private fun NotesFolderList(
                             NotesNoteRow(
                                 note = entry,
                                 density = density,
+                                showDate = showNoteDates,
                                 pinned = entry.documentId in pinnedDocumentIds,
                                 onOpen = { onOpenNote(entry) },
                                 onPin = { onPinNote(entry) },
@@ -2289,6 +2296,7 @@ private fun NotesFolderList(
 private fun NotesFolderRow(
     folder: NotesEntry.Folder,
     density: NotesListDensity,
+    showDate: Boolean,
     pinned: Boolean,
     onOpen: () -> Unit,
     onShowMergedNote: () -> Unit,
@@ -2298,11 +2306,17 @@ private fun NotesFolderRow(
     var menuExpanded by remember { mutableStateOf(false) }
     val iconSize = density.iconSizeDp.dp
     val menuButtonSize = density.mergedButtonHeightDp.dp
+    val rowHeight =
+        if (showDate) {
+            density.listRowHeightWithDateDp.dp
+        } else {
+            density.listRowHeightDp.dp
+        }
     Row(
         modifier =
         Modifier
             .fillMaxWidth()
-            .height(density.listRowHeightDp.dp)
+            .height(rowHeight)
             .clickable(onClick = onOpen)
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -2314,12 +2328,11 @@ private fun NotesFolderRow(
             modifier = Modifier.size(iconSize),
         )
         Spacer(modifier = Modifier.width(10.dp))
-        Text(
-            text = folder.name,
-            style = MaterialTheme.typography.bodyMedium,
+        NotesListTitleBlock(
+            title = folder.name,
+            lastModifiedEpochMs = folder.lastModifiedEpochMs,
+            showDate = showDate,
             modifier = Modifier.weight(1f),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
         )
         if (pinned) {
             Icon(
@@ -2359,6 +2372,7 @@ private fun NotesFolderRow(
 private fun NotesNoteRow(
     note: NotesEntry.Note,
     density: NotesListDensity,
+    showDate: Boolean,
     pinned: Boolean,
     onOpen: () -> Unit,
     onPin: () -> Unit,
@@ -2367,22 +2381,27 @@ private fun NotesNoteRow(
     var menuExpanded by remember { mutableStateOf(false) }
     val iconSize = density.iconSizeDp.dp
     val menuButtonSize = density.mergedButtonHeightDp.dp
+    val rowHeight =
+        if (showDate) {
+            density.listRowHeightWithDateDp.dp
+        } else {
+            density.listRowHeightDp.dp
+        }
     Row(
         modifier =
         Modifier
             .fillMaxWidth()
-            .height(density.listRowHeightDp.dp)
+            .height(rowHeight)
             .clickable(onClick = onOpen)
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         NotesNoteGlyph(icon = note.displayIcon, size = iconSize)
         Spacer(modifier = Modifier.width(10.dp))
-        Text(
-            text = note.displayLabel,
-            style = MaterialTheme.typography.bodyMedium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+        NotesListTitleBlock(
+            title = note.displayLabel,
+            lastModifiedEpochMs = note.lastModifiedEpochMs,
+            showDate = showDate,
             modifier = Modifier.weight(1f),
         )
         if (pinned) {
@@ -2414,6 +2433,34 @@ private fun NotesNoteRow(
                 onShowMergedNote = {},
                 onPin = onPin,
                 onUnpin = onUnpin,
+            )
+        }
+    }
+}
+
+@Composable
+private fun NotesListTitleBlock(
+    title: String,
+    lastModifiedEpochMs: Long?,
+    showDate: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (showDate) {
+            val dateText =
+                lastModifiedEpochMs?.let { NotesDateFormats.formatListDateTime(it) }.orEmpty()
+            Text(
+                text = dateText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }

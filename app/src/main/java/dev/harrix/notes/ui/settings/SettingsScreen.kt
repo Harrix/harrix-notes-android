@@ -395,6 +395,7 @@ private fun GeneralSettingsSection(modifier: Modifier = Modifier) {
     var titleSource by remember { mutableStateOf(preferences.loadTitleSource()) }
     var noteOpenMode by remember { mutableStateOf(preferences.loadNoteOpenMode()) }
     var singleNoteMode by remember { mutableStateOf(preferences.loadSingleNoteMode()) }
+    var showNoteDates by remember { mutableStateOf(preferences.loadShowNoteDates()) }
     var maxOpenTabs by remember { mutableIntStateOf(preferences.loadMaxOpenTabs()) }
     var pinnedBarEnabled by remember { mutableStateOf(preferences.loadPinnedBarEnabled()) }
     var maxPinnedItems by remember { mutableIntStateOf(preferences.loadMaxPinnedItems()) }
@@ -498,6 +499,30 @@ private fun GeneralSettingsSection(modifier: Modifier = Modifier) {
                 preferences.saveTitleSource(source)
             },
         )
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.settings_markdown_notes_show_note_dates),
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f),
+                )
+                Switch(
+                    checked = showNoteDates,
+                    onCheckedChange = { enabled ->
+                        showNoteDates = enabled
+                        preferences.saveShowNoteDates(enabled)
+                    },
+                )
+            }
+            Text(
+                text = stringResource(R.string.settings_markdown_notes_show_note_dates_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         if (!singleNoteMode) {
             IntSliderSetting(
                 label = stringResource(R.string.settings_markdown_notes_max_open_tabs),

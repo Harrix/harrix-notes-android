@@ -69,6 +69,10 @@ enum class NotesListDensity(
     val listRowHeightDp: Int
         get() = mergedButtonHeightDp + verticalPaddingDp * 2
 
+    /** Extra space for the grey last-modified line under the title. */
+    val listRowHeightWithDateDp: Int
+        get() = listRowHeightDp + 14
+
     /** Fixed drawer-tree row height (Compact is much shorter than the list). */
     val treeRowHeightDp: Int
         get() = treeMergedButtonHeightDp + treeVerticalPaddingDp * 2

@@ -125,6 +125,13 @@ class NotesViewerPreferences(
         prefs.edit().putBoolean(KEY_SINGLE_NOTE_MODE, enabled).apply()
     }
 
+    /** When true, the folder list shows last-modified dates under titles. */
+    fun loadShowNoteDates(): Boolean = prefs.getBoolean(KEY_SHOW_NOTE_DATES, DEFAULT_SHOW_NOTE_DATES)
+
+    fun saveShowNoteDates(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_SHOW_NOTE_DATES, enabled).apply()
+    }
+
     fun loadPinnedBarEnabled(): Boolean = prefs.getBoolean(KEY_PINNED_BAR_ENABLED, DEFAULT_PINNED_BAR_ENABLED)
 
     fun savePinnedBarEnabled(enabled: Boolean) {
@@ -219,6 +226,7 @@ class NotesViewerPreferences(
             .remove(KEY_HIGHLIGHT_MAX_MB)
             .remove(KEY_MAX_OPEN_TABS)
             .remove(KEY_SINGLE_NOTE_MODE)
+            .remove(KEY_SHOW_NOTE_DATES)
             .remove(KEY_OPEN_TABS_SESSION)
             .remove(KEY_PINNED_BAR_ENABLED)
             .remove(KEY_MAX_PINNED_ITEMS)
@@ -240,6 +248,7 @@ class NotesViewerPreferences(
         private const val KEY_HIGHLIGHT_MAX_MB = "highlight_max_mb"
         private const val KEY_MAX_OPEN_TABS = "max_open_tabs"
         private const val KEY_SINGLE_NOTE_MODE = "single_note_mode"
+        private const val KEY_SHOW_NOTE_DATES = "show_note_dates"
         private const val KEY_OPEN_TABS_SESSION = "open_tabs_session"
         private const val KEY_PINNED_BAR_ENABLED = "pinned_bar_enabled"
         private const val KEY_MAX_PINNED_ITEMS = "max_pinned_items"
@@ -250,6 +259,8 @@ class NotesViewerPreferences(
         const val MAX_OPEN_TABS = 50
 
         const val DEFAULT_SINGLE_NOTE_MODE = false
+
+        const val DEFAULT_SHOW_NOTE_DATES = false
 
         const val DEFAULT_PINNED_BAR_ENABLED = true
         const val DEFAULT_MAX_PINNED_ITEMS = 5

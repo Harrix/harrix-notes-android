@@ -65,6 +65,8 @@
     <string name="settings_markdown_notes_max_open_tabs_hint">O separador mais antigo é fechado quando o limite é ultrapassado</string>
     <string name="settings_markdown_notes_single_note_mode">Modo de nota única</string>
     <string name="settings_markdown_notes_single_note_mode_hint">Abrir uma nota fecha a anterior</string>
+    <string name="settings_markdown_notes_show_note_dates">Mostrar datas</string>
+    <string name="settings_markdown_notes_show_note_dates_hint">Mostrar a data de alteração sob os títulos na lista</string>
     <string name="settings_markdown_notes_pinned_bar">Barra de afixados</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Mostrar barra de afixados</string>
     <string name="settings_markdown_notes_max_pinned">Máx. elementos afixados</string>

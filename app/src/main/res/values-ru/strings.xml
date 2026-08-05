@@ -65,6 +65,8 @@
     <string name="settings_markdown_notes_max_open_tabs_hint">Самая старая вкладка закрывается при превышении лимита</string>
     <string name="settings_markdown_notes_single_note_mode">Режим одной заметки</string>
     <string name="settings_markdown_notes_single_note_mode_hint">При открытии заметки предыдущая закрывается</string>
+    <string name="settings_markdown_notes_show_note_dates">Показывать даты</string>
+    <string name="settings_markdown_notes_show_note_dates_hint">Дата изменения под названием в списке папки</string>
     <string name="settings_markdown_notes_pinned_bar">Панель закреплений</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Показывать панель закреплений</string>
     <string name="settings_markdown_notes_max_pinned">Макс. закреплений</string>

@@ -65,6 +65,8 @@
     <string name="settings_markdown_notes_max_open_tabs_hint">Ältester Tab wird geschlossen, wenn Limit überschritten wird</string>
     <string name="settings_markdown_notes_single_note_mode">Einzelnotiz-Modus</string>
     <string name="settings_markdown_notes_single_note_mode_hint">Beim Öffnen einer Notiz wird die vorherige geschlossen</string>
+    <string name="settings_markdown_notes_show_note_dates">Daten anzeigen</string>
+    <string name="settings_markdown_notes_show_note_dates_hint">Änderungsdatum unter Titeln in der Ordnerliste anzeigen</string>
     <string name="settings_markdown_notes_pinned_bar">Angepinnte Leiste</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Angepinnte Leiste anzeigen</string>
     <string name="settings_markdown_notes_max_pinned">Max. angeheftete Elemente</string>

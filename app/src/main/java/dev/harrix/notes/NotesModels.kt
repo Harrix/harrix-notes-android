@@ -16,6 +16,8 @@ sealed class NotesEntry {
         val hasMergedNote: Boolean,
         val mergedNoteDocumentId: String?,
         val mergedNoteUri: Uri?,
+        /** Last modified time from the document provider, if known. */
+        val lastModifiedEpochMs: Long? = null,
     ) : NotesEntry() {
         override val sortLabel: String get() = name
     }
@@ -33,6 +35,8 @@ sealed class NotesEntry {
          * the listing path so relative assets resolve.
          */
         val containingFolder: NotesPathSegment? = null,
+        /** Last modified time from the document provider, if known. */
+        val lastModifiedEpochMs: Long? = null,
     ) : NotesEntry() {
         override val sortLabel: String get() = displayLabel
     }

@@ -65,6 +65,8 @@
     <string name="settings_markdown_notes_max_open_tabs_hint">Najstarsza zakładka zamyka się po przekroczeniu limitu</string>
     <string name="settings_markdown_notes_single_note_mode">Tryb jednej notatki</string>
     <string name="settings_markdown_notes_single_note_mode_hint">Otwarcie notatki zamyka poprzednią</string>
+    <string name="settings_markdown_notes_show_note_dates">Pokazuj daty</string>
+    <string name="settings_markdown_notes_show_note_dates_hint">Pokazuj datę modyfikacji pod tytułami na liście folderu</string>
     <string name="settings_markdown_notes_pinned_bar">Przypięty pasek</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Pokaż przypięty pasek</string>
     <string name="settings_markdown_notes_max_pinned">Maksymalna liczba przypiętych elementów</string>

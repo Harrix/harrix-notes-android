@@ -65,6 +65,8 @@
     <string name="settings_markdown_notes_max_open_tabs_hint">Найстаріша вкладка закривається, коли перевищено ліміт</string>
     <string name="settings_markdown_notes_single_note_mode">Режим однієї нотатки</string>
     <string name="settings_markdown_notes_single_note_mode_hint">При відкритті нотатки попередня закривається</string>
+    <string name="settings_markdown_notes_show_note_dates">Показувати дати</string>
+    <string name="settings_markdown_notes_show_note_dates_hint">Дата зміни під назвою у списку папки</string>
     <string name="settings_markdown_notes_pinned_bar">Закріплена панель</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Показати закріплену панель</string>
     <string name="settings_markdown_notes_max_pinned">Максимальна кількість закріплених елементів</string>
