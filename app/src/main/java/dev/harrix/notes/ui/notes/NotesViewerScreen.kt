@@ -492,9 +492,6 @@ fun NotesViewerScreen(
                 lastSavedText = text
                 noteContent = text
                 statusMessage = null
-                Toast
-                    .makeText(context, R.string.markdown_notes_saved, Toast.LENGTH_SHORT)
-                    .show()
                 val tab = openTabs.firstOrNull { it.documentId == selectedTabDocumentId }
                 if (tab != null) {
                     val (contentTitle, contentIcon) =
