@@ -710,7 +710,8 @@ class NotesTreeRepository(
 
     /**
      * Creates a Markdown file in [parentDocumentId].
-     * [fileStem] is the name without `.md`; [noteTitle] is written as YAML `title:`.
+     * [fileStem] is the name without `.md`.
+     * Content follows `@hsk-sync:new-note` (beginning template + optional personal data + `#` heading).
      * Uses `text/markdown` when the provider accepts it, otherwise `text/plain`.
      */
     fun createMarkdownNote(
@@ -718,6 +719,8 @@ class NotesTreeRepository(
         parentDocumentId: String,
         fileStem: String,
         noteTitle: String,
+        beginningTemplate: NewNoteContent.BeginningTemplate,
+        personalData: NewNoteContent.PersonalData,
     ): NotesEntry.Note {
         val parentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, parentDocumentId)
         val existingNames =
@@ -737,7 +740,13 @@ class NotesTreeRepository(
                 "text/plain",
                 displayName,
             ) ?: error("Could not create note")
-        val initialContent = initialMarkdownContent(noteTitle)
+        val heading = noteTitle.trim().ifEmpty { fileStem }
+        val initialContent =
+            NewNoteContent.build(
+                beginning = beginningTemplate.content,
+                heading = heading,
+                personal = personalData,
+            )
         runCatching { writeText(created, initialContent) }
         val documentId = DocumentsContract.getDocumentId(created)
         val noteUri =
@@ -745,7 +754,7 @@ class NotesTreeRepository(
                 DocumentsContract.buildDocumentUriUsingTree(treeUri, documentId)
             }.getOrDefault(created)
         invalidateDirectory(treeUri, parentDocumentId)
-        val contentTitle = NoteTitleExtractor.extract(initialContent).ifEmpty { noteTitle.trim() }
+        val contentTitle = NoteTitleExtractor.extract(initialContent).ifEmpty { heading }
         val label = contentTitle.ifEmpty { noteDisplayLabel(displayName) }
         if (contentTitle.isNotEmpty()) {
             titleByDocumentId[documentId] = contentTitle
@@ -1113,22 +1122,6 @@ class NotesTreeRepository(
                 }
                 index += 1
             }
-        }
-
-        fun initialMarkdownContent(noteTitle: String): String {
-            val title = noteTitle.trim()
-            if (title.isEmpty()) {
-                return ""
-            }
-            return "---\ntitle: ${yamlQuotedScalar(title)}\n---\n\n"
-        }
-
-        private fun yamlQuotedScalar(value: String): String {
-            val escaped =
-                value
-                    .replace("\\", "\\\\")
-                    .replace("\"", "\\\"")
-            return "\"$escaped\""
         }
 
         fun nextUntitledNumberedStem(existingLowercaseNames: Set<String>): String {

@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
+import org.json.JSONArray
+import org.json.JSONObject
 
 /** Preferences for the Markdown notes viewer utility. */
 class NotesViewerPreferences(
@@ -238,6 +240,66 @@ class NotesViewerPreferences(
         prefs.edit().remove(KEY_OPEN_TABS_SESSION).apply()
     }
 
+    // @hsk-sync:new-note — personal data + beginning templates
+    fun loadPersonalDataEnabled(): Boolean = prefs.getBoolean(KEY_PERSONAL_DATA_ENABLED, false)
+
+    fun savePersonalDataEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_PERSONAL_DATA_ENABLED, enabled).apply()
+    }
+
+    fun loadPersonalDataAuthor(): String = prefs.getString(KEY_PERSONAL_DATA_AUTHOR, DEFAULT_PERSONAL_DATA_AUTHOR)
+        ?: DEFAULT_PERSONAL_DATA_AUTHOR
+
+    fun savePersonalDataAuthor(author: String) {
+        prefs.edit().putString(KEY_PERSONAL_DATA_AUTHOR, author).apply()
+    }
+
+    fun loadPersonalDataAuthorEmail(): String = prefs.getString(KEY_PERSONAL_DATA_AUTHOR_EMAIL, "") ?: ""
+
+    fun savePersonalDataAuthorEmail(email: String) {
+        prefs.edit().putString(KEY_PERSONAL_DATA_AUTHOR_EMAIL, email).apply()
+    }
+
+    fun loadPersonalData(): NewNoteContent.PersonalData = NewNoteContent.PersonalData(
+        enabled = loadPersonalDataEnabled(),
+        author = loadPersonalDataAuthor().ifBlank { DEFAULT_PERSONAL_DATA_AUTHOR },
+        authorEmail = loadPersonalDataAuthorEmail(),
+    )
+
+    fun loadBeginningTemplates(): List<NewNoteContent.BeginningTemplate> {
+        val raw = prefs.getString(KEY_BEGINNING_TEMPLATES, null)
+        if (raw.isNullOrBlank()) {
+            return NewNoteContent.defaultBeginningTemplates
+        }
+        return runCatching { parseBeginningTemplatesJson(raw) }.getOrElse {
+            NewNoteContent.defaultBeginningTemplates
+        }
+    }
+
+    fun saveBeginningTemplates(templates: List<NewNoteContent.BeginningTemplate>) {
+        prefs.edit().putString(KEY_BEGINNING_TEMPLATES, beginningTemplatesToJson(templates)).apply()
+    }
+
+    fun loadDefaultBeginningTemplateId(): String {
+        val stored = prefs.getString(KEY_DEFAULT_BEGINNING_TEMPLATE_ID, null)
+        if (!stored.isNullOrBlank()) {
+            return stored
+        }
+        return NewNoteContent.defaultBeginningTemplates.first().id
+    }
+
+    fun saveDefaultBeginningTemplateId(id: String) {
+        prefs.edit().putString(KEY_DEFAULT_BEGINNING_TEMPLATE_ID, id).apply()
+    }
+
+    fun resolveBeginningTemplate(templateId: String? = null): NewNoteContent.BeginningTemplate {
+        val templates = loadBeginningTemplates()
+        val wanted = templateId?.takeIf { it.isNotBlank() } ?: loadDefaultBeginningTemplateId()
+        return templates.firstOrNull { it.id == wanted || it.label == wanted }
+            ?: templates.firstOrNull()
+            ?: NewNoteContent.defaultBeginningTemplates.first()
+    }
+
     /**
      * Restores viewer preferences to defaults.
      * Keeps the chosen notes folder URI ([KEY_NOTES_TREE_URI]).
@@ -266,6 +328,11 @@ class NotesViewerPreferences(
             .remove(KEY_PINNED_BAR_ENABLED)
             .remove(KEY_MAX_PINNED_ITEMS)
             .remove(KEY_PINNED_ITEMS)
+            .remove(KEY_PERSONAL_DATA_ENABLED)
+            .remove(KEY_PERSONAL_DATA_AUTHOR)
+            .remove(KEY_PERSONAL_DATA_AUTHOR_EMAIL)
+            .remove(KEY_BEGINNING_TEMPLATES)
+            .remove(KEY_DEFAULT_BEGINNING_TEMPLATE_ID)
             .apply()
     }
 
@@ -293,6 +360,47 @@ class NotesViewerPreferences(
         private const val KEY_PINNED_BAR_ENABLED = "pinned_bar_enabled"
         private const val KEY_MAX_PINNED_ITEMS = "max_pinned_items"
         private const val KEY_PINNED_ITEMS = "pinned_items"
+        private const val KEY_PERSONAL_DATA_ENABLED = "personal_data_enabled"
+        private const val KEY_PERSONAL_DATA_AUTHOR = "personal_data_author"
+        private const val KEY_PERSONAL_DATA_AUTHOR_EMAIL = "personal_data_author_email"
+        private const val KEY_BEGINNING_TEMPLATES = "beginning_templates_json"
+        private const val KEY_DEFAULT_BEGINNING_TEMPLATE_ID = "default_beginning_template_id"
+
+        const val DEFAULT_PERSONAL_DATA_AUTHOR = "noname"
+
+        private fun beginningTemplatesToJson(templates: List<NewNoteContent.BeginningTemplate>): String {
+            val array = JSONArray()
+            for (template in templates) {
+                array.put(
+                    JSONObject()
+                        .put("id", template.id)
+                        .put("label", template.label)
+                        .put("content", template.content),
+                )
+            }
+            return array.toString()
+        }
+
+        private fun parseBeginningTemplatesJson(raw: String): List<NewNoteContent.BeginningTemplate> {
+            val array = JSONArray(raw)
+            val result = mutableListOf<NewNoteContent.BeginningTemplate>()
+            for (index in 0 until array.length()) {
+                val obj = array.optJSONObject(index) ?: continue
+                val id = obj.optString("id").trim()
+                val label = obj.optString("label").trim().ifEmpty { id }
+                val content = obj.optString("content")
+                if (id.isEmpty() && content.isEmpty()) {
+                    continue
+                }
+                result +=
+                    NewNoteContent.BeginningTemplate(
+                        id = id.ifEmpty { label },
+                        label = label.ifEmpty { id },
+                        content = content,
+                    )
+            }
+            return result.ifEmpty { NewNoteContent.defaultBeginningTemplates }
+        }
 
         const val DEFAULT_MAX_OPEN_TABS = 10
         const val MIN_OPEN_TABS = 1

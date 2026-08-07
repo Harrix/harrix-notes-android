@@ -10,7 +10,12 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -29,20 +34,37 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import dev.harrix.notes.NewNoteContent
 import dev.harrix.notes.NotesTreeRepository
 import dev.harrix.notes.R
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotesCreateNoteDialog(
     untitledFileStem: String,
+    beginningTemplates: List<NewNoteContent.BeginningTemplate>,
+    defaultBeginningTemplateId: String,
     onDismiss: () -> Unit,
-    onConfirm: (fileStem: String, noteTitle: String) -> Unit,
+    onConfirm: (fileStem: String, noteTitle: String, beginningTemplateId: String) -> Unit,
 ) {
     var noteTitle by remember { mutableStateOf("") }
     var fileStem by remember { mutableStateOf("") }
     var syncFileNameFromTitle by remember { mutableStateOf(true) }
+    val templates =
+        beginningTemplates.ifEmpty { NewNoteContent.defaultBeginningTemplates }
+    var selectedTemplateId by remember {
+        mutableStateOf(
+            templates
+                .firstOrNull { it.id == defaultBeginningTemplateId }
+                ?.id
+                ?: templates.first().id,
+        )
+    }
+    var templateMenuExpanded by remember { mutableStateOf(false) }
     val titleFocus = remember { FocusRequester() }
     val untitledFileName = "$untitledFileStem.md"
+    val selectedTemplate =
+        templates.firstOrNull { it.id == selectedTemplateId } ?: templates.first()
 
     LaunchedEffect(Unit) {
         titleFocus.requestFocus()
@@ -66,11 +88,12 @@ fun NotesCreateNoteDialog(
         onConfirm(
             NotesTreeRepository.normalizeMarkdownFileStem(fileStem),
             noteTitle.trim(),
+            selectedTemplate.id,
         )
     }
 
     fun confirmUntitled() {
-        onConfirm(untitledFileStem, untitledFileStem)
+        onConfirm(untitledFileStem, untitledFileStem, selectedTemplate.id)
     }
 
     AlertDialog(
@@ -86,6 +109,40 @@ fun NotesCreateNoteDialog(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(text = untitledFileName)
+                }
+                ExposedDropdownMenuBox(
+                    expanded = templateMenuExpanded,
+                    onExpandedChange = { templateMenuExpanded = it },
+                ) {
+                    OutlinedTextField(
+                        value = selectedTemplate.label,
+                        onValueChange = {},
+                        readOnly = true,
+                        modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                        label = {
+                            Text(stringResource(R.string.markdown_notes_create_note_template_label))
+                        },
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = templateMenuExpanded)
+                        },
+                    )
+                    ExposedDropdownMenu(
+                        expanded = templateMenuExpanded,
+                        onDismissRequest = { templateMenuExpanded = false },
+                    ) {
+                        templates.forEach { template ->
+                            DropdownMenuItem(
+                                text = { Text(template.label) },
+                                onClick = {
+                                    selectedTemplateId = template.id
+                                    templateMenuExpanded = false
+                                },
+                            )
+                        }
+                    }
                 }
                 OutlinedTextField(
                     value = noteTitle,

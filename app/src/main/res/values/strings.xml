@@ -10,6 +10,18 @@
     <string name="settings_general_summary">Files and folders</string>
     <string name="settings_edit_mode_title">Edit mode</string>
     <string name="settings_edit_mode_summary">Editor settings</string>
+    <string name="settings_new_note_title">New note</string>
+    <string name="settings_new_note_summary">Templates and personal data</string>
+    <string name="settings_new_note_personal_data">Personal data</string>
+    <string name="settings_new_note_personal_data_enabled">Include author in new notes</string>
+    <string name="settings_new_note_personal_data_author">Author</string>
+    <string name="settings_new_note_personal_data_author_email">Author email</string>
+    <string name="settings_new_note_templates">Beginning templates</string>
+    <string name="settings_new_note_default_template">Default beginning template</string>
+    <string name="settings_new_note_template_label">Label</string>
+    <string name="settings_new_note_template_content">Template content</string>
+    <string name="settings_new_note_template_save">Save template</string>
+    <string name="settings_new_note_templates_reset">Reset templates to defaults</string>
     <string name="settings_view_mode_title">View mode</string>
     <string name="settings_view_mode_summary">Preview settings</string>
     <string name="settings_appearance_title">Appearance</string>
@@ -137,6 +149,7 @@
     <string name="markdown_notes_saved">Saved</string>
     <string name="markdown_notes_new_note">+ New Note</string>
     <string name="markdown_notes_create_note_title">New note</string>
+    <string name="markdown_notes_create_note_template_label">Beginning template</string>
     <string name="markdown_notes_create_note_name_label">Note title</string>
     <string name="markdown_notes_create_note_file_label">File name</string>
     <string name="markdown_notes_create_note_extension">.md</string>

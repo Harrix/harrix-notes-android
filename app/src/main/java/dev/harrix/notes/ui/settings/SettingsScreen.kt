@@ -22,6 +22,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Edit
@@ -29,6 +30,7 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -72,6 +74,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import dev.harrix.notes.AppPreferences
+import dev.harrix.notes.NewNoteContent
 import dev.harrix.notes.NotesBrowseLayout
 import dev.harrix.notes.NotesIconStyle
 import dev.harrix.notes.NotesListDensity
@@ -104,6 +107,7 @@ private enum class NotesSettingsPage {
     General,
     EditMode,
     ViewMode,
+    NewNote,
     Other,
 }
 
@@ -132,6 +136,7 @@ fun SettingsScreen(
             NotesSettingsPage.General -> stringResource(R.string.settings_general_title)
             NotesSettingsPage.EditMode -> stringResource(R.string.settings_edit_mode_title)
             NotesSettingsPage.ViewMode -> stringResource(R.string.settings_view_mode_title)
+            NotesSettingsPage.NewNote -> stringResource(R.string.settings_new_note_title)
             NotesSettingsPage.Other -> stringResource(R.string.settings_other_title)
         }
 
@@ -204,6 +209,13 @@ fun SettingsScreen(
                         icon = Icons.Filled.Visibility,
                         onClick = { page = NotesSettingsPage.ViewMode },
                     )
+                    HorizontalDivider()
+                    SettingsHubRow(
+                        title = stringResource(R.string.settings_new_note_title),
+                        summary = stringResource(R.string.settings_new_note_summary),
+                        icon = Icons.Filled.Add,
+                        onClick = { page = NotesSettingsPage.NewNote },
+                    )
                     SettingsCategoryHeader(text = stringResource(R.string.settings_category_essential))
                     key(settingsEpoch) {
                         EssentialSettingsSection(
@@ -246,6 +258,14 @@ fun SettingsScreen(
                 SettingsDetailPane(innerPadding = innerPadding) {
                     key(settingsEpoch) {
                         ViewModeSettingsSection()
+                    }
+                }
+            }
+
+            NotesSettingsPage.NewNote -> {
+                SettingsDetailPane(innerPadding = innerPadding) {
+                    key(settingsEpoch) {
+                        NewNoteSettingsSection()
                     }
                 }
             }
@@ -797,6 +817,200 @@ private fun ViewModeSettingsSection(modifier: Modifier = Modifier) {
                 previewFontSizeSp = value
                 preferences.savePreviewFontSizeSp(value)
             },
+        )
+    }
+}
+
+/** @hsk-sync:new-note */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun NewNoteSettingsSection(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val preferences = remember { NotesViewerPreferences(context.applicationContext) }
+    var personalEnabled by remember { mutableStateOf(preferences.loadPersonalDataEnabled()) }
+    var author by remember { mutableStateOf(preferences.loadPersonalDataAuthor()) }
+    var authorEmail by remember { mutableStateOf(preferences.loadPersonalDataAuthorEmail()) }
+    var templates by remember { mutableStateOf(preferences.loadBeginningTemplates()) }
+    var defaultTemplateId by remember { mutableStateOf(preferences.loadDefaultBeginningTemplateId()) }
+    var selectedTemplateId by remember {
+        mutableStateOf(defaultTemplateId.ifBlank { templates.firstOrNull()?.id.orEmpty() })
+    }
+    var templateLabel by remember {
+        mutableStateOf(templates.firstOrNull { it.id == selectedTemplateId }?.label.orEmpty())
+    }
+    var templateContent by remember {
+        mutableStateOf(templates.firstOrNull { it.id == selectedTemplateId }?.content.orEmpty())
+    }
+    var defaultMenuExpanded by remember { mutableStateOf(false) }
+    var templateMenuExpanded by remember { mutableStateOf(false) }
+
+    fun selectTemplate(id: String) {
+        selectedTemplateId = id
+        val template = templates.firstOrNull { it.id == id }
+        templateLabel = template?.label.orEmpty()
+        templateContent = template?.content.orEmpty()
+    }
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        SettingsSectionHeader(text = stringResource(R.string.settings_new_note_personal_data))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = stringResource(R.string.settings_new_note_personal_data_enabled),
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.weight(1f).padding(end = 12.dp),
+            )
+            Switch(
+                checked = personalEnabled,
+                onCheckedChange = { enabled ->
+                    personalEnabled = enabled
+                    preferences.savePersonalDataEnabled(enabled)
+                },
+            )
+        }
+        if (personalEnabled) {
+            OutlinedTextField(
+                value = author,
+                onValueChange = { value ->
+                    author = value
+                    preferences.savePersonalDataAuthor(value)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(stringResource(R.string.settings_new_note_personal_data_author)) },
+                singleLine = true,
+            )
+            OutlinedTextField(
+                value = authorEmail,
+                onValueChange = { value ->
+                    authorEmail = value
+                    preferences.savePersonalDataAuthorEmail(value)
+                },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(stringResource(R.string.settings_new_note_personal_data_author_email)) },
+                singleLine = true,
+            )
+        }
+
+        SettingsSectionHeader(text = stringResource(R.string.settings_new_note_templates))
+        ExposedDropdownMenuBox(
+            expanded = defaultMenuExpanded,
+            onExpandedChange = { defaultMenuExpanded = it },
+        ) {
+            val defaultLabel =
+                templates.firstOrNull { it.id == defaultTemplateId }?.label
+                    ?: defaultTemplateId
+            OutlinedTextField(
+                value = defaultLabel,
+                onValueChange = {},
+                readOnly = true,
+                modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                label = { Text(stringResource(R.string.settings_new_note_default_template)) },
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = defaultMenuExpanded)
+                },
+            )
+            ExposedDropdownMenu(
+                expanded = defaultMenuExpanded,
+                onDismissRequest = { defaultMenuExpanded = false },
+            ) {
+                templates.forEach { template ->
+                    DropdownMenuItem(
+                        text = { Text(template.label) },
+                        onClick = {
+                            defaultTemplateId = template.id
+                            preferences.saveDefaultBeginningTemplateId(template.id)
+                            defaultMenuExpanded = false
+                        },
+                    )
+                }
+            }
+        }
+
+        ExposedDropdownMenuBox(
+            expanded = templateMenuExpanded,
+            onExpandedChange = { templateMenuExpanded = it },
+        ) {
+            OutlinedTextField(
+                value = templates.firstOrNull { it.id == selectedTemplateId }?.label.orEmpty(),
+                onValueChange = {},
+                readOnly = true,
+                modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                label = { Text(stringResource(R.string.settings_new_note_templates)) },
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = templateMenuExpanded)
+                },
+            )
+            ExposedDropdownMenu(
+                expanded = templateMenuExpanded,
+                onDismissRequest = { templateMenuExpanded = false },
+            ) {
+                templates.forEach { template ->
+                    DropdownMenuItem(
+                        text = { Text(template.label) },
+                        onClick = {
+                            selectTemplate(template.id)
+                            templateMenuExpanded = false
+                        },
+                    )
+                }
+            }
+        }
+
+        OutlinedTextField(
+            value = templateLabel,
+            onValueChange = { templateLabel = it },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(R.string.settings_new_note_template_label)) },
+            singleLine = true,
+        )
+        OutlinedTextField(
+            value = templateContent,
+            onValueChange = { templateContent = it },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(R.string.settings_new_note_template_content)) },
+            minLines = 6,
+        )
+        SettingsFullWidthOutlinedButton(
+            onClick = {
+                val id = selectedTemplateId.ifBlank { templateLabel.ifBlank { "template" } }
+                val updated =
+                    NewNoteContent.BeginningTemplate(
+                        id = id,
+                        label = templateLabel.ifBlank { id },
+                        content = templateContent,
+                    )
+                templates =
+                    templates.map { existing ->
+                        if (existing.id == id) updated else existing
+                    }.let { list ->
+                        if (list.any { it.id == id }) list else list + updated
+                    }
+                preferences.saveBeginningTemplates(templates)
+                selectTemplate(id)
+            },
+            label = stringResource(R.string.settings_new_note_template_save),
+        )
+        SettingsFullWidthOutlinedButton(
+            onClick = {
+                templates = NewNoteContent.defaultBeginningTemplates
+                preferences.saveBeginningTemplates(templates)
+                defaultTemplateId = templates.first().id
+                preferences.saveDefaultBeginningTemplateId(defaultTemplateId)
+                selectTemplate(defaultTemplateId)
+            },
+            label = stringResource(R.string.settings_new_note_templates_reset),
         )
     }
 }

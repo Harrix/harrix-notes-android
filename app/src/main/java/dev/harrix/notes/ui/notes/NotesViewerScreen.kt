@@ -982,6 +982,7 @@ fun NotesViewerScreen(
     fun createNewNote(
         fileStem: String,
         noteTitle: String,
+        beginningTemplateId: String,
     ) {
         val tree = notesTreeUri ?: return
         val treeUri = Uri.parse(tree)
@@ -996,6 +997,9 @@ fun NotesViewerScreen(
                 else -> ensureRootPath() ?: return
             }
         val dir = path.lastOrNull() ?: return
+        // @hsk-sync:new-note
+        val beginningTemplate = preferences.resolveBeginningTemplate(beginningTemplateId)
+        val personalData = preferences.loadPersonalData()
         scope.launch {
             val note =
                 withContext(Dispatchers.IO) {
@@ -1005,6 +1009,8 @@ fun NotesViewerScreen(
                             parentDocumentId = dir.documentId,
                             fileStem = fileStem,
                             noteTitle = noteTitle,
+                            beginningTemplate = beginningTemplate,
+                            personalData = personalData,
                         )
                     }
                 }.getOrElse { error ->
@@ -2078,10 +2084,16 @@ fun NotesViewerScreen(
     if (showCreateNoteDialog) {
         NotesCreateNoteDialog(
             untitledFileStem = createNoteUntitledStem,
+            beginningTemplates = preferences.loadBeginningTemplates(),
+            defaultBeginningTemplateId = preferences.loadDefaultBeginningTemplateId(),
             onDismiss = { showCreateNoteDialog = false },
-            onConfirm = { fileStem, noteTitle ->
+            onConfirm = { fileStem, noteTitle, beginningTemplateId ->
                 showCreateNoteDialog = false
-                createNewNote(fileStem = fileStem, noteTitle = noteTitle)
+                createNewNote(
+                    fileStem = fileStem,
+                    noteTitle = noteTitle,
+                    beginningTemplateId = beginningTemplateId,
+                )
             },
         )
     }
