@@ -12,6 +12,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -2037,6 +2038,7 @@ fun NotesViewerScreen(
                                                 onDeleteEntry = { entry ->
                                                     pendingDeleteEntry = entry
                                                 },
+                                                onEmptySpaceLongPress = { menuExpanded = true },
                                             )
                                         }
                                     }
@@ -2917,7 +2919,9 @@ private fun NotesFolderList(
     onCutEntry: (NotesEntry) -> Unit,
     onDuplicateEntry: (NotesEntry) -> Unit,
     onDeleteEntry: (NotesEntry) -> Unit,
+    onEmptySpaceLongPress: (() -> Unit)? = null,
 ) {
+    val onEmptySpaceLongPressState = rememberUpdatedState(onEmptySpaceLongPress)
     when {
         statusMessage != null && entries.isEmpty() -> {
             Text(
@@ -2928,12 +2932,31 @@ private fun NotesFolderList(
         }
 
         entries.isEmpty() -> {
-            Text(
-                text = stringResource(R.string.markdown_notes_folder_empty),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(24.dp),
-            )
+            Box(
+                modifier =
+                Modifier
+                    .fillMaxSize()
+                    .then(
+                        if (layout == NotesBrowseLayout.Icons && onEmptySpaceLongPress != null) {
+                            Modifier.pointerInput(Unit) {
+                                detectTapGestures(
+                                    onLongPress = {
+                                        onEmptySpaceLongPressState.value?.invoke()
+                                    },
+                                )
+                            }
+                        } else {
+                            Modifier
+                        },
+                    ),
+            ) {
+                Text(
+                    text = stringResource(R.string.markdown_notes_folder_empty),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(24.dp),
+                )
+            }
         }
 
         layout == NotesBrowseLayout.Icons -> {
@@ -2955,7 +2978,32 @@ private fun NotesFolderList(
             LazyVerticalGrid(
                 columns = GridCells.Fixed(notesIconsGridColumnCount()),
                 state = gridState,
-                modifier = Modifier.fillMaxSize(),
+                modifier =
+                Modifier
+                    .fillMaxSize()
+                    .then(
+                        if (onEmptySpaceLongPress != null) {
+                            Modifier.pointerInput(Unit) {
+                                detectTapGestures(
+                                    onLongPress = { offset ->
+                                        val hitItem =
+                                            gridState.layoutInfo.visibleItemsInfo.any { item ->
+                                                val left = item.offset.x.toFloat()
+                                                val top = item.offset.y.toFloat()
+                                                val right = left + item.size.width
+                                                val bottom = top + item.size.height
+                                                offset.x in left..right && offset.y in top..bottom
+                                            }
+                                        if (!hitItem) {
+                                            onEmptySpaceLongPressState.value?.invoke()
+                                        }
+                                    },
+                                )
+                            }
+                        } else {
+                            Modifier
+                        },
+                    ),
                 contentPadding =
                 PaddingValues(
                     start = 8.dp,
