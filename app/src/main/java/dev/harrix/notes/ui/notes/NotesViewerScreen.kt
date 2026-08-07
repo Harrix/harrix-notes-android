@@ -49,9 +49,14 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.ContentCut
+import androidx.compose.material.icons.filled.ContentPaste
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FileCopy
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
@@ -61,6 +66,7 @@ import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenu
@@ -75,6 +81,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -108,6 +115,9 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.harrix.notes.NoteMetaUpdates
 import dev.harrix.notes.NotesBrowseLayout
+import dev.harrix.notes.NotesClipboardEntry
+import dev.harrix.notes.NotesClipboardKind
+import dev.harrix.notes.NotesClipboardMode
 import dev.harrix.notes.NotesDateFormats
 import dev.harrix.notes.NotesDocumentInfo
 import dev.harrix.notes.NotesEntry
@@ -166,6 +176,7 @@ fun NotesViewerScreen(
     var showCreateNoteDialog by remember { mutableStateOf(false) }
     var showNoteInfoDialog by remember { mutableStateOf(false) }
     var noteInfoDocument by remember { mutableStateOf<NotesDocumentInfo?>(null) }
+    var pendingDeleteEntry by remember { mutableStateOf<NotesEntry?>(null) }
     var createNoteUntitledStem by remember { mutableStateOf("Untitled_01") }
     var folderPath by viewModel.folderPath
     var entries by viewModel.entries
@@ -203,6 +214,7 @@ fun NotesViewerScreen(
     var pinnedBarEnabled by viewModel.pinnedBarEnabled
     var maxPinnedItems by viewModel.maxPinnedItems
     var pinnedItems by viewModel.pinnedItems
+    var notesClipboard by viewModel.notesClipboard
     var pinnedRestoredForTree by viewModel.pinnedRestoredForTree
     var treeRoot by viewModel.treeRoot
     var treeChildrenByFolderId by viewModel.treeChildrenByFolderId
@@ -238,6 +250,7 @@ fun NotesViewerScreen(
         treeChildrenByFolderId = emptyMap()
         treeExpandedFolderIds = emptySet()
         treeLoadingRoot = false
+        notesClipboard = null
     }
 
     fun persistPinnedItems(items: List<NotesPinnedItem>) {
@@ -1147,6 +1160,254 @@ fun NotesViewerScreen(
         }
     }
 
+    fun listingParentDocumentId(): String? = folderPath.lastOrNull()?.documentId
+
+    fun clipboardFromEntry(
+        entry: NotesEntry,
+        mode: NotesClipboardMode,
+    ) {
+        val tree = notesTreeUri ?: return
+        val parentId = listingParentDocumentId() ?: return
+        notesClipboard =
+            NotesClipboardEntry(
+                treeUri = tree,
+                documentId = entry.documentId,
+                uri = entry.uri,
+                displayName = entry.name,
+                kind =
+                when (entry) {
+                    is NotesEntry.Folder -> NotesClipboardKind.Folder
+                    is NotesEntry.Note -> NotesClipboardKind.Note
+                },
+                mode = mode,
+                sourceParentDocumentId = parentId,
+            )
+    }
+
+    fun reloadListingAfterMutation(parentDocumentId: String) {
+        val tree = notesTreeUri ?: return
+        val treeUri = Uri.parse(tree)
+        val dir = folderPath.lastOrNull() ?: return
+        repository.invalidateDirectory(treeUri, parentDocumentId)
+        if (dir.documentId != parentDocumentId) {
+            repository.invalidateDirectory(treeUri, dir.documentId)
+        }
+        scope.launch {
+            val listed =
+                withContext(Dispatchers.IO) {
+                    runCatching {
+                        repository.listChildren(treeUri, dir.documentId, dir.name)
+                    }.getOrNull()
+                } ?: return@launch
+            if (folderPath.lastOrNull()?.documentId != dir.documentId) {
+                putTreeChildren(
+                    dir.documentId,
+                    repository.applyTitleSource(listed, titleSource),
+                )
+                return@launch
+            }
+            val withTitles = repository.applyTitleSource(listed, titleSource)
+            entries = withTitles
+            putTreeChildren(dir.documentId, withTitles)
+            enrichNoteMeta(treeUri, dir.documentId, withTitles, folderListRequestId)
+        }
+    }
+
+    fun closeTabsAffectedByDelete(
+        entry: NotesEntry,
+    ) {
+        val removedIds =
+            when (entry) {
+                is NotesEntry.Note ->
+                    openTabs
+                        .filter { it.documentId == entry.documentId }
+                        .map { it.documentId }
+                        .toSet()
+
+                is NotesEntry.Folder ->
+                    openTabs
+                        .filter { tab ->
+                            tab.documentId == entry.documentId ||
+                                tab.folderPath.any { it.documentId == entry.documentId }
+                        }.map { it.documentId }
+                        .toSet()
+            }
+        if (removedIds.isEmpty()) {
+            return
+        }
+        val closingSelected = selectedTabDocumentId in removedIds
+        if (closingSelected) {
+            persistCurrentDraft {
+                openTabs = openTabs.filterNot { it.documentId in removedIds }
+                val nextId = openTabs.lastOrNull()?.documentId
+                selectedTabDocumentId = nextId
+                if (nextId == null) {
+                    noteContent = null
+                    noteLoading = false
+                    resetEditorState()
+                } else {
+                    noteLoading = true
+                    noteContent = null
+                    resetEditorState()
+                }
+            }
+        } else {
+            openTabs = openTabs.filterNot { it.documentId in removedIds }
+        }
+    }
+
+    fun pasteClipboard() {
+        val clip = notesClipboard ?: return
+        val tree = notesTreeUri ?: return
+        if (clip.treeUri != tree) {
+            statusMessage = context.getString(R.string.markdown_notes_paste_failed)
+            return
+        }
+        val dest = folderPath.lastOrNull() ?: return
+        val treeUri = Uri.parse(tree)
+        scope.launch {
+            val result =
+                withContext(Dispatchers.IO) {
+                    runCatching {
+                        val existing = repository.childNamesLowercase(treeUri, dest.documentId)
+                        when (clip.mode) {
+                            NotesClipboardMode.Copy -> {
+                                val name =
+                                    NotesTreeRepository.uniqueCopyDisplayName(
+                                        clip.displayName,
+                                        existing,
+                                    )
+                                repository.copyEntryInto(
+                                    treeUri = treeUri,
+                                    sourceUri = clip.uri,
+                                    sourceDocumentId = clip.documentId,
+                                    isDirectory = clip.kind == NotesClipboardKind.Folder,
+                                    destParentDocumentId = dest.documentId,
+                                    desiredDisplayName = name,
+                                )
+                            }
+
+                            NotesClipboardMode.Cut -> {
+                                if (clip.sourceParentDocumentId == dest.documentId) {
+                                    return@runCatching clip.uri
+                                }
+                                val nameLower = clip.displayName.lowercase(java.util.Locale.ROOT)
+                                val name =
+                                    if (nameLower in existing) {
+                                        NotesTreeRepository.uniqueCopyDisplayName(
+                                            clip.displayName,
+                                            existing,
+                                        )
+                                    } else {
+                                        clip.displayName
+                                    }
+                                repository.moveEntryInto(
+                                    treeUri = treeUri,
+                                    sourceUri = clip.uri,
+                                    sourceDocumentId = clip.documentId,
+                                    isDirectory = clip.kind == NotesClipboardKind.Folder,
+                                    sourceParentDocumentId = clip.sourceParentDocumentId,
+                                    destParentDocumentId = dest.documentId,
+                                    desiredDisplayName = name,
+                                )
+                            }
+                        }
+                    }
+                }
+            result
+                .onSuccess {
+                    if (clip.mode == NotesClipboardMode.Cut) {
+                        unpinByDocumentId(clip.documentId)
+                        notesClipboard = null
+                        if (clip.sourceParentDocumentId != dest.documentId) {
+                            repository.invalidateDirectory(treeUri, clip.sourceParentDocumentId)
+                        }
+                    }
+                    reloadListingAfterMutation(dest.documentId)
+                }.onFailure { error ->
+                    statusMessage =
+                        error.message
+                            ?: context.getString(R.string.markdown_notes_paste_failed)
+                }
+        }
+    }
+
+    fun duplicateEntry(entry: NotesEntry) {
+        val tree = notesTreeUri ?: return
+        val parentId = listingParentDocumentId() ?: return
+        val treeUri = Uri.parse(tree)
+        scope.launch {
+            val result =
+                withContext(Dispatchers.IO) {
+                    runCatching {
+                        val existing = repository.childNamesLowercase(treeUri, parentId)
+                        val name =
+                            NotesTreeRepository.uniqueCopyDisplayName(entry.name, existing)
+                        repository.copyEntryInto(
+                            treeUri = treeUri,
+                            sourceUri = entry.uri,
+                            sourceDocumentId = entry.documentId,
+                            isDirectory = entry is NotesEntry.Folder,
+                            destParentDocumentId = parentId,
+                            desiredDisplayName = name,
+                        )
+                    }
+                }
+            result
+                .onSuccess {
+                    reloadListingAfterMutation(parentId)
+                }.onFailure { error ->
+                    statusMessage =
+                        error.message
+                            ?: context.getString(R.string.markdown_notes_copy_failed)
+                }
+        }
+    }
+
+    fun confirmDeleteEntry(entry: NotesEntry) {
+        val tree = notesTreeUri ?: return
+        val parentId = listingParentDocumentId() ?: return
+        val treeUri = Uri.parse(tree)
+        pendingDeleteEntry = null
+        scope.launch {
+            val result =
+                withContext(Dispatchers.IO) {
+                    runCatching {
+                        repository.deleteEntry(
+                            treeUri = treeUri,
+                            documentUri = entry.uri,
+                            documentId = entry.documentId,
+                            isDirectory = entry is NotesEntry.Folder,
+                            parentDocumentId = parentId,
+                        )
+                    }
+                }
+            result
+                .onSuccess { deleted ->
+                    if (!deleted) {
+                        statusMessage = context.getString(R.string.markdown_notes_delete_failed)
+                        return@onSuccess
+                    }
+                    closeTabsAffectedByDelete(entry)
+                    unpinByDocumentId(entry.documentId)
+                    if (entry is NotesEntry.Note) {
+                        entry.containingFolder?.let {
+                            repository.invalidateDirectory(treeUri, it.documentId)
+                        }
+                    }
+                    val clip = notesClipboard
+                    if (clip != null && clip.documentId == entry.documentId) {
+                        notesClipboard = null
+                    }
+                    reloadListingAfterMutation(parentId)
+                }.onFailure { error ->
+                    statusMessage =
+                        error.message
+                            ?: context.getString(R.string.markdown_notes_delete_failed)
+                }
+        }
+    }
+
     fun reorderTabs(
         fromIndex: Int,
         toIndex: Int,
@@ -1590,6 +1851,12 @@ fun NotesViewerScreen(
                             preferences.saveShowNoteDates(value)
                         },
                         noteOpen = selectedTab != null,
+                        canPaste =
+                        selectedTab == null &&
+                            notesClipboard != null &&
+                            !notesTreeUri.isNullOrBlank() &&
+                            folderPath.isNotEmpty(),
+                        onPaste = { pasteClipboard() },
                         onOpenNoteInfo = {
                             val tab = selectedTab
                             if (tab != null) {
@@ -1758,6 +2025,18 @@ fun NotesViewerScreen(
                                                 onUnpinNote = { note ->
                                                     unpinByDocumentId(note.documentId)
                                                 },
+                                                onCopyEntry = { entry ->
+                                                    clipboardFromEntry(entry, NotesClipboardMode.Copy)
+                                                },
+                                                onCutEntry = { entry ->
+                                                    clipboardFromEntry(entry, NotesClipboardMode.Cut)
+                                                },
+                                                onDuplicateEntry = { entry ->
+                                                    duplicateEntry(entry)
+                                                },
+                                                onDeleteEntry = { entry ->
+                                                    pendingDeleteEntry = entry
+                                                },
                                             )
                                         }
                                     }
@@ -1823,6 +2102,35 @@ fun NotesViewerScreen(
             noteInfoDocument = null
         }
     }
+    val deleteTarget = pendingDeleteEntry
+    if (deleteTarget != null) {
+        val label =
+            when (deleteTarget) {
+                is NotesEntry.Folder -> deleteTarget.name
+                is NotesEntry.Note -> deleteTarget.displayLabel.ifBlank { deleteTarget.name }
+            }
+        AlertDialog(
+            onDismissRequest = { pendingDeleteEntry = null },
+            title = { Text(stringResource(R.string.markdown_notes_delete_confirm_title)) },
+            text = {
+                Text(
+                    text = stringResource(R.string.markdown_notes_delete_confirm_message, label),
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { confirmDeleteEntry(deleteTarget) },
+                ) {
+                    Text(stringResource(R.string.markdown_notes_delete_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDeleteEntry = null }) {
+                    Text(stringResource(R.string.markdown_notes_create_note_cancel))
+                }
+            },
+        )
+    }
 }
 
 private const val AutosaveDelayMs = 800L
@@ -1864,6 +2172,8 @@ private fun NotesTopChrome(
     onShowGmdFilesChange: (Boolean) -> Unit,
     onShowNoteDatesChange: (Boolean) -> Unit,
     noteOpen: Boolean,
+    canPaste: Boolean,
+    onPaste: () -> Unit,
     onOpenNoteInfo: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenAbout: () -> Unit,
@@ -1998,6 +2308,27 @@ private fun NotesTopChrome(
                             NotesMenuCheckbox(checked = showNoteDates)
                         },
                     )
+                    if (canPaste) {
+                        HorizontalDivider()
+                        NotesDropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = stringResource(R.string.markdown_notes_paste),
+                                    maxLines = 2,
+                                )
+                            },
+                            onClick = {
+                                onMenuExpandedChange(false)
+                                onPaste()
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Filled.ContentPaste,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
                     HorizontalDivider()
                 }
                 NotesDropdownMenuItem(
@@ -2582,6 +2913,10 @@ private fun NotesFolderList(
     onUnpinFolder: (NotesEntry.Folder) -> Unit,
     onPinNote: (NotesEntry.Note) -> Unit,
     onUnpinNote: (NotesEntry.Note) -> Unit,
+    onCopyEntry: (NotesEntry) -> Unit,
+    onCutEntry: (NotesEntry) -> Unit,
+    onDuplicateEntry: (NotesEntry) -> Unit,
+    onDeleteEntry: (NotesEntry) -> Unit,
 ) {
     when {
         statusMessage != null && entries.isEmpty() -> {
@@ -2642,6 +2977,10 @@ private fun NotesFolderList(
                                 onShowMergedNote = { onShowMergedNote(entry) },
                                 onPin = { onPinFolder(entry) },
                                 onUnpin = { onUnpinFolder(entry) },
+                                onCopy = { onCopyEntry(entry) },
+                                onCut = { onCutEntry(entry) },
+                                onDuplicate = { onDuplicateEntry(entry) },
+                                onDelete = { onDeleteEntry(entry) },
                             )
                         }
 
@@ -2653,6 +2992,10 @@ private fun NotesFolderList(
                                 onOpen = { onOpenNote(entry) },
                                 onPin = { onPinNote(entry) },
                                 onUnpin = { onUnpinNote(entry) },
+                                onCopy = { onCopyEntry(entry) },
+                                onCut = { onCutEntry(entry) },
+                                onDuplicate = { onDuplicateEntry(entry) },
+                                onDelete = { onDeleteEntry(entry) },
                             )
                         }
                     }
@@ -2697,6 +3040,10 @@ private fun NotesFolderList(
                                 onShowMergedNote = { onShowMergedNote(entry) },
                                 onPin = { onPinFolder(entry) },
                                 onUnpin = { onUnpinFolder(entry) },
+                                onCopy = { onCopyEntry(entry) },
+                                onCut = { onCutEntry(entry) },
+                                onDuplicate = { onDuplicateEntry(entry) },
+                                onDelete = { onDeleteEntry(entry) },
                             )
                         }
 
@@ -2709,6 +3056,10 @@ private fun NotesFolderList(
                                 onOpen = { onOpenNote(entry) },
                                 onPin = { onPinNote(entry) },
                                 onUnpin = { onUnpinNote(entry) },
+                                onCopy = { onCopyEntry(entry) },
+                                onCut = { onCutEntry(entry) },
+                                onDuplicate = { onDuplicateEntry(entry) },
+                                onDelete = { onDeleteEntry(entry) },
                             )
                         }
                     }
@@ -2729,6 +3080,10 @@ private fun NotesFolderRow(
     onShowMergedNote: () -> Unit,
     onPin: () -> Unit,
     onUnpin: () -> Unit,
+    onCopy: () -> Unit,
+    onCut: () -> Unit,
+    onDuplicate: () -> Unit,
+    onDelete: () -> Unit,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     val iconSize = density.iconSizeDp.dp
@@ -2785,6 +3140,10 @@ private fun NotesFolderRow(
                 onShowMergedNote = onShowMergedNote,
                 onPin = onPin,
                 onUnpin = onUnpin,
+                onCopy = onCopy,
+                onCut = onCut,
+                onDuplicate = onDuplicate,
+                onDelete = onDelete,
             )
         }
     }
@@ -2799,6 +3158,10 @@ private fun NotesNoteRow(
     onOpen: () -> Unit,
     onPin: () -> Unit,
     onUnpin: () -> Unit,
+    onCopy: () -> Unit,
+    onCut: () -> Unit,
+    onDuplicate: () -> Unit,
+    onDelete: () -> Unit,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     val iconSize = density.iconSizeDp.dp
@@ -2855,6 +3218,10 @@ private fun NotesNoteRow(
                 onShowMergedNote = {},
                 onPin = onPin,
                 onUnpin = onUnpin,
+                onCopy = onCopy,
+                onCut = onCut,
+                onDuplicate = onDuplicate,
+                onDelete = onDelete,
             )
         }
     }
@@ -2898,6 +3265,10 @@ private fun NotesFolderIconCell(
     onShowMergedNote: () -> Unit,
     onPin: () -> Unit,
     onUnpin: () -> Unit,
+    onCopy: () -> Unit,
+    onCut: () -> Unit,
+    onDuplicate: () -> Unit,
+    onDelete: () -> Unit,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     Box(modifier = Modifier.fillMaxWidth()) {
@@ -2932,6 +3303,10 @@ private fun NotesFolderIconCell(
             onShowMergedNote = onShowMergedNote,
             onPin = onPin,
             onUnpin = onUnpin,
+            onCopy = onCopy,
+            onCut = onCut,
+            onDuplicate = onDuplicate,
+            onDelete = onDelete,
         )
     }
 }
@@ -2944,6 +3319,10 @@ private fun NotesNoteIconCell(
     onOpen: () -> Unit,
     onPin: () -> Unit,
     onUnpin: () -> Unit,
+    onCopy: () -> Unit,
+    onCut: () -> Unit,
+    onDuplicate: () -> Unit,
+    onDelete: () -> Unit,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     Box(modifier = Modifier.fillMaxWidth()) {
@@ -2981,6 +3360,10 @@ private fun NotesNoteIconCell(
             onShowMergedNote = {},
             onPin = onPin,
             onUnpin = onUnpin,
+            onCopy = onCopy,
+            onCut = onCut,
+            onDuplicate = onDuplicate,
+            onDelete = onDelete,
         )
     }
 }
@@ -2994,6 +3377,10 @@ private fun NotesEntryContextMenu(
     onShowMergedNote: () -> Unit,
     onPin: () -> Unit,
     onUnpin: () -> Unit,
+    onCopy: () -> Unit,
+    onCut: () -> Unit,
+    onDuplicate: () -> Unit,
+    onDelete: () -> Unit,
 ) {
     DropdownMenu(
         expanded = expanded,
@@ -3049,6 +3436,79 @@ private fun NotesEntryContextMenu(
                     } else {
                         Icons.Filled.PushPin
                     },
+                    contentDescription = null,
+                )
+            },
+        )
+        HorizontalDivider()
+        NotesDropdownMenuItem(
+            text = {
+                Text(
+                    text = stringResource(R.string.markdown_notes_cut),
+                    maxLines = 2,
+                )
+            },
+            onClick = {
+                onDismiss()
+                onCut()
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Filled.ContentCut,
+                    contentDescription = null,
+                )
+            },
+        )
+        NotesDropdownMenuItem(
+            text = {
+                Text(
+                    text = stringResource(R.string.markdown_notes_copy),
+                    maxLines = 2,
+                )
+            },
+            onClick = {
+                onDismiss()
+                onCopy()
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Filled.ContentCopy,
+                    contentDescription = null,
+                )
+            },
+        )
+        NotesDropdownMenuItem(
+            text = {
+                Text(
+                    text = stringResource(R.string.markdown_notes_duplicate),
+                    maxLines = 2,
+                )
+            },
+            onClick = {
+                onDismiss()
+                onDuplicate()
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Filled.FileCopy,
+                    contentDescription = null,
+                )
+            },
+        )
+        NotesDropdownMenuItem(
+            text = {
+                Text(
+                    text = stringResource(R.string.markdown_notes_delete),
+                    maxLines = 2,
+                )
+            },
+            onClick = {
+                onDismiss()
+                onDelete()
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Filled.Delete,
                     contentDescription = null,
                 )
             },

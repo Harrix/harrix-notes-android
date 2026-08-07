@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
+import dev.harrix.notes.NotesClipboardEntry
 import dev.harrix.notes.NotesEntry
 import dev.harrix.notes.NotesOpenMode
 import dev.harrix.notes.NotesPathSegment
@@ -60,6 +61,7 @@ class NotesViewerViewModel(
     val maxPinnedItems = mutableIntStateOf(preferences.loadMaxPinnedItems())
     val pinnedItems = mutableStateOf<List<NotesPinnedItem>>(emptyList())
     val pinnedRestoredForTree = mutableStateOf<String?>(null)
+    val notesClipboard = mutableStateOf<NotesClipboardEntry?>(null)
     val treeRoot = mutableStateOf<NotesPathSegment?>(null)
     val treeChildrenByFolderId = mutableStateOf<Map<String, List<NotesEntry>>>(emptyMap())
     val treeExpandedFolderIds = mutableStateOf<Set<String>>(emptySet())

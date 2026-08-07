@@ -112,6 +112,17 @@
     <string name="markdown_notes_note_menu">Параметры заметки</string>
     <string name="markdown_notes_pin">Закрепить</string>
     <string name="markdown_notes_unpin">Открепить</string>
+    <string name="markdown_notes_copy">Копировать</string>
+    <string name="markdown_notes_cut">Вырезать</string>
+    <string name="markdown_notes_paste">Вставить</string>
+    <string name="markdown_notes_duplicate">Дублировать</string>
+    <string name="markdown_notes_delete">Удалить</string>
+    <string name="markdown_notes_delete_confirm_title">Удалить?</string>
+    <string name="markdown_notes_delete_confirm_message">Удалить «%1$s»?</string>
+    <string name="markdown_notes_delete_confirm">Удалить</string>
+    <string name="markdown_notes_delete_failed">Не удалось удалить</string>
+    <string name="markdown_notes_copy_failed">Не удалось копировать</string>
+    <string name="markdown_notes_paste_failed">Не удалось вставить</string>
     <string name="markdown_notes_pinned">Закреплено</string>
     <string name="markdown_notes_pin_empty">пусто</string>
     <string name="markdown_notes_pin_how_title">Как закрепить</string>

@@ -112,6 +112,17 @@
     <string name="markdown_notes_note_menu">Note options</string>
     <string name="markdown_notes_pin">Pin</string>
     <string name="markdown_notes_unpin">Unpin</string>
+    <string name="markdown_notes_copy">Copy</string>
+    <string name="markdown_notes_cut">Cut</string>
+    <string name="markdown_notes_paste">Paste</string>
+    <string name="markdown_notes_duplicate">Duplicate</string>
+    <string name="markdown_notes_delete">Delete</string>
+    <string name="markdown_notes_delete_confirm_title">Delete?</string>
+    <string name="markdown_notes_delete_confirm_message">Delete “%1$s”?</string>
+    <string name="markdown_notes_delete_confirm">Delete</string>
+    <string name="markdown_notes_delete_failed">Could not delete</string>
+    <string name="markdown_notes_copy_failed">Could not copy</string>
+    <string name="markdown_notes_paste_failed">Could not paste</string>
     <string name="markdown_notes_pinned">Pinned</string>
     <string name="markdown_notes_pin_empty">empty</string>
     <string name="markdown_notes_pin_how_title">How to pin</string>

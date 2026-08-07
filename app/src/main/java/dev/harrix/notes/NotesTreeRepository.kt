@@ -759,6 +759,226 @@ class NotesTreeRepository(
         )
     }
 
+    /**
+     * Deletes [documentUri]. Folders are deleted depth-first (children first).
+     * Invalidates [parentDocumentId] (and nested folders when known).
+     */
+    fun deleteEntry(
+        treeUri: Uri,
+        documentUri: Uri,
+        documentId: String,
+        isDirectory: Boolean,
+        parentDocumentId: String,
+    ): Boolean {
+        val ok =
+            if (isDirectory) {
+                deleteFolderRecursive(treeUri, documentUri, documentId)
+            } else {
+                runCatching { DocumentsContract.deleteDocument(resolver, documentUri) }.getOrDefault(false)
+            }
+        invalidateDirectory(treeUri, parentDocumentId)
+        if (isDirectory) {
+            invalidateDirectory(treeUri, documentId)
+        }
+        return ok
+    }
+
+    /**
+     * Copies a note or folder into [destParentDocumentId] under [desiredDisplayName]
+     * (caller should make the name unique). Returns the new document URI.
+     */
+    fun copyEntryInto(
+        treeUri: Uri,
+        sourceUri: Uri,
+        sourceDocumentId: String,
+        isDirectory: Boolean,
+        destParentDocumentId: String,
+        desiredDisplayName: String,
+    ): Uri {
+        val created =
+            if (isDirectory) {
+                copyFolderRecursive(
+                    treeUri = treeUri,
+                    sourceFolderId = sourceDocumentId,
+                    destParentDocumentId = destParentDocumentId,
+                    desiredDisplayName = desiredDisplayName,
+                )
+            } else {
+                copyFileInto(
+                    treeUri = treeUri,
+                    sourceUri = sourceUri,
+                    destParentDocumentId = destParentDocumentId,
+                    desiredDisplayName = desiredDisplayName,
+                )
+            }
+        invalidateDirectory(treeUri, destParentDocumentId)
+        return created
+    }
+
+    /**
+     * Moves a document into [destParentDocumentId]. Uses SAF move when available,
+     * otherwise copy + delete. [desiredDisplayName] is used only for the copy fallback.
+     */
+    fun moveEntryInto(
+        treeUri: Uri,
+        sourceUri: Uri,
+        sourceDocumentId: String,
+        isDirectory: Boolean,
+        sourceParentDocumentId: String,
+        destParentDocumentId: String,
+        desiredDisplayName: String,
+    ): Uri {
+        if (sourceParentDocumentId == destParentDocumentId) {
+            return sourceUri
+        }
+        val sourceParentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, sourceParentDocumentId)
+        val destParentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, destParentDocumentId)
+        val moved =
+            runCatching {
+                DocumentsContract.moveDocument(
+                    resolver,
+                    sourceUri,
+                    sourceParentUri,
+                    destParentUri,
+                )
+            }.getOrNull()
+        if (moved != null) {
+            invalidateDirectory(treeUri, sourceParentDocumentId)
+            invalidateDirectory(treeUri, destParentDocumentId)
+            return moved
+        }
+        val copied =
+            copyEntryInto(
+                treeUri = treeUri,
+                sourceUri = sourceUri,
+                sourceDocumentId = sourceDocumentId,
+                isDirectory = isDirectory,
+                destParentDocumentId = destParentDocumentId,
+                desiredDisplayName = desiredDisplayName,
+            )
+        deleteEntry(
+            treeUri = treeUri,
+            documentUri = sourceUri,
+            documentId = sourceDocumentId,
+            isDirectory = isDirectory,
+            parentDocumentId = sourceParentDocumentId,
+        )
+        return copied
+    }
+
+    private fun deleteFolderRecursive(
+        treeUri: Uri,
+        folderUri: Uri,
+        folderDocumentId: String,
+    ): Boolean {
+        val children = queryChildren(treeUri, folderDocumentId)
+        for (child in children) {
+            if (child.isDirectory) {
+                deleteFolderRecursive(treeUri, child.uri, child.documentId)
+            } else {
+                runCatching { DocumentsContract.deleteDocument(resolver, child.uri) }
+            }
+        }
+        invalidateDirectory(treeUri, folderDocumentId)
+        return runCatching { DocumentsContract.deleteDocument(resolver, folderUri) }.getOrDefault(false)
+    }
+
+    private fun copyFileInto(
+        treeUri: Uri,
+        sourceUri: Uri,
+        destParentDocumentId: String,
+        desiredDisplayName: String,
+    ): Uri {
+        val destParentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, destParentDocumentId)
+        val viaProvider =
+            runCatching {
+                DocumentsContract.copyDocument(resolver, sourceUri, destParentUri)
+            }.getOrNull()
+        if (viaProvider != null) {
+            // Some providers keep the source name; rename when needed.
+            val info = queryDocumentInfo(viaProvider)
+            if (info != null &&
+                info.displayName.isNotBlank() &&
+                !info.displayName.equals(desiredDisplayName, ignoreCase = true)
+            ) {
+                val renamed =
+                    runCatching {
+                        DocumentsContract.renameDocument(resolver, viaProvider, desiredDisplayName)
+                    }.getOrNull()
+                if (renamed != null) {
+                    return renamed
+                }
+            }
+            return viaProvider
+        }
+        val mime =
+            queryDocumentInfo(sourceUri)?.mimeType?.takeIf { it.isNotBlank() }
+                ?: "text/markdown"
+        val created =
+            DocumentsContract.createDocument(
+                resolver,
+                destParentUri,
+                mime,
+                desiredDisplayName,
+            ) ?: DocumentsContract.createDocument(
+                resolver,
+                destParentUri,
+                "application/octet-stream",
+                desiredDisplayName,
+            ) ?: error("Could not create copy")
+        copyBytes(sourceUri, created)
+        return created
+    }
+
+    private fun copyFolderRecursive(
+        treeUri: Uri,
+        sourceFolderId: String,
+        destParentDocumentId: String,
+        desiredDisplayName: String,
+    ): Uri {
+        val destParentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, destParentDocumentId)
+        val createdFolder =
+            DocumentsContract.createDocument(
+                resolver,
+                destParentUri,
+                DocumentsContract.Document.MIME_TYPE_DIR,
+                desiredDisplayName,
+            ) ?: error("Could not create folder copy")
+        val newFolderId = DocumentsContract.getDocumentId(createdFolder)
+        val children = queryChildren(treeUri, sourceFolderId)
+        for (child in children) {
+            if (child.isDirectory) {
+                copyFolderRecursive(
+                    treeUri = treeUri,
+                    sourceFolderId = child.documentId,
+                    destParentDocumentId = newFolderId,
+                    desiredDisplayName = child.name,
+                )
+            } else {
+                copyFileInto(
+                    treeUri = treeUri,
+                    sourceUri = child.uri,
+                    destParentDocumentId = newFolderId,
+                    desiredDisplayName = child.name,
+                )
+            }
+        }
+        invalidateDirectory(treeUri, newFolderId)
+        return createdFolder
+    }
+
+    private fun copyBytes(
+        sourceUri: Uri,
+        destUri: Uri,
+    ) {
+        resolver.openInputStream(sourceUri)?.use { input ->
+            resolver.openOutputStream(destUri, "w")?.use { output ->
+                input.copyTo(output)
+                output.flush()
+            } ?: error("Could not write copy")
+        } ?: error("Could not read source")
+    }
+
     private data class RawEntry(
         val documentId: String,
         val name: String,
@@ -859,6 +1079,35 @@ class NotesTreeRepository(
             var index = 2
             while (true) {
                 val candidate = "$base-$index.md"
+                if (candidate.lowercase(Locale.ROOT) !in existingLowercaseNames) {
+                    return candidate
+                }
+                index += 1
+            }
+        }
+
+        /**
+         * Duplicate naming: `Name_copy`, then `Name_copy_02`, `Name_copy_03`, …
+         * Keeps `.md` / `.g.md` suffixes when present.
+         */
+        fun uniqueCopyDisplayName(
+            displayName: String,
+            existingLowercaseNames: Set<String>,
+        ): String {
+            val (stem, suffix) =
+                when {
+                    isGMd(displayName) -> displayName.dropLast(5) to ".g.md"
+                    isMd(displayName) -> displayName.dropLast(3) to ".md"
+                    else -> displayName to ""
+                }
+            val first = "${stem}_copy$suffix"
+            if (first.lowercase(Locale.ROOT) !in existingLowercaseNames) {
+                return first
+            }
+            var index = 2
+            while (true) {
+                val candidate =
+                    String.format(Locale.ROOT, "%s_copy_%02d%s", stem, index, suffix)
                 if (candidate.lowercase(Locale.ROOT) !in existingLowercaseNames) {
                     return candidate
                 }
