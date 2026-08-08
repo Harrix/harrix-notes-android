@@ -99,6 +99,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -109,6 +110,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -177,6 +179,8 @@ fun NotesViewerScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     var notesTreeUri by viewModel.notesTreeUri
     var menuExpanded by remember { mutableStateOf(false) }
+    var browseContextMenuExpanded by remember { mutableStateOf(false) }
+    var browseContextMenuOffset by remember { mutableStateOf(DpOffset.Zero) }
     var showCreateNoteDialog by remember { mutableStateOf(false) }
     var showNoteInfoDialog by remember { mutableStateOf(false) }
     var noteInfoDocument by remember { mutableStateOf<NotesDocumentInfo?>(null) }
@@ -2038,79 +2042,159 @@ fun NotesViewerScreen(
                                         }
 
                                         else -> {
-                                            NotesFolderList(
-                                                entries = visibleEntries,
-                                                statusMessage = statusMessage,
-                                                density = listDensity,
-                                                layout = browseLayout,
-                                                showNoteDates = showNoteDates,
-                                                pinnedDocumentIds =
-                                                pinnedItems
-                                                    .filter { it.kind != NotesPinnedKind.Home }
-                                                    .map { it.documentId }
-                                                    .toSet(),
-                                                listFirstVisibleIndex = viewModel.folderListFirstVisibleIndex,
-                                                listFirstVisibleOffset = viewModel.folderListFirstVisibleOffset,
-                                                gridFirstVisibleIndex = viewModel.folderGridFirstVisibleIndex,
-                                                gridFirstVisibleOffset = viewModel.folderGridFirstVisibleOffset,
-                                                onListScrollPositionChange = { index, offset ->
-                                                    viewModel.folderListFirstVisibleIndex = index
-                                                    viewModel.folderListFirstVisibleOffset = offset
-                                                },
-                                                onGridScrollPositionChange = { index, offset ->
-                                                    viewModel.folderGridFirstVisibleIndex = index
-                                                    viewModel.folderGridFirstVisibleOffset = offset
-                                                },
-                                                onOpenFolder = { folder ->
-                                                    openFolderList(
-                                                        folderPath +
-                                                            NotesPathSegment(
-                                                                documentId = folder.documentId,
-                                                                name = folder.name,
-                                                                uri = folder.uri,
-                                                            ),
+                                            val density = LocalDensity.current
+                                            val canPasteBrowse =
+                                                notesClipboard != null &&
+                                                    !notesTreeUri.isNullOrBlank() &&
+                                                    folderPath.isNotEmpty()
+                                            Box(modifier = Modifier.fillMaxSize()) {
+                                                NotesFolderList(
+                                                    entries = visibleEntries,
+                                                    statusMessage = statusMessage,
+                                                    density = listDensity,
+                                                    layout = browseLayout,
+                                                    showNoteDates = showNoteDates,
+                                                    pinnedDocumentIds =
+                                                    pinnedItems
+                                                        .filter { it.kind != NotesPinnedKind.Home }
+                                                        .map { it.documentId }
+                                                        .toSet(),
+                                                    listFirstVisibleIndex =
+                                                    viewModel.folderListFirstVisibleIndex,
+                                                    listFirstVisibleOffset =
+                                                    viewModel.folderListFirstVisibleOffset,
+                                                    gridFirstVisibleIndex =
+                                                    viewModel.folderGridFirstVisibleIndex,
+                                                    gridFirstVisibleOffset =
+                                                    viewModel.folderGridFirstVisibleOffset,
+                                                    onListScrollPositionChange = { index, offset ->
+                                                        viewModel.folderListFirstVisibleIndex = index
+                                                        viewModel.folderListFirstVisibleOffset = offset
+                                                    },
+                                                    onGridScrollPositionChange = { index, offset ->
+                                                        viewModel.folderGridFirstVisibleIndex = index
+                                                        viewModel.folderGridFirstVisibleOffset = offset
+                                                    },
+                                                    onOpenFolder = { folder ->
+                                                        openFolderList(
+                                                            folderPath +
+                                                                NotesPathSegment(
+                                                                    documentId = folder.documentId,
+                                                                    name = folder.name,
+                                                                    uri = folder.uri,
+                                                                ),
+                                                        )
+                                                    },
+                                                    onOpenNote = { note ->
+                                                        openNote(
+                                                            note,
+                                                            noteAssetFolderPath(folderPath, note),
+                                                        )
+                                                    },
+                                                    onShowMergedNote = { folder ->
+                                                        openMergedNote(folder, folderPath)
+                                                    },
+                                                    onPinFolder = { folder ->
+                                                        pinFolder(
+                                                            folder,
+                                                            folderPath +
+                                                                NotesPathSegment(
+                                                                    documentId = folder.documentId,
+                                                                    name = folder.name,
+                                                                    uri = folder.uri,
+                                                                ),
+                                                        )
+                                                    },
+                                                    onUnpinFolder = { folder ->
+                                                        unpinByDocumentId(folder.documentId)
+                                                    },
+                                                    onPinNote = { note ->
+                                                        pinNote(
+                                                            note,
+                                                            noteAssetFolderPath(folderPath, note),
+                                                        )
+                                                    },
+                                                    onUnpinNote = { note ->
+                                                        unpinByDocumentId(note.documentId)
+                                                    },
+                                                    onCopyEntry = { entry ->
+                                                        clipboardFromEntry(
+                                                            entry,
+                                                            NotesClipboardMode.Copy,
+                                                        )
+                                                    },
+                                                    onCutEntry = { entry ->
+                                                        clipboardFromEntry(
+                                                            entry,
+                                                            NotesClipboardMode.Cut,
+                                                        )
+                                                    },
+                                                    onDuplicateEntry = { entry ->
+                                                        duplicateEntry(entry)
+                                                    },
+                                                    onDeleteEntry = { entry ->
+                                                        pendingDeleteEntry = entry
+                                                    },
+                                                    onEmptySpaceLongPress = { offset ->
+                                                        browseContextMenuOffset =
+                                                            with(density) {
+                                                                DpOffset(
+                                                                    offset.x.toDp(),
+                                                                    offset.y.toDp(),
+                                                                )
+                                                            }
+                                                        browseContextMenuExpanded = true
+                                                    },
+                                                )
+                                                DropdownMenu(
+                                                    expanded = browseContextMenuExpanded,
+                                                    onDismissRequest = {
+                                                        browseContextMenuExpanded = false
+                                                    },
+                                                    offset = browseContextMenuOffset,
+                                                ) {
+                                                    NotesFolderBrowseMenuContent(
+                                                        sortBy = sortBy,
+                                                        foldersFirst = foldersFirst,
+                                                        sortReverseOrder = sortReverseOrder,
+                                                        showGmdFiles = showGmdFiles,
+                                                        showNoteDates = showNoteDates,
+                                                        canPaste = canPasteBrowse,
+                                                        onSortByChange = { value ->
+                                                            sortBy = value
+                                                            preferences.saveSortBy(value)
+                                                        },
+                                                        onFoldersFirstChange = { value ->
+                                                            foldersFirst = value
+                                                            preferences.saveFoldersFirst(value)
+                                                        },
+                                                        onSortReverseOrderChange = { value ->
+                                                            sortReverseOrder = value
+                                                            preferences.saveSortReverseOrder(value)
+                                                        },
+                                                        onShowGmdFilesChange = { value ->
+                                                            showGmdFiles = value
+                                                            preferences.saveShowGmdFiles(value)
+                                                        },
+                                                        onShowNoteDatesChange = { value ->
+                                                            showNoteDates = value
+                                                            preferences.saveShowNoteDates(value)
+                                                        },
+                                                        onPaste = {
+                                                            browseContextMenuExpanded = false
+                                                            pasteClipboard()
+                                                        },
+                                                        onOpenSettings = {
+                                                            browseContextMenuExpanded = false
+                                                            onOpenSettings()
+                                                        },
+                                                        onOpenAbout = {
+                                                            browseContextMenuExpanded = false
+                                                            onOpenAbout()
+                                                        },
                                                     )
-                                                },
-                                                onOpenNote = { note ->
-                                                    openNote(note, noteAssetFolderPath(folderPath, note))
-                                                },
-                                                onShowMergedNote = { folder ->
-                                                    openMergedNote(folder, folderPath)
-                                                },
-                                                onPinFolder = { folder ->
-                                                    pinFolder(
-                                                        folder,
-                                                        folderPath +
-                                                            NotesPathSegment(
-                                                                documentId = folder.documentId,
-                                                                name = folder.name,
-                                                                uri = folder.uri,
-                                                            ),
-                                                    )
-                                                },
-                                                onUnpinFolder = { folder ->
-                                                    unpinByDocumentId(folder.documentId)
-                                                },
-                                                onPinNote = { note ->
-                                                    pinNote(note, noteAssetFolderPath(folderPath, note))
-                                                },
-                                                onUnpinNote = { note ->
-                                                    unpinByDocumentId(note.documentId)
-                                                },
-                                                onCopyEntry = { entry ->
-                                                    clipboardFromEntry(entry, NotesClipboardMode.Copy)
-                                                },
-                                                onCutEntry = { entry ->
-                                                    clipboardFromEntry(entry, NotesClipboardMode.Cut)
-                                                },
-                                                onDuplicateEntry = { entry ->
-                                                    duplicateEntry(entry)
-                                                },
-                                                onDeleteEntry = { entry ->
-                                                    pendingDeleteEntry = entry
-                                                },
-                                                onEmptySpaceLongPress = { menuExpanded = true },
-                                            )
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -2403,137 +2487,209 @@ private fun NotesTopChrome(
                         },
                     )
                     HorizontalDivider()
+                    NotesDropdownMenuItem(
+                        text = {
+                            Text(
+                                text = stringResource(R.string.markdown_notes_settings),
+                                maxLines = 2,
+                            )
+                        },
+                        onClick = {
+                            onMenuExpandedChange(false)
+                            onOpenSettings()
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Settings,
+                                contentDescription = null,
+                            )
+                        },
+                    )
+                    NotesDropdownMenuItem(
+                        text = {
+                            Text(
+                                text = stringResource(R.string.markdown_notes_about),
+                                maxLines = 2,
+                            )
+                        },
+                        onClick = {
+                            onMenuExpandedChange(false)
+                            onOpenAbout()
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Info,
+                                contentDescription = null,
+                            )
+                        },
+                    )
                 } else {
-                    NotesSortBy.entries.forEach { option ->
-                        NotesDropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = stringResource(sortByLabelRes(option)),
-                                    maxLines = 2,
-                                )
-                            },
-                            onClick = { onSortByChange(option) },
-                            leadingIcon = {
-                                if (sortBy == option) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Check,
-                                        contentDescription = null,
-                                    )
-                                }
-                            },
-                        )
-                    }
-                    HorizontalDivider()
-                    NotesDropdownMenuItem(
-                        text = {
-                            Text(
-                                text = stringResource(R.string.markdown_notes_sort_folders_first),
-                                maxLines = 2,
-                            )
+                    NotesFolderBrowseMenuContent(
+                        sortBy = sortBy,
+                        foldersFirst = foldersFirst,
+                        sortReverseOrder = sortReverseOrder,
+                        showGmdFiles = showGmdFiles,
+                        showNoteDates = showNoteDates,
+                        canPaste = canPaste,
+                        onSortByChange = onSortByChange,
+                        onFoldersFirstChange = onFoldersFirstChange,
+                        onSortReverseOrderChange = onSortReverseOrderChange,
+                        onShowGmdFilesChange = onShowGmdFilesChange,
+                        onShowNoteDatesChange = onShowNoteDatesChange,
+                        onPaste = {
+                            onMenuExpandedChange(false)
+                            onPaste()
                         },
-                        onClick = { onFoldersFirstChange(!foldersFirst) },
-                        trailingIcon = {
-                            NotesMenuCheckbox(checked = foldersFirst)
+                        onOpenSettings = {
+                            onMenuExpandedChange(false)
+                            onOpenSettings()
+                        },
+                        onOpenAbout = {
+                            onMenuExpandedChange(false)
+                            onOpenAbout()
                         },
                     )
-                    NotesDropdownMenuItem(
-                        text = {
-                            Text(
-                                text = stringResource(R.string.markdown_notes_sort_reverse),
-                                maxLines = 2,
-                            )
-                        },
-                        onClick = { onSortReverseOrderChange(!sortReverseOrder) },
-                        trailingIcon = {
-                            NotesMenuCheckbox(checked = sortReverseOrder)
-                        },
-                    )
-                    NotesDropdownMenuItem(
-                        text = {
-                            Text(
-                                text = stringResource(R.string.markdown_notes_sort_show_gmd),
-                                maxLines = 2,
-                            )
-                        },
-                        onClick = { onShowGmdFilesChange(!showGmdFiles) },
-                        trailingIcon = {
-                            NotesMenuCheckbox(checked = showGmdFiles)
-                        },
-                    )
-                    NotesDropdownMenuItem(
-                        text = {
-                            Text(
-                                text = stringResource(R.string.settings_markdown_notes_show_note_dates),
-                                maxLines = 2,
-                            )
-                        },
-                        onClick = { onShowNoteDatesChange(!showNoteDates) },
-                        trailingIcon = {
-                            NotesMenuCheckbox(checked = showNoteDates)
-                        },
-                    )
-                    if (canPaste) {
-                        HorizontalDivider()
-                        NotesDropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = stringResource(R.string.markdown_notes_paste),
-                                    maxLines = 2,
-                                )
-                            },
-                            onClick = {
-                                onMenuExpandedChange(false)
-                                onPaste()
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Filled.ContentPaste,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                    }
-                    HorizontalDivider()
                 }
-                NotesDropdownMenuItem(
-                    text = {
-                        Text(
-                            text = stringResource(R.string.markdown_notes_settings),
-                            maxLines = 2,
-                        )
-                    },
-                    onClick = {
-                        onMenuExpandedChange(false)
-                        onOpenSettings()
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Settings,
-                            contentDescription = null,
-                        )
-                    },
-                )
-                NotesDropdownMenuItem(
-                    text = {
-                        Text(
-                            text = stringResource(R.string.markdown_notes_about),
-                            maxLines = 2,
-                        )
-                    },
-                    onClick = {
-                        onMenuExpandedChange(false)
-                        onOpenAbout()
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Info,
-                            contentDescription = null,
-                        )
-                    },
-                )
             }
         }
     }
+}
+
+/** Shared overflow / empty-space context menu for the folder browser. */
+@Composable
+private fun NotesFolderBrowseMenuContent(
+    sortBy: NotesSortBy,
+    foldersFirst: Boolean,
+    sortReverseOrder: Boolean,
+    showGmdFiles: Boolean,
+    showNoteDates: Boolean,
+    canPaste: Boolean,
+    onSortByChange: (NotesSortBy) -> Unit,
+    onFoldersFirstChange: (Boolean) -> Unit,
+    onSortReverseOrderChange: (Boolean) -> Unit,
+    onShowGmdFilesChange: (Boolean) -> Unit,
+    onShowNoteDatesChange: (Boolean) -> Unit,
+    onPaste: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onOpenAbout: () -> Unit,
+) {
+    NotesSortBy.entries.forEach { option ->
+        NotesDropdownMenuItem(
+            text = {
+                Text(
+                    text = stringResource(sortByLabelRes(option)),
+                    maxLines = 2,
+                )
+            },
+            onClick = { onSortByChange(option) },
+            leadingIcon = {
+                if (sortBy == option) {
+                    Icon(
+                        imageVector = Icons.Filled.Check,
+                        contentDescription = null,
+                    )
+                }
+            },
+        )
+    }
+    HorizontalDivider()
+    NotesDropdownMenuItem(
+        text = {
+            Text(
+                text = stringResource(R.string.markdown_notes_sort_folders_first),
+                maxLines = 2,
+            )
+        },
+        onClick = { onFoldersFirstChange(!foldersFirst) },
+        trailingIcon = {
+            NotesMenuCheckbox(checked = foldersFirst)
+        },
+    )
+    NotesDropdownMenuItem(
+        text = {
+            Text(
+                text = stringResource(R.string.markdown_notes_sort_reverse),
+                maxLines = 2,
+            )
+        },
+        onClick = { onSortReverseOrderChange(!sortReverseOrder) },
+        trailingIcon = {
+            NotesMenuCheckbox(checked = sortReverseOrder)
+        },
+    )
+    NotesDropdownMenuItem(
+        text = {
+            Text(
+                text = stringResource(R.string.markdown_notes_sort_show_gmd),
+                maxLines = 2,
+            )
+        },
+        onClick = { onShowGmdFilesChange(!showGmdFiles) },
+        trailingIcon = {
+            NotesMenuCheckbox(checked = showGmdFiles)
+        },
+    )
+    NotesDropdownMenuItem(
+        text = {
+            Text(
+                text = stringResource(R.string.settings_markdown_notes_show_note_dates),
+                maxLines = 2,
+            )
+        },
+        onClick = { onShowNoteDatesChange(!showNoteDates) },
+        trailingIcon = {
+            NotesMenuCheckbox(checked = showNoteDates)
+        },
+    )
+    if (canPaste) {
+        HorizontalDivider()
+        NotesDropdownMenuItem(
+            text = {
+                Text(
+                    text = stringResource(R.string.markdown_notes_paste),
+                    maxLines = 2,
+                )
+            },
+            onClick = onPaste,
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Filled.ContentPaste,
+                    contentDescription = null,
+                )
+            },
+        )
+    }
+    HorizontalDivider()
+    NotesDropdownMenuItem(
+        text = {
+            Text(
+                text = stringResource(R.string.markdown_notes_settings),
+                maxLines = 2,
+            )
+        },
+        onClick = onOpenSettings,
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Filled.Settings,
+                contentDescription = null,
+            )
+        },
+    )
+    NotesDropdownMenuItem(
+        text = {
+            Text(
+                text = stringResource(R.string.markdown_notes_about),
+                maxLines = 2,
+            )
+        },
+        onClick = onOpenAbout,
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Filled.Info,
+                contentDescription = null,
+            )
+        },
+    )
 }
 
 private fun sortByLabelRes(sortBy: NotesSortBy): Int = when (sortBy) {
@@ -3081,7 +3237,7 @@ private fun NotesFolderList(
     onCutEntry: (NotesEntry) -> Unit,
     onDuplicateEntry: (NotesEntry) -> Unit,
     onDeleteEntry: (NotesEntry) -> Unit,
-    onEmptySpaceLongPress: (() -> Unit)? = null,
+    onEmptySpaceLongPress: ((Offset) -> Unit)? = null,
 ) {
     val onEmptySpaceLongPressState = rememberUpdatedState(onEmptySpaceLongPress)
     when {
@@ -3099,11 +3255,11 @@ private fun NotesFolderList(
                 Modifier
                     .fillMaxSize()
                     .then(
-                        if (layout == NotesBrowseLayout.Icons && onEmptySpaceLongPress != null) {
+                        if (onEmptySpaceLongPress != null) {
                             Modifier.pointerInput(Unit) {
                                 detectTapGestures(
-                                    onLongPress = {
-                                        onEmptySpaceLongPressState.value?.invoke()
+                                    onLongPress = { offset ->
+                                        onEmptySpaceLongPressState.value?.invoke(offset)
                                     },
                                 )
                             }
@@ -3157,7 +3313,7 @@ private fun NotesFolderList(
                                                 offset.x in left..right && offset.y in top..bottom
                                             }
                                         if (!hitItem) {
-                                            onEmptySpaceLongPressState.value?.invoke()
+                                            onEmptySpaceLongPressState.value?.invoke(offset)
                                         }
                                     },
                                 )
@@ -3231,7 +3387,30 @@ private fun NotesFolderList(
             }
             LazyColumn(
                 state = listState,
-                modifier = Modifier.fillMaxSize(),
+                modifier =
+                Modifier
+                    .fillMaxSize()
+                    .then(
+                        if (onEmptySpaceLongPress != null) {
+                            Modifier.pointerInput(Unit) {
+                                detectTapGestures(
+                                    onLongPress = { offset ->
+                                        val hitItem =
+                                            listState.layoutInfo.visibleItemsInfo.any { item ->
+                                                val top = item.offset.toFloat()
+                                                val bottom = top + item.size
+                                                offset.y in top..bottom
+                                            }
+                                        if (!hitItem) {
+                                            onEmptySpaceLongPressState.value?.invoke(offset)
+                                        }
+                                    },
+                                )
+                            }
+                        } else {
+                            Modifier
+                        },
+                    ),
                 contentPadding =
                 PaddingValues(
                     top = 4.dp,
