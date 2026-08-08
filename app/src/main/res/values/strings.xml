@@ -80,6 +80,8 @@
     <string name="settings_markdown_notes_max_open_tabs_hint">Oldest tab closes when the limit is exceeded</string>
     <string name="settings_markdown_notes_single_note_mode">Single note mode</string>
     <string name="settings_markdown_notes_single_note_mode_hint">Opening a note closes the previous one</string>
+    <string name="settings_markdown_notes_dual_pane">Dual pane</string>
+    <string name="settings_markdown_notes_dual_pane_hint">On tablets and foldables in landscape, show editor and preview side by side</string>
     <string name="settings_markdown_notes_show_note_dates">Show dates</string>
     <string name="settings_markdown_notes_show_note_dates_hint">Show last modified date under titles in the folder list</string>
     <string name="settings_markdown_notes_show_note_path">Show note path</string>

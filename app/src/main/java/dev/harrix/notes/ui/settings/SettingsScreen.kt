@@ -421,6 +421,7 @@ private fun GeneralSettingsSection(modifier: Modifier = Modifier) {
     var titleSource by remember { mutableStateOf(preferences.loadTitleSource()) }
     var noteOpenMode by remember { mutableStateOf(preferences.loadNoteOpenMode()) }
     var singleNoteMode by remember { mutableStateOf(preferences.loadSingleNoteMode()) }
+    var dualPaneEnabled by remember { mutableStateOf(preferences.loadDualPaneEnabled()) }
     var showNoteDates by remember { mutableStateOf(preferences.loadShowNoteDates()) }
     var showNotePath by remember { mutableStateOf(preferences.loadShowNotePath()) }
     var sortBy by remember { mutableStateOf(preferences.loadSortBy()) }
@@ -518,6 +519,30 @@ private fun GeneralSettingsSection(modifier: Modifier = Modifier) {
                 }
                 Text(
                     text = stringResource(R.string.settings_markdown_notes_single_note_mode_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.settings_markdown_notes_dual_pane),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Switch(
+                        checked = dualPaneEnabled,
+                        onCheckedChange = { enabled ->
+                            dualPaneEnabled = enabled
+                            preferences.saveDualPaneEnabled(enabled)
+                        },
+                    )
+                }
+                Text(
+                    text = stringResource(R.string.settings_markdown_notes_dual_pane_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

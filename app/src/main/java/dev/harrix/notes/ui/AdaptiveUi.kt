@@ -29,6 +29,17 @@ fun isCompactHeight(): Boolean = LocalConfiguration.current.screenHeightDp < Com
 @Composable
 fun screenWidthDp(): Int = LocalConfiguration.current.screenWidthDp
 
+/**
+ * Wide landscape layout suitable for side-by-side editor + preview
+ * (tablets and unfolded foldables).
+ */
+@Composable
+fun isDualPaneLayoutEligible(): Boolean {
+    val configuration = LocalConfiguration.current
+    return configuration.screenWidthDp >= MediumScreenWidthDp &&
+        configuration.screenWidthDp > configuration.screenHeightDp
+}
+
 /** Icons browse grid: fewer columns on landscape phones, more on tablets. */
 @Composable
 fun notesIconsGridColumnCount(): Int {

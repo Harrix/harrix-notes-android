@@ -52,6 +52,7 @@ class NotesViewerViewModel(
     val highlightMaxMb = mutableIntStateOf(preferences.loadHighlightMaxMb())
     val maxOpenTabs = mutableIntStateOf(preferences.loadMaxOpenTabs())
     val singleNoteMode = mutableStateOf(preferences.loadSingleNoteMode())
+    val dualPaneEnabled = mutableStateOf(preferences.loadDualPaneEnabled())
     val showNoteDates = mutableStateOf(preferences.loadShowNoteDates())
     val showNotePath = mutableStateOf(preferences.loadShowNotePath())
     val sortBy = mutableStateOf(preferences.loadSortBy())

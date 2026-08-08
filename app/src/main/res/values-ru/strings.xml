@@ -68,6 +68,8 @@
     <string name="settings_markdown_notes_max_open_tabs_hint">Самая старая вкладка закрывается при превышении лимита</string>
     <string name="settings_markdown_notes_single_note_mode">Режим одной заметки</string>
     <string name="settings_markdown_notes_single_note_mode_hint">При открытии заметки предыдущая закрывается</string>
+    <string name="settings_markdown_notes_dual_pane">Две панели</string>
+    <string name="settings_markdown_notes_dual_pane_hint">На планшетах и складных в альбомной ориентации показывать редактор и превью рядом</string>
     <string name="settings_markdown_notes_show_note_dates">Показывать даты</string>
     <string name="settings_markdown_notes_show_note_dates_hint">Дата изменения под названием в списке папки</string>
     <string name="settings_markdown_notes_show_note_path">Показывать путь к заметке</string>

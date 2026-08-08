@@ -84,6 +84,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -145,6 +146,7 @@ import dev.harrix.notes.notesFolderDisplayName
 import dev.harrix.notes.takeNotesFolderPermission
 import dev.harrix.notes.ui.adaptiveContentWidth
 import dev.harrix.notes.ui.isCompactHeight
+import dev.harrix.notes.ui.isDualPaneLayoutEligible
 import dev.harrix.notes.ui.notesIconsGridColumnCount
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -214,8 +216,10 @@ fun NotesViewerScreen(
     var highlightMaxMb by viewModel.highlightMaxMb
     var maxOpenTabs by viewModel.maxOpenTabs
     var singleNoteMode by viewModel.singleNoteMode
+    var dualPaneEnabled by viewModel.dualPaneEnabled
     var showNoteDates by viewModel.showNoteDates
     var showNotePath by viewModel.showNotePath
+    var previewDraftText by remember { mutableStateOf("") }
     var sortBy by viewModel.sortBy
     var foldersFirst by viewModel.foldersFirst
     var sortReverseOrder by viewModel.sortReverseOrder
@@ -245,6 +249,7 @@ fun NotesViewerScreen(
         highlightMaxMb = preferences.loadHighlightMaxMb()
         maxOpenTabs = preferences.loadMaxOpenTabs()
         singleNoteMode = preferences.loadSingleNoteMode()
+        dualPaneEnabled = preferences.loadDualPaneEnabled()
         showNoteDates = preferences.loadShowNoteDates()
         showNotePath = preferences.loadShowNotePath()
         sortBy = preferences.loadSortBy()
@@ -1491,9 +1496,9 @@ fun NotesViewerScreen(
         openTabs = openTabs.moved(fromIndex, toIndex)
     }
 
-    fun navigateBack() {
+    fun navigateBack(useDualPane: Boolean = false) {
         when {
-            isEditing -> {
+            isEditing && !useDualPane -> {
                 persistCurrentDraft {
                     isEditing = false
                     draftText = noteContent.orEmpty()
@@ -1721,11 +1726,15 @@ fun NotesViewerScreen(
         }
     }
 
+    val useDualPane = dualPaneEnabled && isDualPaneLayoutEligible()
+    val useDualPaneState = rememberUpdatedState(useDualPane)
+
     LaunchedEffect(selectedTabDocumentId, selectedTab?.uri) {
         val tab = selectedTab
         if (tab == null) {
             noteContent = null
             noteLoading = false
+            previewDraftText = ""
             resetEditorState()
             return@LaunchedEffect
         }
@@ -1756,15 +1765,19 @@ fun NotesViewerScreen(
                             true
                         }
 
+                        useDualPaneState.value -> true
+
                         else -> noteOpenMode == NotesOpenMode.Edit
                     }
                 isEditing = shouldEdit
+                previewDraftText = loaded
                 statusMessage = null
                 viewModel.markNoteLoaded(tab.documentId, tabUri)
             }.onFailure { error ->
                 noteContent = null
                 draftText = ""
                 lastSavedText = null
+                previewDraftText = ""
                 if (autoEditDocumentId == tab.documentId) {
                     autoEditDocumentId = null
                 }
@@ -1776,11 +1789,29 @@ fun NotesViewerScreen(
         noteLoading = false
     }
 
+    LaunchedEffect(useDualPane, selectedTabDocumentId, noteContent) {
+        if (useDualPane && selectedTabDocumentId != null && noteContent != null) {
+            isEditing = true
+            previewDraftText = draftText
+        }
+    }
+
+    LaunchedEffect(draftText, useDualPane, selectedTabDocumentId) {
+        if (!useDualPane) {
+            return@LaunchedEffect
+        }
+        if (draftText == previewDraftText) {
+            return@LaunchedEffect
+        }
+        delay(AutosaveDelayMs)
+        previewDraftText = draftText
+    }
+
     BackHandler {
         if (drawerState.isOpen) {
             scope.launch { drawerState.close() }
         } else {
-            navigateBack()
+            navigateBack(useDualPane = useDualPane)
         }
     }
 
@@ -1964,7 +1995,7 @@ fun NotesViewerScreen(
                     } else {
                         Column(modifier = Modifier.weight(1f).fillMaxWidth()) {
                             NotesNavigationRow(
-                                onBack = { navigateBack() },
+                                onBack = { navigateBack(useDualPane = useDualPane) },
                                 openTabs = openTabs,
                                 selectedTabDocumentId = selectedTabDocumentId,
                                 onSelectTab = { selectTab(it) },
@@ -1972,6 +2003,7 @@ fun NotesViewerScreen(
                                 onReorderTabs = { from, to -> reorderTabs(from, to) },
                                 onCreateNote = { requestCreateNewNote() },
                                 showEditActions = selectedTab != null && !noteLoading && noteContent != null,
+                                showEditPreviewToggle = !useDualPane,
                                 isEditing = isEditing,
                                 isSaving = isSaving,
                                 onPreview = {
@@ -2006,6 +2038,40 @@ fun NotesViewerScreen(
                                         .background(MaterialTheme.colorScheme.surface),
                                 ) {
                                     when {
+                                        selectedTab != null && useDualPane -> {
+                                            Row(modifier = Modifier.fillMaxSize()) {
+                                                NotesMarkdownEditorPane(
+                                                    isLoading = noteLoading,
+                                                    docKey = selectedTab.documentId,
+                                                    text = draftText,
+                                                    errorMessage = statusMessage,
+                                                    hasContent = noteContent != null,
+                                                    fontSizeSp = editorFontSizeSp,
+                                                    highlightMaxChars =
+                                                    NotesViewerPreferences.highlightMaxChars(
+                                                        highlightMaxMb,
+                                                    ),
+                                                    controller = editorController,
+                                                    onTextChange = { value ->
+                                                        draftText = value
+                                                        scheduleAutosave()
+                                                    },
+                                                    modifier = Modifier.weight(1f).fillMaxSize(),
+                                                )
+                                                VerticalDivider()
+                                                NotesHtmlPreviewPane(
+                                                    isLoading = noteLoading,
+                                                    content = previewDraftText,
+                                                    errorMessage = statusMessage,
+                                                    fontSizeSp = previewFontSizeSp,
+                                                    treeUri = notesTreeUri?.let { Uri.parse(it) },
+                                                    folderPath = selectedTab.folderPath,
+                                                    noteDocumentId = selectedTab.documentId,
+                                                    modifier = Modifier.weight(1f).fillMaxSize(),
+                                                )
+                                            }
+                                        }
+
                                         selectedTab != null -> {
                                             if (isEditing) {
                                                 NotesMarkdownEditorPane(
@@ -3010,6 +3076,7 @@ private fun NotesNavigationRow(
     onReorderTabs: (Int, Int) -> Unit,
     onCreateNote: () -> Unit,
     showEditActions: Boolean,
+    showEditPreviewToggle: Boolean = true,
     isEditing: Boolean,
     isSaving: Boolean,
     onPreview: () -> Unit,
@@ -3076,7 +3143,7 @@ private fun NotesNavigationRow(
                         .padding(top = 2.dp),
                 )
             }
-            if (showEditActions) {
+            if (showEditActions && showEditPreviewToggle) {
                 if (isEditing) {
                     IconButton(
                         onClick = onPreview,
