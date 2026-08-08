@@ -2232,8 +2232,8 @@ private const val NotesPathBarFontStepSp = 0.5f
 
 private fun noteFullPathLabel(tab: OpenNoteTab): String {
     val leaf =
-        tab.title
-            .ifBlank { tab.fileName }
+        tab.fileName
+            .ifBlank { tab.title }
             .ifBlank { tab.documentId }
     if (tab.isExternal) {
         return leaf
