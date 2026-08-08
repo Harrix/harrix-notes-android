@@ -208,6 +208,7 @@ fun NotesViewerScreen(
     var maxOpenTabs by viewModel.maxOpenTabs
     var singleNoteMode by viewModel.singleNoteMode
     var showNoteDates by viewModel.showNoteDates
+    var showNotePath by viewModel.showNotePath
     var sortBy by viewModel.sortBy
     var foldersFirst by viewModel.foldersFirst
     var sortReverseOrder by viewModel.sortReverseOrder
@@ -238,6 +239,7 @@ fun NotesViewerScreen(
         maxOpenTabs = preferences.loadMaxOpenTabs()
         singleNoteMode = preferences.loadSingleNoteMode()
         showNoteDates = preferences.loadShowNoteDates()
+        showNotePath = preferences.loadShowNotePath()
         sortBy = preferences.loadSortBy()
         foldersFirst = preferences.loadFoldersFirst()
         sortReverseOrder = preferences.loadSortReverseOrder()
@@ -2065,6 +2067,14 @@ fun NotesViewerScreen(
                                     }
                                 }
                             }
+                            if (showNotePath) {
+                                val pathTab = selectedTab
+                                if (pathTab != null) {
+                                    NotesNotePathBar(
+                                        path = noteFullPathLabel(pathTab),
+                                    )
+                                }
+                            }
                             if (pinnedBarEnabled) {
                                 NotesPinnedBar(
                                     items = pinnedItems,
@@ -2153,6 +2163,83 @@ private val NotesOpenTabsMenuMaxHeight = 360.dp
 private val NotesTabSwipeCloseThreshold = 40.dp
 private val NotesMenuReorderStepHeight = 48.dp
 private val NotesFabListBottomClearance = 88.dp
+private val NotesPathBarMaxFontSize = 12.sp
+private val NotesPathBarMinFontSize = 7.sp
+private const val NotesPathBarFontStepSp = 0.5f
+
+private fun noteFullPathLabel(tab: OpenNoteTab): String {
+    val leaf =
+        tab.title
+            .ifBlank { tab.fileName }
+            .ifBlank { tab.documentId }
+    if (tab.isExternal) {
+        return leaf
+    }
+    val parents = tab.folderPath.map { it.name }.filter { it.isNotBlank() }
+    return (parents + leaf).joinToString(" / ")
+}
+
+@Composable
+private fun NotesNotePathBar(
+    path: String,
+    modifier: Modifier = Modifier,
+) {
+    val baseStyle = MaterialTheme.typography.labelMedium
+    val textMeasurer = rememberTextMeasurer()
+    var fontSize by remember(path) { mutableStateOf(NotesPathBarMaxFontSize) }
+    val color = MaterialTheme.colorScheme.onSurfaceVariant
+
+    Column(
+        modifier =
+        modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface),
+    ) {
+        HorizontalDivider()
+        BoxWithConstraints(
+            modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+        ) {
+            val maxWidthPx = constraints.maxWidth
+            LaunchedEffect(path, maxWidthPx, baseStyle) {
+                if (maxWidthPx <= 0) {
+                    return@LaunchedEffect
+                }
+                var candidate = NotesPathBarMaxFontSize
+                while (candidate > NotesPathBarMinFontSize) {
+                    val layout =
+                        textMeasurer.measure(
+                            text = path,
+                            style = baseStyle.copy(fontSize = candidate, lineHeight = candidate),
+                            overflow = TextOverflow.Clip,
+                            softWrap = false,
+                            maxLines = 1,
+                            constraints = Constraints(maxWidth = maxWidthPx),
+                        )
+                    if (!layout.hasVisualOverflow) {
+                        break
+                    }
+                    candidate =
+                        (candidate.value - NotesPathBarFontStepSp)
+                            .coerceAtLeast(NotesPathBarMinFontSize.value)
+                            .sp
+                }
+                fontSize = candidate
+            }
+            Text(
+                text = path,
+                style = baseStyle.copy(fontSize = fontSize, lineHeight = fontSize),
+                color = color,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Clip,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
 
 private fun <T> List<T>.moved(
     fromIndex: Int,

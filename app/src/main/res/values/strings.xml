@@ -82,6 +82,8 @@
     <string name="settings_markdown_notes_single_note_mode_hint">Opening a note closes the previous one</string>
     <string name="settings_markdown_notes_show_note_dates">Show dates</string>
     <string name="settings_markdown_notes_show_note_dates_hint">Show last modified date under titles in the folder list</string>
+    <string name="settings_markdown_notes_show_note_path">Show note path</string>
+    <string name="settings_markdown_notes_show_note_path_hint">Show full path to the open note above the pinned bar</string>
     <string name="settings_markdown_notes_sort_by">Sort by</string>
     <string name="markdown_notes_sort_by_name">Name</string>
     <string name="markdown_notes_sort_by_date">Date</string>

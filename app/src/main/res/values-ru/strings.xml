@@ -70,6 +70,8 @@
     <string name="settings_markdown_notes_single_note_mode_hint">При открытии заметки предыдущая закрывается</string>
     <string name="settings_markdown_notes_show_note_dates">Показывать даты</string>
     <string name="settings_markdown_notes_show_note_dates_hint">Дата изменения под названием в списке папки</string>
+    <string name="settings_markdown_notes_show_note_path">Показывать путь к заметке</string>
+    <string name="settings_markdown_notes_show_note_path_hint">Полный путь к открытой заметке над панелью закреплений</string>
     <string name="settings_markdown_notes_sort_by">Сортировка</string>
     <string name="markdown_notes_sort_by_name">Имя</string>
     <string name="markdown_notes_sort_by_date">Дата</string>

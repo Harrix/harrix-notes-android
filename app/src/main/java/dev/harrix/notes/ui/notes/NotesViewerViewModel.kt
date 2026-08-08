@@ -53,6 +53,7 @@ class NotesViewerViewModel(
     val maxOpenTabs = mutableIntStateOf(preferences.loadMaxOpenTabs())
     val singleNoteMode = mutableStateOf(preferences.loadSingleNoteMode())
     val showNoteDates = mutableStateOf(preferences.loadShowNoteDates())
+    val showNotePath = mutableStateOf(preferences.loadShowNotePath())
     val sortBy = mutableStateOf(preferences.loadSortBy())
     val foldersFirst = mutableStateOf(preferences.loadFoldersFirst())
     val sortReverseOrder = mutableStateOf(preferences.loadSortReverseOrder())

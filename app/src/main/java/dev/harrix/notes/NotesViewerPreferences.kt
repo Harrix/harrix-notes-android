@@ -140,6 +140,13 @@ class NotesViewerPreferences(
         prefs.edit().putBoolean(KEY_SHOW_NOTE_DATES, enabled).apply()
     }
 
+    /** When true, the full path of the open note is shown above the pinned bar. */
+    fun loadShowNotePath(): Boolean = prefs.getBoolean(KEY_SHOW_NOTE_PATH, DEFAULT_SHOW_NOTE_PATH)
+
+    fun saveShowNotePath(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_SHOW_NOTE_PATH, enabled).apply()
+    }
+
     fun loadSortBy(): NotesSortBy = NotesSortBy.fromStorageKey(prefs.getString(KEY_SORT_BY, null))
 
     fun saveSortBy(sortBy: NotesSortBy) {
@@ -320,6 +327,7 @@ class NotesViewerPreferences(
             .remove(KEY_MAX_OPEN_TABS)
             .remove(KEY_SINGLE_NOTE_MODE)
             .remove(KEY_SHOW_NOTE_DATES)
+            .remove(KEY_SHOW_NOTE_PATH)
             .remove(KEY_SORT_BY)
             .remove(KEY_FOLDERS_FIRST)
             .remove(KEY_SORT_REVERSE_ORDER)
@@ -352,6 +360,7 @@ class NotesViewerPreferences(
         private const val KEY_MAX_OPEN_TABS = "max_open_tabs"
         private const val KEY_SINGLE_NOTE_MODE = "single_note_mode"
         private const val KEY_SHOW_NOTE_DATES = "show_note_dates"
+        private const val KEY_SHOW_NOTE_PATH = "show_note_path"
         private const val KEY_SORT_BY = "sort_by"
         private const val KEY_FOLDERS_FIRST = "folders_first"
         private const val KEY_SORT_REVERSE_ORDER = "sort_reverse_order"
@@ -409,6 +418,8 @@ class NotesViewerPreferences(
         const val DEFAULT_SINGLE_NOTE_MODE = false
 
         const val DEFAULT_SHOW_NOTE_DATES = false
+
+        const val DEFAULT_SHOW_NOTE_PATH = true
 
         const val DEFAULT_FOLDERS_FIRST = false
         const val DEFAULT_SORT_REVERSE_ORDER = false
