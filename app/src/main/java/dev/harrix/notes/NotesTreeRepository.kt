@@ -825,6 +825,49 @@ class NotesTreeRepository(
     }
 
     /**
+     * After copying a folder-per-note package under a new folder name, rename the
+     * inner `OldStem.md` (and `_<OldStem>.g.md` when present) to match [newFolderName]
+     * so the listing can collapse again and relative links stay consistent.
+     */
+    fun syncFolderPerNoteInnerNames(
+        treeUri: Uri,
+        folderDocumentId: String,
+        oldStem: String,
+        newFolderName: String,
+    ) {
+        val newStem = newFolderName.trim()
+        val previousStem = oldStem.trim()
+        if (previousStem.isEmpty() ||
+            newStem.isEmpty() ||
+            previousStem.equals(newStem, ignoreCase = true)
+        ) {
+            return
+        }
+        val children = queryChildren(treeUri, folderDocumentId)
+        val noteFile =
+            children.firstOrNull { child ->
+                !child.isDirectory &&
+                    child.name.equals("$previousStem.md", ignoreCase = true)
+            }
+        if (noteFile != null) {
+            runCatching {
+                DocumentsContract.renameDocument(resolver, noteFile.uri, "$newStem.md")
+            }
+        }
+        val mergedFile =
+            children.firstOrNull { child ->
+                !child.isDirectory &&
+                    child.name.equals("_$previousStem.g.md", ignoreCase = true)
+            }
+        if (mergedFile != null) {
+            runCatching {
+                DocumentsContract.renameDocument(resolver, mergedFile.uri, "_$newStem.g.md")
+            }
+        }
+        invalidateDirectory(treeUri, folderDocumentId)
+    }
+
+    /**
      * Moves a document into [destParentDocumentId]. Uses SAF move when available,
      * otherwise copy + delete. [desiredDisplayName] is used only for the copy fallback.
      */

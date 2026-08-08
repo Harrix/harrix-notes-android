@@ -1,6 +1,7 @@
 ﻿package dev.harrix.notes.ui.notes
 
 import android.net.Uri
+import android.provider.DocumentsContract
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -119,6 +120,8 @@ import dev.harrix.notes.NotesBrowseLayout
 import dev.harrix.notes.NotesClipboardEntry
 import dev.harrix.notes.NotesClipboardKind
 import dev.harrix.notes.NotesClipboardMode
+import dev.harrix.notes.blocksClipboardRelocation
+import dev.harrix.notes.mutationDocument
 import dev.harrix.notes.NotesDateFormats
 import dev.harrix.notes.NotesDocumentInfo
 import dev.harrix.notes.NotesEntry
@@ -1175,22 +1178,12 @@ fun NotesViewerScreen(
         entry: NotesEntry,
         mode: NotesClipboardMode,
     ) {
+        if (entry.blocksClipboardRelocation()) {
+            return
+        }
         val tree = notesTreeUri ?: return
         val parentId = listingParentDocumentId() ?: return
-        notesClipboard =
-            NotesClipboardEntry(
-                treeUri = tree,
-                documentId = entry.documentId,
-                uri = entry.uri,
-                displayName = entry.name,
-                kind =
-                when (entry) {
-                    is NotesEntry.Folder -> NotesClipboardKind.Folder
-                    is NotesEntry.Note -> NotesClipboardKind.Note
-                },
-                mode = mode,
-                sourceParentDocumentId = parentId,
-            )
+        notesClipboard = entry.mutationDocument(parentId).toClipboardEntry(tree, mode)
     }
 
     fun reloadListingAfterMutation(parentDocumentId: String) {
@@ -1227,11 +1220,21 @@ fun NotesViewerScreen(
     ) {
         val removedIds =
             when (entry) {
-                is NotesEntry.Note ->
+                is NotesEntry.Note -> {
+                    val containingId = entry.containingFolder?.documentId
                     openTabs
-                        .filter { it.documentId == entry.documentId }
-                        .map { it.documentId }
+                        .filter { tab ->
+                            tab.documentId == entry.documentId ||
+                                (
+                                    containingId != null &&
+                                        (
+                                            tab.documentId == containingId ||
+                                                tab.folderPath.any { it.documentId == containingId }
+                                            )
+                                    )
+                        }.map { it.documentId }
                         .toSet()
+                }
 
                 is NotesEntry.Folder ->
                     openTabs
@@ -1272,6 +1275,10 @@ fun NotesViewerScreen(
             statusMessage = context.getString(R.string.markdown_notes_paste_failed)
             return
         }
+        if (clip.kind == NotesClipboardKind.Note && NotesTreeRepository.isGMd(clip.displayName)) {
+            notesClipboard = null
+            return
+        }
         val dest = folderPath.lastOrNull() ?: return
         val treeUri = Uri.parse(tree)
         scope.launch {
@@ -1286,14 +1293,29 @@ fun NotesViewerScreen(
                                         clip.displayName,
                                         existing,
                                     )
-                                repository.copyEntryInto(
-                                    treeUri = treeUri,
-                                    sourceUri = clip.uri,
-                                    sourceDocumentId = clip.documentId,
-                                    isDirectory = clip.kind == NotesClipboardKind.Folder,
-                                    destParentDocumentId = dest.documentId,
-                                    desiredDisplayName = name,
-                                )
+                                val created =
+                                    repository.copyEntryInto(
+                                        treeUri = treeUri,
+                                        sourceUri = clip.uri,
+                                        sourceDocumentId = clip.documentId,
+                                        isDirectory = clip.kind == NotesClipboardKind.Folder,
+                                        destParentDocumentId = dest.documentId,
+                                        desiredDisplayName = name,
+                                    )
+                                val stem = clip.folderPerNoteStem
+                                if (stem != null && clip.kind == NotesClipboardKind.Folder) {
+                                    val folderId = DocumentsContract.getDocumentId(created)
+                                    val actualName =
+                                        repository.queryDocumentInfo(created)?.displayName
+                                            ?: name
+                                    repository.syncFolderPerNoteInnerNames(
+                                        treeUri = treeUri,
+                                        folderDocumentId = folderId,
+                                        oldStem = stem,
+                                        newFolderName = actualName,
+                                    )
+                                }
+                                created
                             }
 
                             NotesClipboardMode.Cut -> {
@@ -1310,15 +1332,30 @@ fun NotesViewerScreen(
                                     } else {
                                         clip.displayName
                                     }
-                                repository.moveEntryInto(
-                                    treeUri = treeUri,
-                                    sourceUri = clip.uri,
-                                    sourceDocumentId = clip.documentId,
-                                    isDirectory = clip.kind == NotesClipboardKind.Folder,
-                                    sourceParentDocumentId = clip.sourceParentDocumentId,
-                                    destParentDocumentId = dest.documentId,
-                                    desiredDisplayName = name,
-                                )
+                                val moved =
+                                    repository.moveEntryInto(
+                                        treeUri = treeUri,
+                                        sourceUri = clip.uri,
+                                        sourceDocumentId = clip.documentId,
+                                        isDirectory = clip.kind == NotesClipboardKind.Folder,
+                                        sourceParentDocumentId = clip.sourceParentDocumentId,
+                                        destParentDocumentId = dest.documentId,
+                                        desiredDisplayName = name,
+                                    )
+                                val stem = clip.folderPerNoteStem
+                                if (stem != null && clip.kind == NotesClipboardKind.Folder) {
+                                    val folderId = DocumentsContract.getDocumentId(moved)
+                                    val actualName =
+                                        repository.queryDocumentInfo(moved)?.displayName
+                                            ?: name
+                                    repository.syncFolderPerNoteInnerNames(
+                                        treeUri = treeUri,
+                                        folderDocumentId = folderId,
+                                        oldStem = stem,
+                                        newFolderName = actualName,
+                                    )
+                                }
+                                moved
                             }
                         }
                     }
@@ -1326,7 +1363,10 @@ fun NotesViewerScreen(
             result
                 .onSuccess {
                     if (clip.mode == NotesClipboardMode.Cut) {
-                        unpinByDocumentId(clip.documentId)
+                        unpinByDocumentId(clip.pinDocumentId)
+                        if (clip.pinDocumentId != clip.documentId) {
+                            unpinByDocumentId(clip.documentId)
+                        }
                         notesClipboard = null
                         if (clip.sourceParentDocumentId != dest.documentId) {
                             repository.invalidateDirectory(treeUri, clip.sourceParentDocumentId)
@@ -1342,24 +1382,42 @@ fun NotesViewerScreen(
     }
 
     fun duplicateEntry(entry: NotesEntry) {
+        if (entry.blocksClipboardRelocation()) {
+            return
+        }
         val tree = notesTreeUri ?: return
         val parentId = listingParentDocumentId() ?: return
         val treeUri = Uri.parse(tree)
+        val target = entry.mutationDocument(parentId)
         scope.launch {
             val result =
                 withContext(Dispatchers.IO) {
                     runCatching {
                         val existing = repository.childNamesLowercase(treeUri, parentId)
                         val name =
-                            NotesTreeRepository.uniqueCopyDisplayName(entry.name, existing)
-                        repository.copyEntryInto(
-                            treeUri = treeUri,
-                            sourceUri = entry.uri,
-                            sourceDocumentId = entry.documentId,
-                            isDirectory = entry is NotesEntry.Folder,
-                            destParentDocumentId = parentId,
-                            desiredDisplayName = name,
-                        )
+                            NotesTreeRepository.uniqueCopyDisplayName(target.displayName, existing)
+                        val created =
+                            repository.copyEntryInto(
+                                treeUri = treeUri,
+                                sourceUri = target.uri,
+                                sourceDocumentId = target.documentId,
+                                isDirectory = target.isDirectory,
+                                destParentDocumentId = parentId,
+                                desiredDisplayName = name,
+                            )
+                        val stem = target.folderPerNoteStem
+                        if (stem != null && target.isDirectory) {
+                            val folderId = DocumentsContract.getDocumentId(created)
+                            val actualName =
+                                repository.queryDocumentInfo(created)?.displayName ?: name
+                            repository.syncFolderPerNoteInnerNames(
+                                treeUri = treeUri,
+                                folderDocumentId = folderId,
+                                oldStem = stem,
+                                newFolderName = actualName,
+                            )
+                        }
+                        created
                     }
                 }
             result
@@ -1377,6 +1435,7 @@ fun NotesViewerScreen(
         val tree = notesTreeUri ?: return
         val parentId = listingParentDocumentId() ?: return
         val treeUri = Uri.parse(tree)
+        val target = entry.mutationDocument(parentId)
         pendingDeleteEntry = null
         scope.launch {
             val result =
@@ -1384,9 +1443,9 @@ fun NotesViewerScreen(
                     runCatching {
                         repository.deleteEntry(
                             treeUri = treeUri,
-                            documentUri = entry.uri,
-                            documentId = entry.documentId,
-                            isDirectory = entry is NotesEntry.Folder,
+                            documentUri = target.uri,
+                            documentId = target.documentId,
+                            isDirectory = target.isDirectory,
                             parentDocumentId = parentId,
                         )
                     }
@@ -1398,14 +1457,18 @@ fun NotesViewerScreen(
                         return@onSuccess
                     }
                     closeTabsAffectedByDelete(entry)
-                    unpinByDocumentId(entry.documentId)
-                    if (entry is NotesEntry.Note) {
-                        entry.containingFolder?.let {
-                            repository.invalidateDirectory(treeUri, it.documentId)
-                        }
+                    unpinByDocumentId(target.pinDocumentId)
+                    if (target.pinDocumentId != target.documentId) {
+                        unpinByDocumentId(target.documentId)
                     }
                     val clip = notesClipboard
-                    if (clip != null && clip.documentId == entry.documentId) {
+                    if (clip != null &&
+                        (
+                            clip.documentId == target.documentId ||
+                                clip.pinDocumentId == target.pinDocumentId ||
+                                clip.documentId == entry.documentId
+                            )
+                    ) {
                         notesClipboard = null
                     }
                     reloadListingAfterMutation(parentId)
@@ -3362,6 +3425,7 @@ private fun NotesNoteRow(
                 onDismiss = { menuExpanded = false },
                 pinned = pinned,
                 showMergedNote = false,
+                allowClipboardActions = !NotesTreeRepository.isGMd(note.name),
                 onShowMergedNote = {},
                 onPin = onPin,
                 onUnpin = onUnpin,
@@ -3504,6 +3568,7 @@ private fun NotesNoteIconCell(
             onDismiss = { menuExpanded = false },
             pinned = pinned,
             showMergedNote = false,
+            allowClipboardActions = !NotesTreeRepository.isGMd(note.name),
             onShowMergedNote = {},
             onPin = onPin,
             onUnpin = onUnpin,
@@ -3521,6 +3586,7 @@ private fun NotesEntryContextMenu(
     onDismiss: () -> Unit,
     pinned: Boolean,
     showMergedNote: Boolean,
+    allowClipboardActions: Boolean = true,
     onShowMergedNote: () -> Unit,
     onPin: () -> Unit,
     onUnpin: () -> Unit,
@@ -3587,61 +3653,65 @@ private fun NotesEntryContextMenu(
                 )
             },
         )
-        HorizontalDivider()
-        NotesDropdownMenuItem(
-            text = {
-                Text(
-                    text = stringResource(R.string.markdown_notes_cut),
-                    maxLines = 2,
-                )
-            },
-            onClick = {
-                onDismiss()
-                onCut()
-            },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Filled.ContentCut,
-                    contentDescription = null,
-                )
-            },
-        )
-        NotesDropdownMenuItem(
-            text = {
-                Text(
-                    text = stringResource(R.string.markdown_notes_copy),
-                    maxLines = 2,
-                )
-            },
-            onClick = {
-                onDismiss()
-                onCopy()
-            },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Filled.ContentCopy,
-                    contentDescription = null,
-                )
-            },
-        )
-        NotesDropdownMenuItem(
-            text = {
-                Text(
-                    text = stringResource(R.string.markdown_notes_duplicate),
-                    maxLines = 2,
-                )
-            },
-            onClick = {
-                onDismiss()
-                onDuplicate()
-            },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Filled.FileCopy,
-                    contentDescription = null,
-                )
-            },
-        )
+        if (allowClipboardActions) {
+            HorizontalDivider()
+            NotesDropdownMenuItem(
+                text = {
+                    Text(
+                        text = stringResource(R.string.markdown_notes_cut),
+                        maxLines = 2,
+                    )
+                },
+                onClick = {
+                    onDismiss()
+                    onCut()
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.ContentCut,
+                        contentDescription = null,
+                    )
+                },
+            )
+            NotesDropdownMenuItem(
+                text = {
+                    Text(
+                        text = stringResource(R.string.markdown_notes_copy),
+                        maxLines = 2,
+                    )
+                },
+                onClick = {
+                    onDismiss()
+                    onCopy()
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.ContentCopy,
+                        contentDescription = null,
+                    )
+                },
+            )
+            NotesDropdownMenuItem(
+                text = {
+                    Text(
+                        text = stringResource(R.string.markdown_notes_duplicate),
+                        maxLines = 2,
+                    )
+                },
+                onClick = {
+                    onDismiss()
+                    onDuplicate()
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.FileCopy,
+                        contentDescription = null,
+                    )
+                },
+            )
+        } else {
+            HorizontalDivider()
+        }
         NotesDropdownMenuItem(
             text = {
                 Text(
