@@ -2119,10 +2119,6 @@ fun NotesViewerScreen(
 
                                         else -> {
                                             val density = LocalDensity.current
-                                            val canPasteBrowse =
-                                                notesClipboard != null &&
-                                                    !notesTreeUri.isNullOrBlank() &&
-                                                    folderPath.isNotEmpty()
                                             Box(modifier = Modifier.fillMaxSize()) {
                                                 NotesFolderList(
                                                     entries = visibleEntries,
@@ -2229,14 +2225,13 @@ fun NotesViewerScreen(
                                                     },
                                                     offset = browseContextMenuOffset,
                                                 ) {
-                                                    NotesFolderBrowseMenuContent(
+                                                    NotesFolderSortViewMenuContent(
                                                         browseLayout = browseLayout,
                                                         sortBy = sortBy,
                                                         foldersFirst = foldersFirst,
                                                         sortReverseOrder = sortReverseOrder,
                                                         showGmdFiles = showGmdFiles,
                                                         showNoteDates = showNoteDates,
-                                                        canPaste = canPasteBrowse,
                                                         onBrowseLayoutChange = { value ->
                                                             browseLayout = value
                                                             preferences.saveBrowseLayout(value)
@@ -2260,18 +2255,6 @@ fun NotesViewerScreen(
                                                         onShowNoteDatesChange = { value ->
                                                             showNoteDates = value
                                                             preferences.saveShowNoteDates(value)
-                                                        },
-                                                        onPaste = {
-                                                            browseContextMenuExpanded = false
-                                                            pasteClipboard()
-                                                        },
-                                                        onOpenSettings = {
-                                                            browseContextMenuExpanded = false
-                                                            onOpenSettings()
-                                                        },
-                                                        onOpenAbout = {
-                                                            browseContextMenuExpanded = false
-                                                            onOpenAbout()
                                                         },
                                                     )
                                                 }
@@ -2783,91 +2766,6 @@ private fun NotesFolderSortViewMenuContent(
         onClick = { onShowNoteDatesChange(!showNoteDates) },
         trailingIcon = {
             NotesMenuCheckbox(checked = showNoteDates)
-        },
-    )
-}
-
-/** Empty-space context menu: sort/view plus paste / settings / about. */
-@Composable
-private fun NotesFolderBrowseMenuContent(
-    browseLayout: NotesBrowseLayout,
-    sortBy: NotesSortBy,
-    foldersFirst: Boolean,
-    sortReverseOrder: Boolean,
-    showGmdFiles: Boolean,
-    showNoteDates: Boolean,
-    canPaste: Boolean,
-    onBrowseLayoutChange: (NotesBrowseLayout) -> Unit,
-    onSortByChange: (NotesSortBy) -> Unit,
-    onFoldersFirstChange: (Boolean) -> Unit,
-    onSortReverseOrderChange: (Boolean) -> Unit,
-    onShowGmdFilesChange: (Boolean) -> Unit,
-    onShowNoteDatesChange: (Boolean) -> Unit,
-    onPaste: () -> Unit,
-    onOpenSettings: () -> Unit,
-    onOpenAbout: () -> Unit,
-) {
-    NotesFolderSortViewMenuContent(
-        browseLayout = browseLayout,
-        sortBy = sortBy,
-        foldersFirst = foldersFirst,
-        sortReverseOrder = sortReverseOrder,
-        showGmdFiles = showGmdFiles,
-        showNoteDates = showNoteDates,
-        onBrowseLayoutChange = onBrowseLayoutChange,
-        onSortByChange = onSortByChange,
-        onFoldersFirstChange = onFoldersFirstChange,
-        onSortReverseOrderChange = onSortReverseOrderChange,
-        onShowGmdFilesChange = onShowGmdFilesChange,
-        onShowNoteDatesChange = onShowNoteDatesChange,
-    )
-    if (canPaste) {
-        HorizontalDivider()
-        NotesDropdownMenuItem(
-            text = {
-                Text(
-                    text = stringResource(R.string.markdown_notes_paste),
-                    maxLines = 2,
-                )
-            },
-            onClick = onPaste,
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Filled.ContentPaste,
-                    contentDescription = null,
-                )
-            },
-        )
-    }
-    HorizontalDivider()
-    NotesDropdownMenuItem(
-        text = {
-            Text(
-                text = stringResource(R.string.markdown_notes_settings),
-                maxLines = 2,
-            )
-        },
-        onClick = onOpenSettings,
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.Filled.Settings,
-                contentDescription = null,
-            )
-        },
-    )
-    NotesDropdownMenuItem(
-        text = {
-            Text(
-                text = stringResource(R.string.markdown_notes_about),
-                maxLines = 2,
-            )
-        },
-        onClick = onOpenAbout,
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.Filled.Info,
-                contentDescription = null,
-            )
         },
     )
 }
