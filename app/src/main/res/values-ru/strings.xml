@@ -92,6 +92,7 @@
     <string name="settings_markdown_notes_pinned_reorder">Изменить порядок</string>
     <string name="markdown_notes_title">Harrix Notes</string>
     <string name="markdown_notes_menu">Ещё</string>
+    <string name="markdown_notes_sort_view_menu">Сортировка и вид</string>
     <string name="markdown_notes_settings">Настройки</string>
     <string name="markdown_notes_about">О программе</string>
     <string name="about_title">О программе</string>

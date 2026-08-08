@@ -48,6 +48,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -59,6 +61,7 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileCopy
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
@@ -1932,11 +1935,18 @@ fun NotesViewerScreen(
                         },
                         menuExpanded = menuExpanded,
                         onMenuExpandedChange = { menuExpanded = it },
+                        showSortViewMenu =
+                        selectedTab == null && !notesTreeUri.isNullOrBlank(),
+                        browseLayout = browseLayout,
                         sortBy = sortBy,
                         foldersFirst = foldersFirst,
                         sortReverseOrder = sortReverseOrder,
                         showGmdFiles = showGmdFiles,
                         showNoteDates = showNoteDates,
+                        onBrowseLayoutChange = { value ->
+                            browseLayout = value
+                            preferences.saveBrowseLayout(value)
+                        },
                         onSortByChange = { value ->
                             sortBy = value
                             preferences.saveSortBy(value)
@@ -2220,12 +2230,17 @@ fun NotesViewerScreen(
                                                     offset = browseContextMenuOffset,
                                                 ) {
                                                     NotesFolderBrowseMenuContent(
+                                                        browseLayout = browseLayout,
                                                         sortBy = sortBy,
                                                         foldersFirst = foldersFirst,
                                                         sortReverseOrder = sortReverseOrder,
                                                         showGmdFiles = showGmdFiles,
                                                         showNoteDates = showNoteDates,
                                                         canPaste = canPasteBrowse,
+                                                        onBrowseLayoutChange = { value ->
+                                                            browseLayout = value
+                                                            preferences.saveBrowseLayout(value)
+                                                        },
                                                         onSortByChange = { value ->
                                                             sortBy = value
                                                             preferences.saveSortBy(value)
@@ -2475,11 +2490,14 @@ private fun NotesTopChrome(
     onSegmentClick: (Int) -> Unit,
     menuExpanded: Boolean,
     onMenuExpandedChange: (Boolean) -> Unit,
+    showSortViewMenu: Boolean,
+    browseLayout: NotesBrowseLayout,
     sortBy: NotesSortBy,
     foldersFirst: Boolean,
     sortReverseOrder: Boolean,
     showGmdFiles: Boolean,
     showNoteDates: Boolean,
+    onBrowseLayoutChange: (NotesBrowseLayout) -> Unit,
     onSortByChange: (NotesSortBy) -> Unit,
     onFoldersFirstChange: (Boolean) -> Unit,
     onSortReverseOrderChange: (Boolean) -> Unit,
@@ -2492,6 +2510,7 @@ private fun NotesTopChrome(
     onOpenSettings: () -> Unit,
     onOpenAbout: () -> Unit,
 ) {
+    var sortViewMenuExpanded by remember { mutableStateOf(false) }
     Column(
         modifier =
         Modifier
@@ -2528,6 +2547,35 @@ private fun NotesTopChrome(
                     modifier = Modifier.weight(1f),
                 )
             }
+            if (showSortViewMenu) {
+                Box {
+                    IconButton(onClick = { sortViewMenuExpanded = true }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Sort,
+                            contentDescription = stringResource(R.string.markdown_notes_sort_view_menu),
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = sortViewMenuExpanded,
+                        onDismissRequest = { sortViewMenuExpanded = false },
+                    ) {
+                        NotesFolderSortViewMenuContent(
+                            browseLayout = browseLayout,
+                            sortBy = sortBy,
+                            foldersFirst = foldersFirst,
+                            sortReverseOrder = sortReverseOrder,
+                            showGmdFiles = showGmdFiles,
+                            showNoteDates = showNoteDates,
+                            onBrowseLayoutChange = onBrowseLayoutChange,
+                            onSortByChange = onSortByChange,
+                            onFoldersFirstChange = onFoldersFirstChange,
+                            onSortReverseOrderChange = onSortReverseOrderChange,
+                            onShowGmdFilesChange = onShowGmdFilesChange,
+                            onShowNoteDatesChange = onShowNoteDatesChange,
+                        )
+                    }
+                }
+            }
             Box {
                 IconButton(onClick = { onMenuExpandedChange(true) }) {
                     Icon(
@@ -2535,30 +2583,51 @@ private fun NotesTopChrome(
                         contentDescription = stringResource(R.string.markdown_notes_menu),
                     )
                 }
-            DropdownMenu(
-                expanded = menuExpanded,
-                onDismissRequest = { onMenuExpandedChange(false) },
-            ) {
-                if (noteOpen) {
-                    NotesDropdownMenuItem(
-                        text = {
-                            Text(
-                                text = stringResource(R.string.markdown_notes_note_info),
-                                maxLines = 2,
-                            )
-                        },
-                        onClick = {
-                            onMenuExpandedChange(false)
-                            onOpenNoteInfo()
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Filled.Description,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-                    HorizontalDivider()
+                DropdownMenu(
+                    expanded = menuExpanded,
+                    onDismissRequest = { onMenuExpandedChange(false) },
+                ) {
+                    if (noteOpen) {
+                        NotesDropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = stringResource(R.string.markdown_notes_note_info),
+                                    maxLines = 2,
+                                )
+                            },
+                            onClick = {
+                                onMenuExpandedChange(false)
+                                onOpenNoteInfo()
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Filled.Description,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                        HorizontalDivider()
+                    } else if (canPaste) {
+                        NotesDropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = stringResource(R.string.markdown_notes_paste),
+                                    maxLines = 2,
+                                )
+                            },
+                            onClick = {
+                                onMenuExpandedChange(false)
+                                onPaste()
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Filled.ContentPaste,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                        HorizontalDivider()
+                    }
                     NotesDropdownMenuItem(
                         text = {
                             Text(
@@ -2595,58 +2664,59 @@ private fun NotesTopChrome(
                             )
                         },
                     )
-                } else {
-                    NotesFolderBrowseMenuContent(
-                        sortBy = sortBy,
-                        foldersFirst = foldersFirst,
-                        sortReverseOrder = sortReverseOrder,
-                        showGmdFiles = showGmdFiles,
-                        showNoteDates = showNoteDates,
-                        canPaste = canPaste,
-                        onSortByChange = onSortByChange,
-                        onFoldersFirstChange = onFoldersFirstChange,
-                        onSortReverseOrderChange = onSortReverseOrderChange,
-                        onShowGmdFilesChange = onShowGmdFilesChange,
-                        onShowNoteDatesChange = onShowNoteDatesChange,
-                        onPaste = {
-                            onMenuExpandedChange(false)
-                            onPaste()
-                        },
-                        onOpenSettings = {
-                            onMenuExpandedChange(false)
-                            onOpenSettings()
-                        },
-                        onOpenAbout = {
-                            onMenuExpandedChange(false)
-                            onOpenAbout()
-                        },
-                    )
                 }
-            }
             }
         }
         HorizontalDivider()
     }
 }
 
-/** Shared overflow / empty-space context menu for the folder browser. */
+/** Sort, filter, and browse-layout options for the folder browser. */
 @Composable
-private fun NotesFolderBrowseMenuContent(
+private fun NotesFolderSortViewMenuContent(
+    browseLayout: NotesBrowseLayout,
     sortBy: NotesSortBy,
     foldersFirst: Boolean,
     sortReverseOrder: Boolean,
     showGmdFiles: Boolean,
     showNoteDates: Boolean,
-    canPaste: Boolean,
+    onBrowseLayoutChange: (NotesBrowseLayout) -> Unit,
     onSortByChange: (NotesSortBy) -> Unit,
     onFoldersFirstChange: (Boolean) -> Unit,
     onSortReverseOrderChange: (Boolean) -> Unit,
     onShowGmdFilesChange: (Boolean) -> Unit,
     onShowNoteDatesChange: (Boolean) -> Unit,
-    onPaste: () -> Unit,
-    onOpenSettings: () -> Unit,
-    onOpenAbout: () -> Unit,
 ) {
+    NotesBrowseLayout.entries.forEach { option ->
+        NotesDropdownMenuItem(
+            text = {
+                Text(
+                    text = stringResource(browseLayoutLabelRes(option)),
+                    maxLines = 2,
+                )
+            },
+            onClick = { onBrowseLayoutChange(option) },
+            leadingIcon = {
+                Icon(
+                    imageVector =
+                    when (option) {
+                        NotesBrowseLayout.List -> Icons.AutoMirrored.Filled.ViewList
+                        NotesBrowseLayout.Icons -> Icons.Filled.GridView
+                    },
+                    contentDescription = null,
+                )
+            },
+            trailingIcon = {
+                if (browseLayout == option) {
+                    Icon(
+                        imageVector = Icons.Filled.Check,
+                        contentDescription = null,
+                    )
+                }
+            },
+        )
+    }
+    HorizontalDivider()
     NotesSortBy.entries.forEach { option ->
         NotesDropdownMenuItem(
             text = {
@@ -2715,6 +2785,42 @@ private fun NotesFolderBrowseMenuContent(
             NotesMenuCheckbox(checked = showNoteDates)
         },
     )
+}
+
+/** Empty-space context menu: sort/view plus paste / settings / about. */
+@Composable
+private fun NotesFolderBrowseMenuContent(
+    browseLayout: NotesBrowseLayout,
+    sortBy: NotesSortBy,
+    foldersFirst: Boolean,
+    sortReverseOrder: Boolean,
+    showGmdFiles: Boolean,
+    showNoteDates: Boolean,
+    canPaste: Boolean,
+    onBrowseLayoutChange: (NotesBrowseLayout) -> Unit,
+    onSortByChange: (NotesSortBy) -> Unit,
+    onFoldersFirstChange: (Boolean) -> Unit,
+    onSortReverseOrderChange: (Boolean) -> Unit,
+    onShowGmdFilesChange: (Boolean) -> Unit,
+    onShowNoteDatesChange: (Boolean) -> Unit,
+    onPaste: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onOpenAbout: () -> Unit,
+) {
+    NotesFolderSortViewMenuContent(
+        browseLayout = browseLayout,
+        sortBy = sortBy,
+        foldersFirst = foldersFirst,
+        sortReverseOrder = sortReverseOrder,
+        showGmdFiles = showGmdFiles,
+        showNoteDates = showNoteDates,
+        onBrowseLayoutChange = onBrowseLayoutChange,
+        onSortByChange = onSortByChange,
+        onFoldersFirstChange = onFoldersFirstChange,
+        onSortReverseOrderChange = onSortReverseOrderChange,
+        onShowGmdFilesChange = onShowGmdFilesChange,
+        onShowNoteDatesChange = onShowNoteDatesChange,
+    )
     if (canPaste) {
         HorizontalDivider()
         NotesDropdownMenuItem(
@@ -2770,6 +2876,11 @@ private fun sortByLabelRes(sortBy: NotesSortBy): Int = when (sortBy) {
     NotesSortBy.Name -> R.string.markdown_notes_sort_by_name
     NotesSortBy.Date -> R.string.markdown_notes_sort_by_date
     NotesSortBy.Size -> R.string.markdown_notes_sort_by_size
+}
+
+private fun browseLayoutLabelRes(layout: NotesBrowseLayout): Int = when (layout) {
+    NotesBrowseLayout.List -> R.string.settings_markdown_notes_browse_layout_list
+    NotesBrowseLayout.Icons -> R.string.settings_markdown_notes_browse_layout_icons
 }
 
 @OptIn(ExperimentalFoundationApi::class)
