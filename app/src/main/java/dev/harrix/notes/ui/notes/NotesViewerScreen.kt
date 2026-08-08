@@ -2492,43 +2492,49 @@ private fun NotesTopChrome(
     onOpenSettings: () -> Unit,
     onOpenAbout: () -> Unit,
 ) {
-    Row(
+    Column(
         modifier =
         Modifier
             .fillMaxWidth()
-            .padding(start = 4.dp, end = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .background(MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
-        IconButton(onClick = onOpenDrawer) {
-            Icon(
-                imageVector = Icons.Filled.Menu,
-                contentDescription = stringResource(R.string.nav_open),
-            )
-        }
-        val showBrandTitle =
-            breadcrumbSegments == null ||
-                (!lastIsNote && breadcrumbSegments.size <= 1)
-        if (showBrandTitle) {
-            NotesBrandTitle(
-                logoSize = TopBarLogoSize,
-                textStyle = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.weight(1f),
-            )
-        } else {
-            NotesBreadcrumbs(
-                segments = breadcrumbSegments.orEmpty(),
-                lastIsNote = lastIsNote,
-                onSegmentClick = onSegmentClick,
-                modifier = Modifier.weight(1f),
-            )
-        }
-        Box {
-            IconButton(onClick = { onMenuExpandedChange(true) }) {
+        Row(
+            modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(start = 4.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = onOpenDrawer) {
                 Icon(
-                    imageVector = Icons.Filled.MoreVert,
-                    contentDescription = stringResource(R.string.markdown_notes_menu),
+                    imageVector = Icons.Filled.Menu,
+                    contentDescription = stringResource(R.string.nav_open),
                 )
             }
+            val showBrandTitle =
+                breadcrumbSegments == null ||
+                    (!lastIsNote && breadcrumbSegments.size <= 1)
+            if (showBrandTitle) {
+                NotesBrandTitle(
+                    logoSize = TopBarLogoSize,
+                    textStyle = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.weight(1f),
+                )
+            } else {
+                NotesBreadcrumbs(
+                    segments = breadcrumbSegments.orEmpty(),
+                    lastIsNote = lastIsNote,
+                    onSegmentClick = onSegmentClick,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Box {
+                IconButton(onClick = { onMenuExpandedChange(true) }) {
+                    Icon(
+                        imageVector = Icons.Filled.MoreVert,
+                        contentDescription = stringResource(R.string.markdown_notes_menu),
+                    )
+                }
             DropdownMenu(
                 expanded = menuExpanded,
                 onDismissRequest = { onMenuExpandedChange(false) },
@@ -2617,7 +2623,9 @@ private fun NotesTopChrome(
                     )
                 }
             }
+            }
         }
+        HorizontalDivider()
     }
 }
 
