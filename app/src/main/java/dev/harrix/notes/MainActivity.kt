@@ -1,8 +1,10 @@
 package dev.harrix.notes
 
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -25,7 +27,18 @@ class MainActivity : AppCompatActivity() {
         preferences.loadAppLanguage().apply()
         super.onCreate(savedInstanceState)
         consumeOpenIntent(intent)
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            statusBarStyle =
+            SystemBarStyle.auto(
+                lightScrim = Color.TRANSPARENT,
+                darkScrim = Color.TRANSPARENT,
+            ),
+            navigationBarStyle =
+            SystemBarStyle.auto(
+                lightScrim = Color.TRANSPARENT,
+                darkScrim = Color.TRANSPARENT,
+            ),
+        )
         setContent {
             var themeMode by remember { mutableStateOf(preferences.loadThemeMode()) }
             var uiFontSizeSp by remember { mutableIntStateOf(preferences.loadUiFontSizeSp()) }

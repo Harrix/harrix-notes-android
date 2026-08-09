@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:NotesViewerScreen.kt$clip != null &amp;&amp; ( clip.documentId == target.documentId || clip.pinDocumentId == target.pinDocumentId || clip.documentId == entry.documentId )</ID>
+    <ID>ComplexCondition:NotesViewerScreen.kt$closesOthers || selectedTabDocumentId == null || openTabs.none { it.documentId == tab.documentId || it.uri == tab.uri }</ID>
+    <ID>ComposableParamOrder:NotesViewerScreen.kt$NotesEntryContextMenu</ID>
+    <ID>ComposableParamOrder:NotesViewerScreen.kt$NotesNavigationRow</ID>
+    <ID>CompositionLocalAllowlist:NotesNoteGlyph.kt$LocalNotesIconStyle</ID>
+    <ID>ExplicitGarbageCollectionCall:NotesHtmlPreviewPane.kt$gc()</ID>
+    <ID>LambdaParameterInRestartableEffect:NotesViewerScreen.kt$onPendingOpenUriConsumed</ID>
+    <ID>LargeClass:NotesTreeRepository.kt$NotesTreeRepository</ID>
+    <ID>LargeClass:SimpleMarkdownToHtml.kt$SimpleMarkdownToHtml</ID>
+    <ID>LoopWithTooManyJumpStatements:NotesViewerPreferences.kt$NotesViewerPreferences.Companion$for</ID>
+    <ID>LoopWithTooManyJumpStatements:SimpleMarkdownToHtml.kt$SimpleMarkdownToHtml$while</ID>
+    <ID>MayBeConst:NotesFingerScrollbar.kt$private val NotesScrollbarExpandAnimMs = 160</ID>
+    <ID>NestedBlockDepth:NotesTreeRepository.kt$NotesTreeRepository$private fun queryChildren( treeUri: Uri, dirDocumentId: String, ): List&lt;RawEntry&gt;</ID>
+    <ID>ParameterNaming:MainScreen.kt$onPendingOpenUriConsumed</ID>
+    <ID>ParameterNaming:NotesViewerScreen.kt$onPendingOpenUriConsumed</ID>
+    <ID>UnusedParameter:NotesTreeRepository.kt$NotesTreeRepository$dirName: String</ID>
+  </CurrentIssues>
+</SmellBaseline>

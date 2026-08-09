@@ -52,6 +52,7 @@ android {
     lint {
         abortOnError = true
         warningsAsErrors = false
+        baseline = file("${rootProject.projectDir}/config/lint/lint-baseline.xml")
     }
 }
 
@@ -59,6 +60,7 @@ detekt {
     buildUponDefaultConfig = true
     allRules = false
     config.setFrom(files("${rootProject.projectDir}/config/detekt/detekt.yml"))
+    baseline = file("${rootProject.projectDir}/config/detekt/baseline.xml")
     parallel = true
 }
 

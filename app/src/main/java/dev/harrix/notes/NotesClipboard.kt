@@ -38,8 +38,7 @@ data class NotesClipboardEntry(
  * True when cut / copy / duplicate would break relative links (`.g.md` notes).
  * Delete remains allowed.
  */
-fun NotesEntry.blocksClipboardRelocation(): Boolean =
-    this is NotesEntry.Note && NotesTreeRepository.isGMd(name)
+fun NotesEntry.blocksClipboardRelocation(): Boolean = this is NotesEntry.Note && NotesTreeRepository.isGMd(name)
 
 /**
  * Document to copy, cut, duplicate, or delete for a browser listing row.
@@ -48,44 +47,43 @@ fun NotesEntry.blocksClipboardRelocation(): Boolean =
  */
 fun NotesEntry.mutationDocument(
     listingParentDocumentId: String,
-): NotesMutationDocument =
-    when (this) {
-        is NotesEntry.Folder ->
+): NotesMutationDocument = when (this) {
+    is NotesEntry.Folder ->
+        NotesMutationDocument(
+            documentId = documentId,
+            uri = uri,
+            displayName = name,
+            kind = NotesClipboardKind.Folder,
+            sourceParentDocumentId = listingParentDocumentId,
+            folderPerNoteStem = null,
+            pinDocumentId = documentId,
+        )
+
+    is NotesEntry.Note -> {
+        val folder = containingFolder
+        if (folder != null) {
+            NotesMutationDocument(
+                documentId = folder.documentId,
+                uri = folder.uri,
+                displayName = folder.name,
+                kind = NotesClipboardKind.Folder,
+                sourceParentDocumentId = listingParentDocumentId,
+                folderPerNoteStem = folder.name,
+                pinDocumentId = documentId,
+            )
+        } else {
             NotesMutationDocument(
                 documentId = documentId,
                 uri = uri,
                 displayName = name,
-                kind = NotesClipboardKind.Folder,
+                kind = NotesClipboardKind.Note,
                 sourceParentDocumentId = listingParentDocumentId,
                 folderPerNoteStem = null,
                 pinDocumentId = documentId,
             )
-
-        is NotesEntry.Note -> {
-            val folder = containingFolder
-            if (folder != null) {
-                NotesMutationDocument(
-                    documentId = folder.documentId,
-                    uri = folder.uri,
-                    displayName = folder.name,
-                    kind = NotesClipboardKind.Folder,
-                    sourceParentDocumentId = listingParentDocumentId,
-                    folderPerNoteStem = folder.name,
-                    pinDocumentId = documentId,
-                )
-            } else {
-                NotesMutationDocument(
-                    documentId = documentId,
-                    uri = uri,
-                    displayName = name,
-                    kind = NotesClipboardKind.Note,
-                    sourceParentDocumentId = listingParentDocumentId,
-                    folderPerNoteStem = null,
-                    pinDocumentId = documentId,
-                )
-            }
         }
     }
+}
 
 data class NotesMutationDocument(
     val documentId: String,
@@ -101,16 +99,15 @@ data class NotesMutationDocument(
     fun toClipboardEntry(
         treeUri: String,
         mode: NotesClipboardMode,
-    ): NotesClipboardEntry =
-        NotesClipboardEntry(
-            treeUri = treeUri,
-            documentId = documentId,
-            uri = uri,
-            displayName = displayName,
-            kind = kind,
-            mode = mode,
-            sourceParentDocumentId = sourceParentDocumentId,
-            folderPerNoteStem = folderPerNoteStem,
-            pinDocumentId = pinDocumentId,
-        )
+    ): NotesClipboardEntry = NotesClipboardEntry(
+        treeUri = treeUri,
+        documentId = documentId,
+        uri = uri,
+        displayName = displayName,
+        kind = kind,
+        mode = mode,
+        sourceParentDocumentId = sourceParentDocumentId,
+        folderPerNoteStem = folderPerNoteStem,
+        pinDocumentId = pinDocumentId,
+    )
 }

@@ -10,13 +10,11 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -95,6 +93,10 @@ import dev.harrix.notes.ui.notes.NotesFolderPathControls
 import dev.harrix.notes.ui.notes.NotesNoteGlyph
 import dev.harrix.notes.ui.theme.AppLanguage
 import dev.harrix.notes.ui.theme.ThemeMode
+import dev.harrix.notes.ui.theme.notesScaffoldContainerColor
+import dev.harrix.notes.ui.theme.notesScaffoldContentWindowInsets
+import dev.harrix.notes.ui.theme.notesTopAppBarColors
+import dev.harrix.notes.ui.theme.notesTopAppBarWindowInsets
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -150,7 +152,8 @@ fun SettingsScreen(
 
     Scaffold(
         modifier = modifier,
-        contentWindowInsets = WindowInsets.safeDrawing,
+        containerColor = notesScaffoldContainerColor(),
+        contentWindowInsets = notesScaffoldContentWindowInsets(),
         topBar = {
             TopAppBar(
                 title = {
@@ -160,6 +163,8 @@ fun SettingsScreen(
                         overflow = TextOverflow.Ellipsis,
                     )
                 },
+                colors = notesTopAppBarColors(),
+                windowInsets = notesTopAppBarWindowInsets(),
                 navigationIcon = {
                     IconButton(
                         onClick = {

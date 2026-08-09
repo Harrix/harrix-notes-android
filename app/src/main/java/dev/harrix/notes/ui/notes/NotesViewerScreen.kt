@@ -31,10 +31,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -126,8 +127,6 @@ import dev.harrix.notes.NotesBrowseLayout
 import dev.harrix.notes.NotesClipboardEntry
 import dev.harrix.notes.NotesClipboardKind
 import dev.harrix.notes.NotesClipboardMode
-import dev.harrix.notes.blocksClipboardRelocation
-import dev.harrix.notes.mutationDocument
 import dev.harrix.notes.NotesDateFormats
 import dev.harrix.notes.NotesDocumentInfo
 import dev.harrix.notes.NotesEntry
@@ -144,6 +143,8 @@ import dev.harrix.notes.NotesTreeRepository
 import dev.harrix.notes.NotesViewerPreferences
 import dev.harrix.notes.OpenNoteTab
 import dev.harrix.notes.R
+import dev.harrix.notes.blocksClipboardRelocation
+import dev.harrix.notes.mutationDocument
 import dev.harrix.notes.noteAssetFolderPath
 import dev.harrix.notes.notesFolderDisplayName
 import dev.harrix.notes.takeNotesFolderPermission
@@ -151,6 +152,8 @@ import dev.harrix.notes.ui.adaptiveContentWidth
 import dev.harrix.notes.ui.isCompactHeight
 import dev.harrix.notes.ui.isDualPaneLayoutEligible
 import dev.harrix.notes.ui.notesIconsGridColumnCount
+import dev.harrix.notes.ui.theme.notesScaffoldContainerColor
+import dev.harrix.notes.ui.theme.notesScaffoldContentWindowInsets
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -1894,8 +1897,8 @@ fun NotesViewerScreen(
         ) {
             Scaffold(
                 modifier = Modifier.fillMaxSize(),
-                containerColor = MaterialTheme.colorScheme.background,
-                contentWindowInsets = WindowInsets.safeDrawing,
+                containerColor = notesScaffoldContainerColor(),
+                contentWindowInsets = notesScaffoldContentWindowInsets(),
             ) { innerPadding ->
                 Column(
                     modifier =
@@ -2498,7 +2501,8 @@ private fun NotesTopChrome(
         modifier =
         Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceContainerLow),
+            .background(MaterialTheme.colorScheme.surface)
+            .windowInsetsPadding(WindowInsets.statusBars),
     ) {
         Row(
             modifier =
