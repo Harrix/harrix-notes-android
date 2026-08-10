@@ -166,6 +166,13 @@
     <string name="markdown_notes_canvas_markdown">Markdown</string>
     <string name="markdown_notes_canvas_pen">Pen</string>
     <string name="markdown_notes_canvas_eraser">Eraser</string>
+    <string name="markdown_notes_canvas_custom_color">Custom color</string>
+    <string name="markdown_notes_canvas_custom_color_title">Choose color</string>
+    <string name="markdown_notes_canvas_custom_color_hue">Hue</string>
+    <string name="markdown_notes_canvas_custom_color_saturation">Saturation</string>
+    <string name="markdown_notes_canvas_custom_color_value">Brightness</string>
+    <string name="markdown_notes_canvas_custom_color_ok">OK</string>
+    <string name="markdown_notes_canvas_custom_color_cancel">Cancel</string>
     <string name="markdown_notes_canvas_pan">Pan canvas</string>
     <string name="markdown_notes_canvas_draw">Draw</string>
     <string name="markdown_notes_canvas_undo">Undo</string>

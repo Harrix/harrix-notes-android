@@ -24,10 +24,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -37,6 +39,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoFixOff
 import androidx.compose.material.icons.filled.Brush
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PanTool
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -61,6 +64,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush as ComposeBrush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -811,6 +815,19 @@ private fun CanvasToolbar(
     onUndo: () -> Unit,
     onRedo: () -> Unit,
 ) {
+    var showCustomColorDialog by remember { mutableStateOf(false) }
+    val isCustomColor = penColor !in PenColors
+    if (showCustomColorDialog) {
+        CanvasCustomColorDialog(
+            initialColor = penColor,
+            onDismiss = { showCustomColorDialog = false },
+            onConfirm = { color ->
+                onToolChange(CanvasTool.Pen)
+                onColorChange(color)
+                showCustomColorDialog = false
+            },
+        )
+    }
     Surface(tonalElevation = 2.dp) {
         Column(
             modifier =
@@ -895,35 +912,63 @@ private fun CanvasToolbar(
             ) {
                 PenColors.forEach { color ->
                     val selected = drawingEnabled && color == penColor && tool == CanvasTool.Pen
-                    val swatchOutline =
-                        if (selected) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.outlineVariant
-                        }
-                    Box(
-                        modifier =
-                        Modifier
-                            .size(28.dp)
-                            .padding(2.dp)
-                            .background(Color(color), CircleShape)
-                            .border(1.dp, swatchOutline, CircleShape)
-                            .then(
-                                if (selected) {
-                                    Modifier.border(
-                                        2.dp,
-                                        MaterialTheme.colorScheme.primary,
-                                        CircleShape,
-                                    )
-                                } else {
-                                    Modifier
-                                },
-                            )
-                            .clickable {
-                                onToolChange(CanvasTool.Pen)
-                                onColorChange(color)
-                            },
+                    ColorSwatch(
+                        color = Color(color),
+                        selected = selected,
+                        onClick = {
+                            onToolChange(CanvasTool.Pen)
+                            onColorChange(color)
+                        },
                     )
+                }
+                val customSelected = drawingEnabled && isCustomColor && tool == CanvasTool.Pen
+                Box(
+                    modifier =
+                    Modifier
+                        .size(28.dp)
+                        .padding(2.dp)
+                        .background(
+                            brush =
+                            ComposeBrush.sweepGradient(
+                                listOf(
+                                    Color(0xFFE53935),
+                                    Color(0xFFFFB300),
+                                    Color(0xFF43A047),
+                                    Color(0xFF1E88E5),
+                                    Color(0xFF8E24AA),
+                                    Color(0xFFE53935),
+                                ),
+                            ),
+                            shape = CircleShape,
+                        )
+                        .then(
+                            if (isCustomColor) {
+                                Modifier.background(Color(penColor), CircleShape)
+                            } else {
+                                Modifier
+                            },
+                        )
+                        .border(
+                            width = if (customSelected) 2.dp else 1.dp,
+                            color =
+                            if (customSelected) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.outlineVariant
+                            },
+                            shape = CircleShape,
+                        )
+                        .clickable { showCustomColorDialog = true },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (!isCustomColor) {
+                        Icon(
+                            imageVector = Icons.Filled.Palette,
+                            contentDescription = stringResource(R.string.markdown_notes_canvas_custom_color),
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp),
+                        )
+                    }
                 }
             }
             Slider(
@@ -935,6 +980,114 @@ private fun CanvasToolbar(
             )
         }
     }
+}
+
+@Composable
+private fun ColorSwatch(
+    color: Color,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val swatchOutline =
+        if (selected) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.outlineVariant
+        }
+    Box(
+        modifier =
+        Modifier
+            .size(28.dp)
+            .padding(2.dp)
+            .background(color, CircleShape)
+            .border(1.dp, swatchOutline, CircleShape)
+            .then(
+                if (selected) {
+                    Modifier.border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                } else {
+                    Modifier
+                },
+            )
+            .clickable(
+                onClick = onClick,
+            ),
+    )
+}
+
+@Composable
+private fun CanvasCustomColorDialog(
+    initialColor: Int,
+    onDismiss: () -> Unit,
+    onConfirm: (Int) -> Unit,
+) {
+    val initialHsv =
+        remember(initialColor) {
+            FloatArray(3).also { AndroidColor.colorToHSV(initialColor, it) }
+        }
+    var hue by remember { mutableFloatStateOf(initialHsv[0]) }
+    var saturation by remember { mutableFloatStateOf(initialHsv[1]) }
+    var value by remember { mutableFloatStateOf(initialHsv[2].coerceAtLeast(0.05f)) }
+    val previewArgb =
+        remember(hue, saturation, value) {
+            AndroidColor.HSVToColor(floatArrayOf(hue, saturation, value))
+        }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.markdown_notes_canvas_custom_color_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(
+                    modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .background(Color(previewArgb), RoundedCornerShape(8.dp))
+                        .border(
+                            1.dp,
+                            MaterialTheme.colorScheme.outlineVariant,
+                            RoundedCornerShape(8.dp),
+                        ),
+                )
+                Text(
+                    text = stringResource(R.string.markdown_notes_canvas_custom_color_hue),
+                    style = MaterialTheme.typography.labelMedium,
+                )
+                Slider(
+                    value = hue,
+                    onValueChange = { hue = it },
+                    valueRange = 0f..360f,
+                )
+                Text(
+                    text = stringResource(R.string.markdown_notes_canvas_custom_color_saturation),
+                    style = MaterialTheme.typography.labelMedium,
+                )
+                Slider(
+                    value = saturation,
+                    onValueChange = { saturation = it },
+                    valueRange = 0f..1f,
+                )
+                Text(
+                    text = stringResource(R.string.markdown_notes_canvas_custom_color_value),
+                    style = MaterialTheme.typography.labelMedium,
+                )
+                Slider(
+                    value = value,
+                    onValueChange = { value = it },
+                    valueRange = 0f..1f,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(previewArgb) }) {
+                Text(stringResource(R.string.markdown_notes_canvas_custom_color_ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.markdown_notes_canvas_custom_color_cancel))
+            }
+        },
+    )
 }
 
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawLiveStroke(
