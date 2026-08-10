@@ -831,7 +831,7 @@ class NotesTreeRepository(
                 CanvasNoteDefaults.HEIGHT_PX,
                 Bitmap.Config.ARGB_8888,
             )
-        bitmap.eraseColor(Color.WHITE)
+        bitmap.eraseColor(Color.TRANSPARENT)
         return try {
             ByteArrayOutputStream().use { stream ->
                 if (!bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)) {

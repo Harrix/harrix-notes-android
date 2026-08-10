@@ -668,6 +668,7 @@ private fun wrapPreviewHtml(
         height: auto;
         display: block;
         margin: 0.6em 0;
+        background: $bg;
       }
       .img-placeholder {
         background: $placeholderBg;

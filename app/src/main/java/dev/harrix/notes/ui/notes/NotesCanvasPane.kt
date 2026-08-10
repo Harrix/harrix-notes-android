@@ -6,6 +6,8 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas as AndroidCanvas
 import android.graphics.Color as AndroidColor
 import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
 import android.net.Uri
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -49,9 +51,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.PointerType
@@ -79,6 +83,7 @@ private const val CanvasAutosaveDelayMs = 800L
 private val PenColors =
     listOf(
         AndroidColor.BLACK,
+        AndroidColor.WHITE,
         AndroidColor.RED,
         AndroidColor.BLUE,
         AndroidColor.GREEN,
@@ -129,10 +134,12 @@ fun NotesCanvasPane(
 ) {
     val scope = rememberCoroutineScope()
     val session = remember { CanvasSession() }
+    val paperColor = MaterialTheme.colorScheme.surface
+    val initialPenColor = MaterialTheme.colorScheme.onSurface.toArgb()
     var loadError by remember { mutableStateOf<String?>(null) }
     var hasImage by remember { mutableStateOf(false) }
     var tool by remember { mutableStateOf(CanvasTool.Pen) }
-    var penColor by remember { mutableIntStateOf(PenColors.first()) }
+    var penColor by remember { mutableIntStateOf(initialPenColor) }
     var baseWidth by remember { mutableFloatStateOf(6f) }
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
@@ -449,6 +456,11 @@ fun NotesCanvasPane(
                                 ((size.width - dstSize.width) / 2f + offset.x).roundToInt(),
                                 ((size.height - dstSize.height) / 2f + offset.y).roundToInt(),
                             )
+                        drawRect(
+                            color = paperColor,
+                            topLeft = Offset(dstOffset.x.toFloat(), dstOffset.y.toFloat()),
+                            size = Size(dstSize.width.toFloat(), dstSize.height.toFloat()),
+                        )
                         drawImage(
                             image = imageBitmap,
                             dstOffset = dstOffset,
@@ -458,6 +470,7 @@ fun NotesCanvasPane(
                         if (live != null) {
                             drawLiveStroke(
                                 stroke = live,
+                                paperColor = paperColor,
                                 totalScale = totalScale,
                                 dstOffset = dstOffset,
                             )
@@ -532,12 +545,19 @@ private fun CanvasToolbar(
                 }
                 PenColors.forEach { color ->
                     val selected = color == penColor && tool == CanvasTool.Pen
+                    val swatchOutline =
+                        if (selected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.outlineVariant
+                        }
                     Box(
                         modifier =
                         Modifier
                             .size(28.dp)
                             .padding(2.dp)
                             .background(Color(color), CircleShape)
+                            .border(1.dp, swatchOutline, CircleShape)
                             .then(
                                 if (selected) {
                                     Modifier.border(
@@ -568,13 +588,15 @@ private fun CanvasToolbar(
 
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawLiveStroke(
     stroke: CanvasStroke,
+    paperColor: Color,
     totalScale: Float,
     dstOffset: IntOffset,
 ) {
     if (stroke.points.isEmpty()) {
         return
     }
-    val color = if (stroke.isEraser) Color.White else Color(stroke.color)
+    // Eraser preview paints paper color over ink; commit uses CLEAR on the alpha bitmap.
+    val color = if (stroke.isEraser) paperColor else Color(stroke.color)
     if (stroke.points.size == 1) {
         val p = stroke.points.first()
         drawCircle(
@@ -617,13 +639,20 @@ private fun drawStrokeOnAndroid(
     if (stroke.points.isEmpty()) {
         return
     }
-    paint.color = if (stroke.isEraser) AndroidColor.WHITE else stroke.color
+    if (stroke.isEraser) {
+        paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
+        paint.color = AndroidColor.TRANSPARENT
+    } else {
+        paint.xfermode = null
+        paint.color = stroke.color
+    }
     if (stroke.points.size == 1) {
         val p = stroke.points.first()
         paint.style = Paint.Style.FILL
         val radius = stroke.baseWidth * pressureFactor(p.pressure) / 2f
         canvas.drawCircle(p.x, p.y, radius, paint)
         paint.style = Paint.Style.STROKE
+        paint.xfermode = null
         return
     }
     paint.style = Paint.Style.STROKE
@@ -633,6 +662,7 @@ private fun drawStrokeOnAndroid(
         paint.strokeWidth = stroke.baseWidth * pressureFactor(b.pressure)
         canvas.drawLine(a.x, a.y, b.x, b.y, paint)
     }
+    paint.xfermode = null
 }
 
 private fun pressureFactor(pressure: Float): Float = 0.25f + 0.75f * pressure.coerceIn(0.05f, 1f)
