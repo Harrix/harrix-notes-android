@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoFixOff
 import androidx.compose.material.icons.filled.Brush
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PanTool
 import androidx.compose.material3.AlertDialog
@@ -168,6 +169,7 @@ fun NotesCanvasPane(
     var pages by remember { mutableStateOf<List<CanvasPageRef>>(emptyList()) }
     var pageIndex by remember { mutableIntStateOf(0) }
     var showDeletePageDialog by remember { mutableStateOf(false) }
+    var showClearPageDialog by remember { mutableStateOf(false) }
     var tool by remember { mutableStateOf(CanvasTool.Pen) }
     var drawingEnabled by remember { mutableStateOf(true) }
     var penColor by remember { mutableIntStateOf(initialPenColor) }
@@ -472,6 +474,24 @@ fun NotesCanvasPane(
         }
     }
 
+    fun clearCurrentPage() {
+        val width = session.sourceBitmap?.width ?: return
+        val height = session.sourceBitmap?.height ?: return
+        currentStroke = null
+        session.strokes.clear()
+        session.redoStack.clear()
+        session.sourceBitmap?.recycle()
+        session.displayBitmap?.recycle()
+        val blank = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        blank.eraseColor(AndroidColor.TRANSPARENT)
+        session.sourceBitmap = blank
+        session.displayBitmap = null
+        rebuildDisplay()
+        syncUndoFlags()
+        scheduleAutosave()
+        showClearPageDialog = false
+    }
+
     if (showDeletePageDialog) {
         AlertDialog(
             onDismissRequest = { showDeletePageDialog = false },
@@ -497,6 +517,24 @@ fun NotesCanvasPane(
         )
     }
 
+    if (showClearPageDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearPageDialog = false },
+            title = { Text(stringResource(R.string.markdown_notes_canvas_clear_title)) },
+            text = { Text(stringResource(R.string.markdown_notes_canvas_clear_message)) },
+            confirmButton = {
+                TextButton(onClick = { clearCurrentPage() }) {
+                    Text(stringResource(R.string.markdown_notes_canvas_clear_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearPageDialog = false }) {
+                    Text(stringResource(R.string.markdown_notes_canvas_clear_cancel))
+                }
+            },
+        )
+    }
+
     Column(modifier = modifier.fillMaxSize()) {
         CanvasToolbar(
             tool = tool,
@@ -505,6 +543,7 @@ fun NotesCanvasPane(
             baseWidth = baseWidth,
             canUndo = canUndo,
             canRedo = canRedo,
+            canClear = hasImage,
             onToolChange = { next ->
                 tool = next
                 drawingEnabled = true
@@ -537,6 +576,7 @@ fun NotesCanvasPane(
                 syncUndoFlags()
                 scheduleAutosave()
             },
+            onClear = { showClearPageDialog = true },
         )
         CanvasPageBar(
             pageIndex = pageIndex,
@@ -808,12 +848,14 @@ private fun CanvasToolbar(
     baseWidth: Float,
     canUndo: Boolean,
     canRedo: Boolean,
+    canClear: Boolean,
     onToolChange: (CanvasTool) -> Unit,
     onDrawingEnabledChange: (Boolean) -> Unit,
     onColorChange: (Int) -> Unit,
     onWidthChange: (Float) -> Unit,
     onUndo: () -> Unit,
     onRedo: () -> Unit,
+    onClear: () -> Unit,
 ) {
     var showCustomColorDialog by remember { mutableStateOf(false) }
     val isCustomColor = penColor !in PenColors
@@ -899,6 +941,12 @@ private fun CanvasToolbar(
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Redo,
                         contentDescription = stringResource(R.string.markdown_notes_canvas_redo),
+                    )
+                }
+                IconButton(onClick = onClear, enabled = canClear) {
+                    Icon(
+                        imageVector = Icons.Filled.DeleteSweep,
+                        contentDescription = stringResource(R.string.markdown_notes_canvas_clear),
                     )
                 }
             }

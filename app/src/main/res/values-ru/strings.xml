@@ -164,6 +164,11 @@
     <string name="markdown_notes_canvas_draw">Рисование</string>
     <string name="markdown_notes_canvas_undo">Отменить</string>
     <string name="markdown_notes_canvas_redo">Повторить</string>
+    <string name="markdown_notes_canvas_clear">Очистить страницу</string>
+    <string name="markdown_notes_canvas_clear_title">Очистить страницу?</string>
+    <string name="markdown_notes_canvas_clear_message">Все рисунки на этой странице будут удалены.</string>
+    <string name="markdown_notes_canvas_clear_confirm">Очистить</string>
+    <string name="markdown_notes_canvas_clear_cancel">Отмена</string>
     <string name="markdown_notes_canvas_load_failed">Не удалось загрузить полотно</string>
     <string name="markdown_notes_canvas_save_failed">Не удалось сохранить полотно</string>
     <string name="markdown_notes_canvas_page_prev">Предыдущая страница</string>

@@ -177,6 +177,11 @@
     <string name="markdown_notes_canvas_draw">Draw</string>
     <string name="markdown_notes_canvas_undo">Undo</string>
     <string name="markdown_notes_canvas_redo">Redo</string>
+    <string name="markdown_notes_canvas_clear">Clear page</string>
+    <string name="markdown_notes_canvas_clear_title">Clear page?</string>
+    <string name="markdown_notes_canvas_clear_message">All drawings on this page will be erased.</string>
+    <string name="markdown_notes_canvas_clear_confirm">Clear</string>
+    <string name="markdown_notes_canvas_clear_cancel">Cancel</string>
     <string name="markdown_notes_canvas_load_failed">Could not load canvas image</string>
     <string name="markdown_notes_canvas_save_failed">Could not save canvas</string>
     <string name="markdown_notes_canvas_page_prev">Previous page</string>
