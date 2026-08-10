@@ -29,17 +29,23 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoFixOff
 import androidx.compose.material.icons.filled.Brush
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PanTool
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -69,7 +75,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import dev.harrix.notes.CanvasNoteDefaults
+import dev.harrix.notes.CanvasPageRef
+import dev.harrix.notes.CanvasPages
 import dev.harrix.notes.NotesPathSegment
 import dev.harrix.notes.NotesRelativeDocuments
 import dev.harrix.notes.NotesViewerPreferences
@@ -130,7 +137,7 @@ private class CanvasSession {
 
 /**
  * Full-screen drawing surface for notes with YAML `type: canvas`.
- * Stylus pressure modulates stroke width; content is saved to `img/canvas.png`.
+ * Pages are `img/canvas_01.png`, `img/canvas_02.png`, … (legacy `canvas.png` supported).
  */
 @Composable
 fun NotesCanvasPane(
@@ -138,10 +145,13 @@ fun NotesCanvasPane(
     treeUri: Uri?,
     folderPath: List<NotesPathSegment>,
     noteDocumentId: String,
+    noteUri: Uri,
+    noteMarkdown: String,
     contentResolver: ContentResolver,
     preferences: NotesViewerPreferences,
     modifier: Modifier = Modifier,
     onStatusMessage: (String?) -> Unit = {},
+    onNoteMarkdownChange: (String) -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
     val session = remember { CanvasSession() }
@@ -151,6 +161,9 @@ fun NotesCanvasPane(
     val initialPenWidth = preferences.loadCanvasPenWidth()
     var loadError by remember { mutableStateOf<String?>(null) }
     var hasImage by remember { mutableStateOf(false) }
+    var pages by remember { mutableStateOf<List<CanvasPageRef>>(emptyList()) }
+    var pageIndex by remember { mutableIntStateOf(0) }
+    var showDeletePageDialog by remember { mutableStateOf(false) }
     var tool by remember { mutableStateOf(CanvasTool.Pen) }
     var drawingEnabled by remember { mutableStateOf(true) }
     var penColor by remember { mutableIntStateOf(initialPenColor) }
@@ -165,6 +178,8 @@ fun NotesCanvasPane(
     var autosaveJob by remember { mutableStateOf<Job?>(null) }
     val loadFailedMessage = stringResource(R.string.markdown_notes_canvas_load_failed)
     val saveFailedMessage = stringResource(R.string.markdown_notes_canvas_save_failed)
+    val pageFailedMessage = stringResource(R.string.markdown_notes_canvas_page_failed)
+    val deleteLastMessage = stringResource(R.string.markdown_notes_canvas_page_delete_last)
     val latestScale by rememberUpdatedState(scale)
     val latestOffset by rememberUpdatedState(offset)
     val latestTool by rememberUpdatedState(tool)
@@ -172,6 +187,8 @@ fun NotesCanvasPane(
     val latestPenColor by rememberUpdatedState(penColor)
     val latestBaseWidth by rememberUpdatedState(baseWidth)
     val latestOnStatusMessage by rememberUpdatedState(onStatusMessage)
+    val latestNoteMarkdown by rememberUpdatedState(noteMarkdown)
+    val latestOnNoteMarkdownChange by rememberUpdatedState(onNoteMarkdownChange)
 
     fun syncUndoFlags() {
         canUndo = session.strokes.isNotEmpty()
@@ -199,31 +216,74 @@ fun NotesCanvasPane(
         displayRevision += 1
     }
 
+    suspend fun flushCurrentPage(): Boolean {
+        autosaveJob?.cancel()
+        autosaveJob = null
+        if (!session.dirty) {
+            return true
+        }
+        val uri = session.imageUri ?: return false
+        val display = session.displayBitmap ?: return false
+        val ok =
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    val bytes = pngBytes(display)
+                    contentResolver.openOutputStream(uri, "w")?.use { output ->
+                        output.write(bytes)
+                        output.flush()
+                    } ?: error("no stream")
+                }.isSuccess
+            }
+        if (ok) {
+            session.dirty = false
+        }
+        return ok
+    }
+
     fun scheduleAutosave() {
         session.dirty = true
         autosaveJob?.cancel()
         autosaveJob =
             scope.launch {
                 delay(CanvasAutosaveDelayMs)
-                val ok =
-                    withContext(Dispatchers.IO) {
-                        runCatching {
-                            val uri = session.imageUri ?: error("no uri")
-                            val display = session.displayBitmap ?: error("no display")
-                            val bytes = pngBytes(display)
-                            contentResolver.openOutputStream(uri, "w")?.use { output ->
-                                output.write(bytes)
-                                output.flush()
-                            } ?: error("no stream")
-                        }.isSuccess
-                    }
+                val ok = flushCurrentPage()
                 if (ok) {
-                    session.dirty = false
                     latestOnStatusMessage(null)
                 } else {
                     latestOnStatusMessage(saveFailedMessage)
                 }
             }
+    }
+
+    fun clearSessionBitmaps() {
+        session.sourceBitmap?.recycle()
+        session.displayBitmap?.recycle()
+        session.sourceBitmap = null
+        session.displayBitmap = null
+        session.imageUri = null
+        session.strokes.clear()
+        session.redoStack.clear()
+        session.dirty = false
+        currentStroke = null
+        hasImage = false
+        syncUndoFlags()
+    }
+
+    suspend fun persistMarkdownForPages(updatedPages: List<CanvasPageRef>): Boolean {
+        val markdown = CanvasPages.syncMarkdownImageLinks(latestNoteMarkdown, updatedPages)
+        val ok =
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    contentResolver.openOutputStream(noteUri, "wt")?.use { output ->
+                        output.write(markdown.toByteArray(Charsets.UTF_8))
+                        output.flush()
+                    } ?: error("no stream")
+                }.isSuccess
+            }
+        if (ok) {
+            latestOnNoteMarkdownChange(markdown)
+        }
+        return ok
     }
 
     LaunchedEffect(treeUri, folderPath, noteDocumentId, isLoading) {
@@ -232,26 +292,43 @@ fun NotesCanvasPane(
         }
         loadError = null
         latestOnStatusMessage(null)
-        hasImage = false
+        clearSessionBitmaps()
+        val listed =
+            withContext(Dispatchers.IO) {
+                CanvasPages.listPages(
+                    resolver = contentResolver,
+                    treeUri = treeUri,
+                    folderPath = folderPath,
+                    noteDocumentId = noteDocumentId,
+                )
+            }
+        pages = listed
+        pageIndex = 0
+        if (listed.isEmpty()) {
+            loadError = loadFailedMessage
+            latestOnStatusMessage(loadFailedMessage)
+        }
+    }
+
+    LaunchedEffect(treeUri, pages, pageIndex, isLoading) {
+        if (isLoading || treeUri == null || pages.isEmpty()) {
+            return@LaunchedEffect
+        }
+        val safeIndex = pageIndex.coerceIn(0, pages.lastIndex)
+        if (safeIndex != pageIndex) {
+            pageIndex = safeIndex
+            return@LaunchedEffect
+        }
+        val page = pages[safeIndex]
+        loadError = null
         val loaded =
             withContext(Dispatchers.IO) {
-                val uri =
-                    NotesRelativeDocuments.resolve(
-                        resolver = contentResolver,
-                        treeUri = treeUri,
-                        folderPath = folderPath,
-                        relativePath = CanvasNoteDefaults.IMAGE_RELATIVE_PATH,
-                        noteDocumentId = noteDocumentId,
-                    )
-                val bytes = uri?.let { NotesRelativeDocuments.readBytes(contentResolver, it) }
-                if (uri == null || bytes == null) {
-                    null
-                } else {
-                    val decoded =
-                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                            ?.copy(Bitmap.Config.ARGB_8888, true)
-                    if (decoded == null) null else uri to decoded
-                }
+                val bytes = NotesRelativeDocuments.readBytes(contentResolver, page.uri)
+                val decoded =
+                    bytes
+                        ?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
+                        ?.copy(Bitmap.Config.ARGB_8888, true)
+                if (decoded == null) null else page.uri to decoded
             }
         session.sourceBitmap?.recycle()
         session.displayBitmap?.recycle()
@@ -265,6 +342,7 @@ fun NotesCanvasPane(
             loadError = loadFailedMessage
             latestOnStatusMessage(loadFailedMessage)
             session.imageUri = null
+            hasImage = false
             syncUndoFlags()
             return@LaunchedEffect
         }
@@ -296,6 +374,123 @@ fun NotesCanvasPane(
             session.sourceBitmap = null
             session.displayBitmap = null
         }
+    }
+
+    fun goToPage(targetIndex: Int) {
+        if (targetIndex == pageIndex || targetIndex !in pages.indices) {
+            return
+        }
+        scope.launch {
+            if (!flushCurrentPage()) {
+                latestOnStatusMessage(saveFailedMessage)
+                return@launch
+            }
+            clearSessionBitmaps()
+            pageIndex = targetIndex
+        }
+    }
+
+    fun addPage() {
+        val tree = treeUri ?: return
+        scope.launch {
+            if (!flushCurrentPage()) {
+                latestOnStatusMessage(saveFailedMessage)
+                return@launch
+            }
+            val updated =
+                withContext(Dispatchers.IO) {
+                    runCatching {
+                        CanvasPages.addPage(
+                            resolver = contentResolver,
+                            treeUri = tree,
+                            folderPath = folderPath,
+                            noteDocumentId = noteDocumentId,
+                        )
+                    }.getOrNull()
+                }
+            if (updated == null || updated.isEmpty()) {
+                latestOnStatusMessage(pageFailedMessage)
+                return@launch
+            }
+            if (!persistMarkdownForPages(updated)) {
+                latestOnStatusMessage(pageFailedMessage)
+                return@launch
+            }
+            clearSessionBitmaps()
+            pages = updated
+            pageIndex = updated.lastIndex
+            latestOnStatusMessage(null)
+        }
+    }
+
+    fun confirmDeletePage() {
+        if (pages.size <= 1) {
+            latestOnStatusMessage(deleteLastMessage)
+            showDeletePageDialog = false
+            return
+        }
+        val tree = treeUri ?: return
+        val page = pages.getOrNull(pageIndex) ?: return
+        scope.launch {
+            if (!flushCurrentPage()) {
+                latestOnStatusMessage(saveFailedMessage)
+                showDeletePageDialog = false
+                return@launch
+            }
+            val deleted =
+                withContext(Dispatchers.IO) {
+                    CanvasPages.deletePage(contentResolver, page)
+                }
+            if (!deleted) {
+                latestOnStatusMessage(pageFailedMessage)
+                showDeletePageDialog = false
+                return@launch
+            }
+            val updated =
+                withContext(Dispatchers.IO) {
+                    CanvasPages.listPages(
+                        resolver = contentResolver,
+                        treeUri = tree,
+                        folderPath = folderPath,
+                        noteDocumentId = noteDocumentId,
+                    )
+                }
+            if (updated.isEmpty() || !persistMarkdownForPages(updated)) {
+                latestOnStatusMessage(pageFailedMessage)
+                showDeletePageDialog = false
+                return@launch
+            }
+            clearSessionBitmaps()
+            pages = updated
+            pageIndex = pageIndex.coerceAtMost(updated.lastIndex)
+            showDeletePageDialog = false
+            latestOnStatusMessage(null)
+        }
+    }
+
+    if (showDeletePageDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeletePageDialog = false },
+            title = { Text(stringResource(R.string.markdown_notes_canvas_page_delete_title)) },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.markdown_notes_canvas_page_delete_message,
+                        pageIndex + 1,
+                    ),
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { confirmDeletePage() }) {
+                    Text(stringResource(R.string.markdown_notes_canvas_page_delete_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeletePageDialog = false }) {
+                    Text(stringResource(R.string.markdown_notes_canvas_page_delete_cancel))
+                }
+            },
+        )
     }
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -337,6 +532,20 @@ fun NotesCanvasPane(
                 rebuildDisplay()
                 syncUndoFlags()
                 scheduleAutosave()
+            },
+        )
+        CanvasPageBar(
+            pageIndex = pageIndex,
+            pageCount = pages.size,
+            onPrevious = { goToPage(pageIndex - 1) },
+            onNext = { goToPage(pageIndex + 1) },
+            onAdd = { addPage() },
+            onDelete = {
+                if (pages.size <= 1) {
+                    latestOnStatusMessage(deleteLastMessage)
+                } else {
+                    showDeletePageDialog = true
+                }
             },
         )
         Box(
@@ -513,6 +722,74 @@ fun NotesCanvasPane(
                             )
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CanvasPageBar(
+    pageIndex: Int,
+    pageCount: Int,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    onAdd: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    Surface(tonalElevation = 1.dp) {
+        Row(
+            modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(
+                    onClick = onPrevious,
+                    enabled = pageIndex > 0 && pageCount > 0,
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                        contentDescription = stringResource(R.string.markdown_notes_canvas_page_prev),
+                    )
+                }
+                Text(
+                    text =
+                    stringResource(
+                        R.string.markdown_notes_canvas_page_indicator,
+                        if (pageCount == 0) 0 else pageIndex + 1,
+                        pageCount,
+                    ),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                IconButton(
+                    onClick = onNext,
+                    enabled = pageIndex < pageCount - 1,
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = stringResource(R.string.markdown_notes_canvas_page_next),
+                    )
+                }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onAdd) {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = stringResource(R.string.markdown_notes_canvas_page_add),
+                    )
+                }
+                IconButton(
+                    onClick = onDelete,
+                    enabled = pageCount > 1,
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = stringResource(R.string.markdown_notes_canvas_page_delete),
+                    )
                 }
             }
         }

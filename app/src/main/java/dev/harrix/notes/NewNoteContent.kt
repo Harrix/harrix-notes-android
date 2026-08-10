@@ -124,7 +124,7 @@ object NewNoteContent {
 
     /**
      * Build note file content: beginning + personal data + `# heading`.
-     * When [isCanvas], injects `type: canvas` and an `img/canvas.png` image link.
+     * When [isCanvas], injects `type: canvas` and an `img/canvas_01.png` image link.
      *
      * @hsk-sync:new-note
      */
@@ -140,7 +140,8 @@ object NewNoteContent {
         }
         val title = heading.trim()
         return if (isCanvas) {
-            "$withPersonal\n# $title\n\n![canvas](img/canvas.png)\n\n"
+            val imageBlock = CanvasPages.markdownImageBlock(pageCount = 1)
+            "$withPersonal\n# $title\n\n$imageBlock\n"
         } else {
             "$withPersonal\n# $title\n\n\n"
         }

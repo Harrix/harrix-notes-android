@@ -2121,10 +2121,18 @@ fun NotesViewerScreen(
                                                 treeUri = notesTreeUri?.let { Uri.parse(it) },
                                                 folderPath = canvasSurfaceTab.folderPath,
                                                 noteDocumentId = canvasSurfaceTab.documentId,
+                                                noteUri = canvasSurfaceTab.uri,
+                                                noteMarkdown = draftText.ifBlank { noteContent.orEmpty() },
                                                 contentResolver = context.contentResolver,
                                                 preferences = preferences,
                                                 onStatusMessage = { message ->
                                                     statusMessage = message
+                                                },
+                                                onNoteMarkdownChange = { markdown ->
+                                                    draftText = markdown
+                                                    noteContent = markdown
+                                                    lastSavedText = markdown
+                                                    previewDraftText = markdown
                                                 },
                                             )
                                         }

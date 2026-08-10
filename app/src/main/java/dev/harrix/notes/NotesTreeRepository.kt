@@ -1,8 +1,6 @@
 ﻿package dev.harrix.notes
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Color
 import android.net.Uri
 import android.provider.DocumentsContract
 import kotlinx.coroutines.Dispatchers
@@ -10,7 +8,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 
@@ -723,7 +720,7 @@ class NotesTreeRepository(
 
     /**
      * Creates a folder-per-note package `{stem}/{stem}.md` under [parentDocumentId].
-     * When [isCanvas], also creates `img/canvas.png` and canvas frontmatter/body.
+     * When [isCanvas], also creates `img/canvas_01.png` and canvas frontmatter/body.
      * Content follows `@hsk-sync:new-note` (beginning template + optional personal data + `#` heading).
      */
     fun createMarkdownNote(
@@ -812,36 +809,17 @@ class NotesTreeRepository(
                 resolver,
                 folderUri,
                 DocumentsContract.Document.MIME_TYPE_DIR,
-                "img",
+                CanvasNoteDefaults.IMAGE_FOLDER,
             ) ?: error("Could not create img folder")
+        val fileName = CanvasNoteDefaults.pageFileName(1)
         val pngUri =
             DocumentsContract.createDocument(
                 resolver,
                 imgFolderUri,
                 "image/png",
-                "canvas.png",
-            ) ?: error("Could not create canvas.png")
-        writeBytes(pngUri, createBlankCanvasPngBytes())
-    }
-
-    private fun createBlankCanvasPngBytes(): ByteArray {
-        val bitmap =
-            Bitmap.createBitmap(
-                CanvasNoteDefaults.WIDTH_PX,
-                CanvasNoteDefaults.HEIGHT_PX,
-                Bitmap.Config.ARGB_8888,
-            )
-        bitmap.eraseColor(Color.TRANSPARENT)
-        return try {
-            ByteArrayOutputStream().use { stream ->
-                if (!bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)) {
-                    error("Could not encode blank canvas")
-                }
-                stream.toByteArray()
-            }
-        } finally {
-            bitmap.recycle()
-        }
+                fileName,
+            ) ?: error("Could not create $fileName")
+        writeBytes(pngUri, CanvasPages.createBlankPngBytes())
     }
 
     /**

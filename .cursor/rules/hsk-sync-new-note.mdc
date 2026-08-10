@@ -24,6 +24,6 @@ Token `@hsk-sync:new-note` marks one logical **New note** command in three place
 3. `personal_data.enabled` default **false** — omit `author` / `author-email` when off; inject configured values when on (defaults `noname` / empty).
 4. Layout: folder-per-note `{stem}/{stem}.md` (Desktop, JS, and Android).
 
-Out of scope for this sync id: Diary/Dream/Cases, rich markdown templates, Android-only canvas notes (`type: canvas` + `img/canvas.png`).
+Out of scope for this sync id: Diary/Dream/Cases, rich markdown templates, Android-only canvas notes (`type: canvas` + `img/canvas_01.png`).
 
 Later synced commands use their own `@hsk-sync:<id>` + rule file using this pattern.

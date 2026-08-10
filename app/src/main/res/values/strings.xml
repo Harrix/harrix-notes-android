@@ -172,6 +172,17 @@
     <string name="markdown_notes_canvas_redo">Redo</string>
     <string name="markdown_notes_canvas_load_failed">Could not load canvas image</string>
     <string name="markdown_notes_canvas_save_failed">Could not save canvas</string>
+    <string name="markdown_notes_canvas_page_prev">Previous page</string>
+    <string name="markdown_notes_canvas_page_next">Next page</string>
+    <string name="markdown_notes_canvas_page_add">Add page</string>
+    <string name="markdown_notes_canvas_page_delete">Delete page</string>
+    <string name="markdown_notes_canvas_page_indicator">%1$d / %2$d</string>
+    <string name="markdown_notes_canvas_page_delete_title">Delete page?</string>
+    <string name="markdown_notes_canvas_page_delete_message">Page %1$d will be removed permanently.</string>
+    <string name="markdown_notes_canvas_page_delete_confirm">Delete</string>
+    <string name="markdown_notes_canvas_page_delete_cancel">Cancel</string>
+    <string name="markdown_notes_canvas_page_delete_last">Cannot delete the only page</string>
+    <string name="markdown_notes_canvas_page_failed">Could not update pages</string>
     <string name="markdown_notes_note_info">Note info</string>
     <string name="markdown_notes_note_info_title">Title</string>
     <string name="markdown_notes_note_info_file_name">File name</string>

@@ -159,6 +159,17 @@
     <string name="markdown_notes_canvas_redo">Повторить</string>
     <string name="markdown_notes_canvas_load_failed">Не удалось загрузить полотно</string>
     <string name="markdown_notes_canvas_save_failed">Не удалось сохранить полотно</string>
+    <string name="markdown_notes_canvas_page_prev">Предыдущая страница</string>
+    <string name="markdown_notes_canvas_page_next">Следующая страница</string>
+    <string name="markdown_notes_canvas_page_add">Добавить страницу</string>
+    <string name="markdown_notes_canvas_page_delete">Удалить страницу</string>
+    <string name="markdown_notes_canvas_page_indicator">%1$d / %2$d</string>
+    <string name="markdown_notes_canvas_page_delete_title">Удалить страницу?</string>
+    <string name="markdown_notes_canvas_page_delete_message">Страница %1$d будет удалена без возможности восстановления.</string>
+    <string name="markdown_notes_canvas_page_delete_confirm">Удалить</string>
+    <string name="markdown_notes_canvas_page_delete_cancel">Отмена</string>
+    <string name="markdown_notes_canvas_page_delete_last">Нельзя удалить единственную страницу</string>
+    <string name="markdown_notes_canvas_page_failed">Не удалось обновить страницы</string>
     <string name="markdown_notes_note_info">О заметке</string>
     <string name="markdown_notes_note_info_title">Название</string>
     <string name="markdown_notes_note_info_file_name">Имя файла</string>
