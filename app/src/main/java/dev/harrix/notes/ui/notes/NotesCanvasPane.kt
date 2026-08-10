@@ -69,6 +69,7 @@ import androidx.compose.ui.unit.dp
 import dev.harrix.notes.CanvasNoteDefaults
 import dev.harrix.notes.NotesPathSegment
 import dev.harrix.notes.NotesRelativeDocuments
+import dev.harrix.notes.NotesViewerPreferences
 import dev.harrix.notes.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -129,18 +130,21 @@ fun NotesCanvasPane(
     folderPath: List<NotesPathSegment>,
     noteDocumentId: String,
     contentResolver: ContentResolver,
+    preferences: NotesViewerPreferences,
     modifier: Modifier = Modifier,
     onStatusMessage: (String?) -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
     val session = remember { CanvasSession() }
     val paperColor = MaterialTheme.colorScheme.surface
-    val initialPenColor = MaterialTheme.colorScheme.onSurface.toArgb()
+    val fallbackPenColor = MaterialTheme.colorScheme.onSurface.toArgb()
+    val initialPenColor = preferences.loadCanvasPenColorArgb() ?: fallbackPenColor
+    val initialPenWidth = preferences.loadCanvasPenWidth()
     var loadError by remember { mutableStateOf<String?>(null) }
     var hasImage by remember { mutableStateOf(false) }
     var tool by remember { mutableStateOf(CanvasTool.Pen) }
     var penColor by remember { mutableIntStateOf(initialPenColor) }
-    var baseWidth by remember { mutableFloatStateOf(6f) }
+    var baseWidth by remember { mutableFloatStateOf(initialPenWidth) }
     var scale by remember { mutableFloatStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
     var viewportSize by remember { mutableStateOf(IntSize.Zero) }
@@ -291,8 +295,14 @@ fun NotesCanvasPane(
             canUndo = canUndo,
             canRedo = canRedo,
             onToolChange = { tool = it },
-            onColorChange = { penColor = it },
-            onWidthChange = { baseWidth = it },
+            onColorChange = { color ->
+                penColor = color
+                preferences.saveCanvasPenColorArgb(color)
+            },
+            onWidthChange = { width ->
+                baseWidth = width
+                preferences.saveCanvasPenWidth(width)
+            },
             onUndo = {
                 if (session.strokes.isEmpty()) {
                     return@CanvasToolbar
@@ -440,6 +450,10 @@ fun NotesCanvasPane(
                                         session.redoStack.clear()
                                         rebuildDisplay()
                                         syncUndoFlags()
+                                        if (!active.isEraser) {
+                                            preferences.saveCanvasPenColorArgb(active.color)
+                                            preferences.saveCanvasPenWidth(active.baseWidth)
+                                        }
                                         scheduleAutosave()
                                     }
                                 }
@@ -579,7 +593,8 @@ private fun CanvasToolbar(
             Slider(
                 value = baseWidth,
                 onValueChange = onWidthChange,
-                valueRange = 2f..28f,
+                valueRange =
+                NotesViewerPreferences.MIN_CANVAS_PEN_WIDTH..NotesViewerPreferences.MAX_CANVAS_PEN_WIDTH,
                 modifier = Modifier.fillMaxWidth(),
             )
         }

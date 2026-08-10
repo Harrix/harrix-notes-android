@@ -79,6 +79,32 @@ class NotesViewerPreferences(
         prefs.edit().putString(KEY_NOTE_OPEN_MODE, mode.name).apply()
     }
 
+    /** Last canvas pen color (ARGB), or null if the user has never drawn yet. */
+    fun loadCanvasPenColorArgb(): Int? =
+        if (prefs.contains(KEY_CANVAS_PEN_COLOR_ARGB)) {
+            prefs.getInt(KEY_CANVAS_PEN_COLOR_ARGB, 0)
+        } else {
+            null
+        }
+
+    fun saveCanvasPenColorArgb(colorArgb: Int) {
+        prefs.edit().putInt(KEY_CANVAS_PEN_COLOR_ARGB, colorArgb).apply()
+    }
+
+    fun loadCanvasPenWidth(): Float =
+        prefs
+            .getFloat(KEY_CANVAS_PEN_WIDTH, DEFAULT_CANVAS_PEN_WIDTH)
+            .coerceIn(MIN_CANVAS_PEN_WIDTH, MAX_CANVAS_PEN_WIDTH)
+
+    fun saveCanvasPenWidth(width: Float) {
+        prefs
+            .edit()
+            .putFloat(
+                KEY_CANVAS_PEN_WIDTH,
+                width.coerceIn(MIN_CANVAS_PEN_WIDTH, MAX_CANVAS_PEN_WIDTH),
+            ).apply()
+    }
+
     fun loadPreviewFontSizeSp(): Int = prefs
         .getInt(KEY_PREVIEW_FONT_SIZE_SP, DEFAULT_PREVIEW_FONT_SIZE_SP)
         .coerceIn(AppPreferences.MIN_FONT_SIZE_SP, AppPreferences.MAX_FONT_SIZE_SP)
@@ -386,8 +412,13 @@ class NotesViewerPreferences(
         private const val KEY_PERSONAL_DATA_AUTHOR_EMAIL = "personal_data_author_email"
         private const val KEY_BEGINNING_TEMPLATES = "beginning_templates_json"
         private const val KEY_DEFAULT_BEGINNING_TEMPLATE_ID = "default_beginning_template_id"
+        private const val KEY_CANVAS_PEN_COLOR_ARGB = "canvas_pen_color_argb"
+        private const val KEY_CANVAS_PEN_WIDTH = "canvas_pen_width"
 
         const val DEFAULT_PERSONAL_DATA_AUTHOR = "noname"
+        const val DEFAULT_CANVAS_PEN_WIDTH = 6f
+        const val MIN_CANVAS_PEN_WIDTH = 2f
+        const val MAX_CANVAS_PEN_WIDTH = 28f
 
         private fun beginningTemplatesToJson(templates: List<NewNoteContent.BeginningTemplate>): String {
             val array = JSONArray()

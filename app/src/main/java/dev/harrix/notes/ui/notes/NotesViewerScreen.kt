@@ -2122,6 +2122,7 @@ fun NotesViewerScreen(
                                                 folderPath = canvasSurfaceTab.folderPath,
                                                 noteDocumentId = canvasSurfaceTab.documentId,
                                                 contentResolver = context.contentResolver,
+                                                preferences = preferences,
                                                 onStatusMessage = { message ->
                                                     statusMessage = message
                                                 },
