@@ -118,6 +118,13 @@ class NotesViewerPreferences(
             ).apply()
     }
 
+    fun loadPreviewFont(): NotesContentFont =
+        NotesContentFont.fromStorageKey(prefs.getString(KEY_PREVIEW_FONT, null))
+
+    fun savePreviewFont(font: NotesContentFont) {
+        prefs.edit().putString(KEY_PREVIEW_FONT, font.storageKey).apply()
+    }
+
     fun loadEditorFontSizeSp(): Int = prefs
         .getInt(KEY_EDITOR_FONT_SIZE_SP, DEFAULT_EDITOR_FONT_SIZE_SP)
         .coerceIn(AppPreferences.MIN_FONT_SIZE_SP, AppPreferences.MAX_FONT_SIZE_SP)
@@ -129,6 +136,13 @@ class NotesViewerPreferences(
                 KEY_EDITOR_FONT_SIZE_SP,
                 value.coerceIn(AppPreferences.MIN_FONT_SIZE_SP, AppPreferences.MAX_FONT_SIZE_SP),
             ).apply()
+    }
+
+    fun loadEditorFont(): NotesContentFont =
+        NotesContentFont.fromStorageKey(prefs.getString(KEY_EDITOR_FONT, null))
+
+    fun saveEditorFont(font: NotesContentFont) {
+        prefs.edit().putString(KEY_EDITOR_FONT, font.storageKey).apply()
     }
 
     /**
@@ -358,7 +372,9 @@ class NotesViewerPreferences(
             .remove(KEY_TITLE_SOURCE)
             .remove(KEY_NOTE_OPEN_MODE)
             .remove(KEY_PREVIEW_FONT_SIZE_SP)
+            .remove(KEY_PREVIEW_FONT)
             .remove(KEY_EDITOR_FONT_SIZE_SP)
+            .remove(KEY_EDITOR_FONT)
             .remove(KEY_HIGHLIGHT_MAX_MB)
             .remove(KEY_MAX_OPEN_TABS)
             .remove(KEY_SINGLE_NOTE_MODE)
@@ -414,6 +430,8 @@ class NotesViewerPreferences(
         private const val KEY_DEFAULT_BEGINNING_TEMPLATE_ID = "default_beginning_template_id"
         private const val KEY_CANVAS_PEN_COLOR_ARGB = "canvas_pen_color_argb"
         private const val KEY_CANVAS_PEN_WIDTH = "canvas_pen_width"
+        private const val KEY_PREVIEW_FONT = "preview_font"
+        private const val KEY_EDITOR_FONT = "editor_font"
 
         const val DEFAULT_PERSONAL_DATA_AUTHOR = "noname"
         const val DEFAULT_CANVAS_PEN_WIDTH = 6f

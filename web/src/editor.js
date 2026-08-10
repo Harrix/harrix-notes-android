@@ -118,7 +118,7 @@ function buildTheme() {
       },
       "&.cm-focused": { outline: "none" },
       ".cm-scroller": {
-        fontFamily: "monospace",
+        fontFamily: config.fontFamily || "monospace",
         lineHeight: "1.45",
         overflow: "auto",
         WebkitOverflowScrolling: "touch",

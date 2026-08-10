@@ -74,6 +74,7 @@ import androidx.compose.ui.unit.dp
 import dev.harrix.notes.AppPreferences
 import dev.harrix.notes.NewNoteContent
 import dev.harrix.notes.NotesBrowseLayout
+import dev.harrix.notes.NotesContentFont
 import dev.harrix.notes.NotesIconStyle
 import dev.harrix.notes.NotesListDensity
 import dev.harrix.notes.NotesOpenMode
@@ -818,6 +819,7 @@ private fun GeneralSettingsSection(modifier: Modifier = Modifier) {
 private fun EditModeSettingsSection(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val preferences = remember { NotesViewerPreferences(context.applicationContext) }
+    var editorFont by remember { mutableStateOf(preferences.loadEditorFont()) }
     var editorFontSizeSp by remember { mutableIntStateOf(preferences.loadEditorFontSizeSp()) }
     var highlightMaxMb by remember { mutableIntStateOf(preferences.loadHighlightMaxMb()) }
 
@@ -825,6 +827,14 @@ private fun EditModeSettingsSection(modifier: Modifier = Modifier) {
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        ContentFontDropdown(
+            label = stringResource(R.string.settings_markdown_notes_editor_font),
+            selected = editorFont,
+            onSelected = { font ->
+                editorFont = font
+                preferences.saveEditorFont(font)
+            },
+        )
         IntSliderSetting(
             label = stringResource(R.string.settings_markdown_notes_editor_font_size),
             value = editorFontSizeSp,
@@ -856,12 +866,21 @@ private fun EditModeSettingsSection(modifier: Modifier = Modifier) {
 private fun ViewModeSettingsSection(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val preferences = remember { NotesViewerPreferences(context.applicationContext) }
+    var previewFont by remember { mutableStateOf(preferences.loadPreviewFont()) }
     var previewFontSizeSp by remember { mutableIntStateOf(preferences.loadPreviewFontSizeSp()) }
 
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        ContentFontDropdown(
+            label = stringResource(R.string.settings_markdown_notes_preview_font),
+            selected = previewFont,
+            onSelected = { font ->
+                previewFont = font
+                preferences.savePreviewFont(font)
+            },
+        )
         IntSliderSetting(
             label = stringResource(R.string.settings_markdown_notes_preview_font_size),
             value = previewFontSizeSp,
@@ -875,6 +894,60 @@ private fun ViewModeSettingsSection(modifier: Modifier = Modifier) {
         )
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ContentFontDropdown(
+    label: String,
+    selected: NotesContentFont,
+    onSelected: (NotesContentFont) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        OutlinedTextField(
+            value = contentFontLabel(selected),
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier =
+            Modifier
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                .fillMaxWidth(),
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            NotesContentFont.entries.forEach { font ->
+                NotesDropdownMenuItem(
+                    text = { Text(contentFontLabel(font)) },
+                    onClick = {
+                        expanded = false
+                        if (font != selected) {
+                            onSelected(font)
+                        }
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun contentFontLabel(font: NotesContentFont): String =
+    stringResource(
+        when (font) {
+            NotesContentFont.System -> R.string.settings_markdown_notes_font_system
+            NotesContentFont.JetBrainsMono -> R.string.settings_markdown_notes_font_jetbrains_mono
+            NotesContentFont.FiraSans -> R.string.settings_markdown_notes_font_fira_sans
+        },
+    )
 
 /** @hsk-sync:new-note */
 @OptIn(ExperimentalMaterial3Api::class)

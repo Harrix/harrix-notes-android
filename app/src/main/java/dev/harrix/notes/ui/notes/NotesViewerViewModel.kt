@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import dev.harrix.notes.NotesClipboardEntry
+import dev.harrix.notes.NotesContentFont
 import dev.harrix.notes.NotesEntry
 import dev.harrix.notes.NotesOpenMode
 import dev.harrix.notes.NotesPathSegment
@@ -50,7 +51,9 @@ class NotesViewerViewModel(
     val titleSource = mutableStateOf(preferences.loadTitleSource())
     val noteOpenMode = mutableStateOf(preferences.loadNoteOpenMode())
     val previewFontSizeSp = mutableIntStateOf(preferences.loadPreviewFontSizeSp())
+    val previewFont = mutableStateOf(preferences.loadPreviewFont())
     val editorFontSizeSp = mutableIntStateOf(preferences.loadEditorFontSizeSp())
+    val editorFont = mutableStateOf(preferences.loadEditorFont())
     val highlightMaxMb = mutableIntStateOf(preferences.loadHighlightMaxMb())
     val maxOpenTabs = mutableIntStateOf(preferences.loadMaxOpenTabs())
     val singleNoteMode = mutableStateOf(preferences.loadSingleNoteMode())

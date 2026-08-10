@@ -221,7 +221,9 @@ fun NotesViewerScreen(
     var titleSource by viewModel.titleSource
     var noteOpenMode by viewModel.noteOpenMode
     var previewFontSizeSp by viewModel.previewFontSizeSp
+    var previewFont by viewModel.previewFont
     var editorFontSizeSp by viewModel.editorFontSizeSp
+    var editorFont by viewModel.editorFont
     var highlightMaxMb by viewModel.highlightMaxMb
     var maxOpenTabs by viewModel.maxOpenTabs
     var singleNoteMode by viewModel.singleNoteMode
@@ -254,7 +256,9 @@ fun NotesViewerScreen(
         titleSource = preferences.loadTitleSource()
         noteOpenMode = preferences.loadNoteOpenMode()
         previewFontSizeSp = preferences.loadPreviewFontSizeSp()
+        previewFont = preferences.loadPreviewFont()
         editorFontSizeSp = preferences.loadEditorFontSizeSp()
+        editorFont = preferences.loadEditorFont()
         highlightMaxMb = preferences.loadHighlightMaxMb()
         maxOpenTabs = preferences.loadMaxOpenTabs()
         singleNoteMode = preferences.loadSingleNoteMode()
@@ -2146,6 +2150,7 @@ fun NotesViewerScreen(
                                                     errorMessage = statusMessage,
                                                     hasContent = noteContent != null,
                                                     fontSizeSp = editorFontSizeSp,
+                                                    font = editorFont,
                                                     highlightMaxChars =
                                                     NotesViewerPreferences.highlightMaxChars(
                                                         highlightMaxMb,
@@ -2163,6 +2168,7 @@ fun NotesViewerScreen(
                                                     content = previewDraftText,
                                                     errorMessage = statusMessage,
                                                     fontSizeSp = previewFontSizeSp,
+                                                    font = previewFont,
                                                     treeUri = notesTreeUri?.let { Uri.parse(it) },
                                                     folderPath = selectedTab.folderPath,
                                                     noteDocumentId = selectedTab.documentId,
@@ -2180,6 +2186,7 @@ fun NotesViewerScreen(
                                                     errorMessage = statusMessage,
                                                     hasContent = noteContent != null,
                                                     fontSizeSp = editorFontSizeSp,
+                                                    font = editorFont,
                                                     highlightMaxChars =
                                                     NotesViewerPreferences.highlightMaxChars(highlightMaxMb),
                                                     controller = editorController,
@@ -2195,6 +2202,7 @@ fun NotesViewerScreen(
                                                     content = noteContent,
                                                     errorMessage = statusMessage,
                                                     fontSizeSp = previewFontSizeSp,
+                                                    font = previewFont,
                                                     treeUri = notesTreeUri?.let { Uri.parse(it) },
                                                     folderPath = selectedTab.folderPath,
                                                     noteDocumentId = selectedTab.documentId,

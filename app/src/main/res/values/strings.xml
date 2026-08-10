@@ -57,8 +57,13 @@
     <string name="settings_markdown_notes_open_mode">Open notes in</string>
     <string name="settings_markdown_notes_open_mode_preview">Preview</string>
     <string name="settings_markdown_notes_open_mode_edit">Editor</string>
+    <string name="settings_markdown_notes_preview_font">Preview font</string>
     <string name="settings_markdown_notes_preview_font_size">Preview font size</string>
+    <string name="settings_markdown_notes_editor_font">Editor font</string>
     <string name="settings_markdown_notes_editor_font_size">Editor font size</string>
+    <string name="settings_markdown_notes_font_system">System</string>
+    <string name="settings_markdown_notes_font_jetbrains_mono">JetBrains Mono</string>
+    <string name="settings_markdown_notes_font_fira_sans">Fira Sans</string>
     <string name="settings_markdown_notes_highlight_max_mb">Syntax highlight limit (MB)</string>
     <string name="settings_markdown_notes_highlight_max_mb_hint">Larger notes edit without highlighting; 0 disables highlighting; default is 8</string>
     <string name="settings_markdown_notes_browse_layout">Folder view</string>

@@ -39,6 +39,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.webkit.WebViewAssetLoader
 import dev.harrix.notes.AppPreferences
+import dev.harrix.notes.NotesContentFont
+import dev.harrix.notes.NotesContentFontCss
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONObject
@@ -51,7 +53,7 @@ private const val BOOT_TIMEOUT_MS = 8_000L
 private const val SELECTION_ALPHA = 0.3f
 private const val LOG_TAG = "NotesEditor"
 
-/** Minimal shell; `editor.js` is still served by [WebViewAssetLoader]. */
+/** Minimal shell; `editor.js` / fonts are served by [WebViewAssetLoader]. */
 private val EDITOR_SHELL_HTML =
     """
     <!DOCTYPE html>
@@ -60,6 +62,7 @@ private val EDITOR_SHELL_HTML =
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
         <style>
+          ${NotesContentFontCss.fontFaceRules()}
           html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:transparent; }
           .cm-editor { height:100%; width:100%; }
         </style>
@@ -442,6 +445,7 @@ fun NotesMarkdownEditorPane(
     errorMessage: String?,
     hasContent: Boolean,
     fontSizeSp: Int,
+    font: NotesContentFont = NotesContentFont.Default,
     highlightMaxChars: Int,
     controller: NotesMarkdownEditorController,
     onTextChange: (String) -> Unit,
@@ -451,8 +455,8 @@ fun NotesMarkdownEditorPane(
     // 0 disables highlighting for every note; larger notes stay plain text.
     val highlight = highlightMaxChars > 0 && text.length <= highlightMaxChars
     val config =
-        remember(palette, fontSizeSp, highlight, text.length) {
-            buildEditorConfig(palette, fontSizeSp, highlight, text.length)
+        remember(palette, fontSizeSp, font, highlight, text.length) {
+            buildEditorConfig(palette, fontSizeSp, font, highlight, text.length)
         }
     var editorReady by remember { mutableStateOf(false) }
     var editorError by remember { mutableStateOf<String?>(null) }
@@ -692,6 +696,7 @@ private fun createEditorWebView(
 private fun buildEditorConfig(
     palette: NotesEditorPalette,
     fontSizeSp: Int,
+    font: NotesContentFont,
     highlight: Boolean,
     expectedLength: Int,
 ): String {
@@ -712,7 +717,8 @@ private fun buildEditorConfig(
         .put(
             "fontSize",
             fontSizeSp.coerceIn(AppPreferences.MIN_FONT_SIZE_SP, AppPreferences.MAX_FONT_SIZE_SP),
-        ).put("dark", palette.dark)
+        ).put("fontFamily", font.cssFontFamily)
+        .put("dark", palette.dark)
         .put("highlight", highlight)
         .put("expectedLength", expectedLength)
         .put("background", palette.background.toCssHex())

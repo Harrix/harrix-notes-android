@@ -35,7 +35,10 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.webkit.WebViewAssetLoader
 import dev.harrix.notes.AppPreferences
+import dev.harrix.notes.NotesContentFont
+import dev.harrix.notes.NotesContentFontCss
 import dev.harrix.notes.NotesPathSegment
 import dev.harrix.notes.NotesRelativeDocuments
 import dev.harrix.notes.NotesViewerPreferences
@@ -121,6 +124,7 @@ fun NotesHtmlPreviewPane(
     errorMessage: String?,
     modifier: Modifier = Modifier,
     fontSizeSp: Int = NotesViewerPreferences.DEFAULT_PREVIEW_FONT_SIZE_SP,
+    font: NotesContentFont = NotesContentFont.Default,
     treeUri: Uri? = null,
     folderPath: List<NotesPathSegment> = emptyList(),
     noteDocumentId: String? = null,
@@ -143,7 +147,7 @@ fun NotesHtmlPreviewPane(
         }
     scrollMetricsSink.emit = onScrollMetrics
 
-    LaunchedEffect(content, fontSizeSp, treeUri, folderPath, noteDocumentId, palette) {
+    LaunchedEffect(content, fontSizeSp, font, treeUri, folderPath, noteDocumentId, palette) {
         // Do not build from null content: that left a non-null empty HTML and hid
         // the spinner when the real note arrived (first open from the browser).
         if (content == null) {
@@ -161,6 +165,7 @@ fun NotesHtmlPreviewPane(
                 buildPreviewHtml(
                     source = content,
                     fontSizeSp = fontSizeSp,
+                    font = font,
                     resolver = resolver,
                     treeUri = treeUri,
                     folderPath = folderPath,
@@ -264,25 +269,34 @@ private fun createPreviewWebView(
     context: Context,
     background: Color,
     onScrollMetrics: (NotesScrollMetrics) -> Unit,
-): NotesPreviewWebView = NotesPreviewWebView(context).apply {
-    settings.javaScriptEnabled = true
-    settings.domStorageEnabled = false
-    settings.loadsImagesAutomatically = true
-    settings.blockNetworkImage = false
-    // Native bar is too thin for fingers; Compose overlay handles scrubbing.
-    isVerticalScrollBarEnabled = false
-    isHorizontalScrollBarEnabled = false
-    setBackgroundColor(background.toArgb())
-    webViewClient =
-        PreviewWebViewClient(
-            onContentReady = { view ->
-                view.post { onScrollMetrics(view.notesScrollMetrics()) }
-            },
-        )
-    setOnScrollChangeListener { view, _, _, _, _ ->
-        onScrollMetrics((view as NotesPreviewWebView).notesScrollMetrics())
+): NotesPreviewWebView {
+    val assetLoader =
+        WebViewAssetLoader
+            .Builder()
+            .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(context))
+            .build()
+    return NotesPreviewWebView(context).apply {
+        settings.javaScriptEnabled = true
+        settings.domStorageEnabled = false
+        settings.loadsImagesAutomatically = true
+        settings.blockNetworkImage = false
+        settings.textZoom = 100
+        // Native bar is too thin for fingers; Compose overlay handles scrubbing.
+        isVerticalScrollBarEnabled = false
+        isHorizontalScrollBarEnabled = false
+        setBackgroundColor(background.toArgb())
+        webViewClient =
+            PreviewWebViewClient(
+                assetLoader = assetLoader,
+                onContentReady = { view ->
+                    view.post { onScrollMetrics(view.notesScrollMetrics()) }
+                },
+            )
+        setOnScrollChangeListener { view, _, _, _, _ ->
+            onScrollMetrics((view as NotesPreviewWebView).notesScrollMetrics())
+        }
+        tag = ""
     }
-    tag = ""
 }
 
 /** Exposes protected scroll-range APIs for the Compose finger scrollbar. */
@@ -297,8 +311,14 @@ private class NotesPreviewWebView(
 }
 
 private class PreviewWebViewClient(
+    private val assetLoader: WebViewAssetLoader,
     private val onContentReady: (NotesPreviewWebView) -> Unit,
 ) : WebViewClient() {
+    override fun shouldInterceptRequest(
+        view: WebView,
+        request: WebResourceRequest,
+    ) = assetLoader.shouldInterceptRequest(request.url)
+
     override fun onPageFinished(
         view: WebView?,
         url: String?,
@@ -379,6 +399,7 @@ private data class PreviewHtmlBuild(
 private suspend fun buildPreviewHtml(
     source: String,
     fontSizeSp: Int,
+    font: NotesContentFont,
     resolver: ContentResolver,
     treeUri: Uri?,
     folderPath: List<NotesPathSegment>,
@@ -421,7 +442,7 @@ private suspend fun buildPreviewHtml(
                     )
             }
         PreviewHtmlBuild(
-            html = wrapPreviewHtml(embedded.html, size, palette),
+            html = wrapPreviewHtml(embedded.html, size, font, palette),
             simplified = embedded.simplified,
         )
     } catch (_: OutOfMemoryError) {
@@ -436,7 +457,7 @@ private suspend fun buildPreviewHtml(
                 "<p>${SimpleMarkdownToHtml.escapeHtml(snippet)}</p>"
             }
         PreviewHtmlBuild(
-            html = wrapPreviewHtml(body, size, palette),
+            html = wrapPreviewHtml(body, size, font, palette),
             simplified = true,
         )
     }
@@ -570,6 +591,7 @@ private class PreviewEmbedBudget(
 private fun wrapPreviewHtml(
     body: String,
     fontSizePx: Int,
+    font: NotesContentFont,
     palette: NotesPreviewPalette,
 ): String {
     val bg = palette.background.toCssHex()
@@ -583,6 +605,8 @@ private fun wrapPreviewHtml(
     val placeholderFg = palette.placeholderForeground.toCssHex()
     val detailsBg = palette.detailsBackground.toCssHex()
     val colorScheme = if (palette.dark) "dark" else "light"
+    val fontFaces = NotesContentFontCss.fontFaceRules()
+    val fontFamily = font.cssFontFamily
     return """
     <!DOCTYPE html>
     <html>
@@ -591,6 +615,7 @@ private fun wrapPreviewHtml(
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <meta name="color-scheme" content="$colorScheme"/>
     <style>
+      $fontFaces
       html, body {
         margin: 0;
         padding: 0;
@@ -601,7 +626,7 @@ private fun wrapPreviewHtml(
       }
       body {
         padding: 16px;
-        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        font-family: $fontFamily;
         font-size: ${fontSizePx}px;
         line-height: 1.5;
         word-wrap: break-word;
