@@ -124,6 +124,7 @@ object NewNoteContent {
 
     /**
      * Build note file content: beginning + personal data + `# heading`.
+     * When [isCanvas], injects `type: canvas` and an `img/canvas.png` image link.
      *
      * @hsk-sync:new-note
      */
@@ -131,9 +132,74 @@ object NewNoteContent {
         beginning: String,
         heading: String,
         personal: PersonalData,
+        isCanvas: Boolean = false,
     ): String {
-        val withPersonal = applyPersonalDataToBeginning(beginning, personal).trimEnd()
+        var withPersonal = applyPersonalDataToBeginning(beginning, personal).trimEnd()
+        if (isCanvas) {
+            withPersonal = injectFrontmatterKey(withPersonal, "type", "canvas")
+        }
         val title = heading.trim()
-        return "$withPersonal\n# $title\n\n\n"
+        return if (isCanvas) {
+            "$withPersonal\n# $title\n\n![canvas](img/canvas.png)\n\n"
+        } else {
+            "$withPersonal\n# $title\n\n\n"
+        }
+    }
+
+    /**
+     * Inserts or replaces a YAML frontmatter key. If there is no frontmatter block,
+     * creates a minimal one.
+     */
+    fun injectFrontmatterKey(
+        text: String,
+        key: String,
+        value: String,
+    ): String {
+        val keyLower = key.trim().lowercase()
+        val stripped = text.removePrefix("\uFEFF")
+        if (!stripped.startsWith("---")) {
+            return "---\n$keyLower: $value\n---\n${stripped.trimStart('\n')}"
+        }
+        val lines = stripped.split('\n')
+        var endIdx = -1
+        for (i in 1 until lines.size) {
+            if (lines[i].trim() == "---") {
+                endIdx = i
+                break
+            }
+        }
+        if (endIdx < 0) {
+            return text
+        }
+        val bodyLines = mutableListOf<String>()
+        var replaced = false
+        for (line in lines.subList(1, endIdx)) {
+            val lineKey =
+                if (':' in line) {
+                    line.substringBefore(':').trim().lowercase()
+                } else {
+                    ""
+                }
+            if (lineKey == keyLower) {
+                if (!replaced) {
+                    bodyLines += "$keyLower: $value"
+                    replaced = true
+                }
+            } else {
+                bodyLines += line
+            }
+        }
+        if (!replaced) {
+            bodyLines += "$keyLower: $value"
+        }
+        val rebuilt = mutableListOf("---")
+        rebuilt += bodyLines
+        rebuilt += "---"
+        rebuilt += lines.subList(endIdx + 1, lines.size)
+        var result = rebuilt.joinToString("\n")
+        if (text.endsWith("\n") && !result.endsWith("\n")) {
+            result += "\n"
+        }
+        return result
     }
 }

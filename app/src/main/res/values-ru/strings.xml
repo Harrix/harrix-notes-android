@@ -146,8 +146,17 @@
     <string name="markdown_notes_create_note_file_label">Имя файла</string>
     <string name="markdown_notes_create_note_extension">.md</string>
     <string name="markdown_notes_create_note_sync_file_name">Создавать имя файла из названия заметки</string>
+    <string name="markdown_notes_create_note_canvas">Полотно</string>
     <string name="markdown_notes_create_note_confirm">Создать</string>
     <string name="markdown_notes_create_note_cancel">Отмена</string>
+    <string name="markdown_notes_canvas">Полотно</string>
+    <string name="markdown_notes_canvas_markdown">Markdown</string>
+    <string name="markdown_notes_canvas_pen">Перо</string>
+    <string name="markdown_notes_canvas_eraser">Ластик</string>
+    <string name="markdown_notes_canvas_undo">Отменить</string>
+    <string name="markdown_notes_canvas_redo">Повторить</string>
+    <string name="markdown_notes_canvas_load_failed">Не удалось загрузить полотно</string>
+    <string name="markdown_notes_canvas_save_failed">Не удалось сохранить полотно</string>
     <string name="markdown_notes_note_info">О заметке</string>
     <string name="markdown_notes_note_info_title">Название</string>
     <string name="markdown_notes_note_info_file_name">Имя файла</string>

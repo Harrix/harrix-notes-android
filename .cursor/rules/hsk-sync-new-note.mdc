@@ -22,8 +22,8 @@ Token `@hsk-sync:new-note` marks one logical **New note** command in three place
 1. Choose a beginning template (picker when interactive; default/first otherwise).
 2. Body: beginning text + `\n# {heading}\n\n\n`.
 3. `personal_data.enabled` default **false** — omit `author` / `author-email` when off; inject configured values when on (defaults `noname` / empty).
-4. Desktop/JS: folder-per-note `{stem}/{stem}.md`. Android may keep SAF single-file layout; **content** must match.
+4. Layout: folder-per-note `{stem}/{stem}.md` (Desktop, JS, and Android).
 
-Out of scope for this sync id: Diary/Dream/Cases, rich markdown templates.
+Out of scope for this sync id: Diary/Dream/Cases, rich markdown templates, Android-only canvas notes (`type: canvas` + `img/canvas.png`).
 
 Later synced commands use their own `@hsk-sync:<id>` + rule file using this pattern.

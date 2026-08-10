@@ -159,8 +159,17 @@
     <string name="markdown_notes_create_note_file_label">File name</string>
     <string name="markdown_notes_create_note_extension">.md</string>
     <string name="markdown_notes_create_note_sync_file_name">Create file name from note title</string>
+    <string name="markdown_notes_create_note_canvas">Canvas note</string>
     <string name="markdown_notes_create_note_confirm">Create</string>
     <string name="markdown_notes_create_note_cancel">Cancel</string>
+    <string name="markdown_notes_canvas">Canvas</string>
+    <string name="markdown_notes_canvas_markdown">Markdown</string>
+    <string name="markdown_notes_canvas_pen">Pen</string>
+    <string name="markdown_notes_canvas_eraser">Eraser</string>
+    <string name="markdown_notes_canvas_undo">Undo</string>
+    <string name="markdown_notes_canvas_redo">Redo</string>
+    <string name="markdown_notes_canvas_load_failed">Could not load canvas image</string>
+    <string name="markdown_notes_canvas_save_failed">Could not save canvas</string>
     <string name="markdown_notes_note_info">Note info</string>
     <string name="markdown_notes_note_info_title">Title</string>
     <string name="markdown_notes_note_info_file_name">File name</string>

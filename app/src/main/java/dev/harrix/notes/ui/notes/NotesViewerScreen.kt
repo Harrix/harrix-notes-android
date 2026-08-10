@@ -52,6 +52,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Brush
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
@@ -123,6 +124,7 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.harrix.notes.NoteMetaUpdates
+import dev.harrix.notes.NoteTitleExtractor
 import dev.harrix.notes.NotesBrowseLayout
 import dev.harrix.notes.NotesClipboardEntry
 import dev.harrix.notes.NotesClipboardKind
@@ -204,6 +206,7 @@ fun NotesViewerScreen(
     var noteContent by viewModel.noteContent
     var noteLoading by viewModel.noteLoading
     var isEditing by viewModel.isEditing
+    var canvasMarkdownMode by viewModel.canvasMarkdownMode
     var autoEditDocumentId by viewModel.autoEditDocumentId
     var draftText by viewModel.draftText
     var lastSavedText by viewModel.lastSavedText
@@ -504,6 +507,7 @@ fun NotesViewerScreen(
 
     fun resetEditorState() {
         isEditing = false
+        canvasMarkdownMode = false
         draftText = ""
         lastSavedText = null
         autosaveJob?.cancel()
@@ -1003,6 +1007,7 @@ fun NotesViewerScreen(
         fileStem: String,
         noteTitle: String,
         beginningTemplateId: String,
+        isCanvas: Boolean = false,
     ) {
         val tree = notesTreeUri ?: return
         val treeUri = Uri.parse(tree)
@@ -1031,6 +1036,7 @@ fun NotesViewerScreen(
                             noteTitle = noteTitle,
                             beginningTemplate = beginningTemplate,
                             personalData = personalData,
+                            isCanvas = isCanvas,
                         )
                     }
                 }.getOrElse { error ->
@@ -1056,8 +1062,13 @@ fun NotesViewerScreen(
                     repository.applyTitleSource(listed, titleSource),
                 )
             }
-            autoEditDocumentId = note.documentId
-            openNote(note, path)
+            canvasMarkdownMode = false
+            if (isCanvas) {
+                autoEditDocumentId = null
+            } else {
+                autoEditDocumentId = note.documentId
+            }
+            openNote(note, noteAssetFolderPath(path, note))
         }
     }
 
@@ -1503,7 +1514,22 @@ fun NotesViewerScreen(
     }
 
     fun navigateBack(useDualPane: Boolean = false) {
+        val canvasNote =
+            NoteTitleExtractor.isCanvas(draftText.ifBlank { noteContent.orEmpty() })
         when {
+            canvasNote && canvasMarkdownMode && isEditing && !useDualPane -> {
+                persistCurrentDraft {
+                    isEditing = false
+                    draftText = noteContent.orEmpty()
+                    lastSavedText = noteContent
+                }
+            }
+
+            canvasNote && canvasMarkdownMode -> {
+                canvasMarkdownMode = false
+                isEditing = false
+            }
+
             isEditing && !useDualPane -> {
                 persistCurrentDraft {
                     isEditing = false
@@ -1764,8 +1790,12 @@ fun NotesViewerScreen(
                 noteContent = loaded
                 draftText = loaded
                 lastSavedText = loaded
+                canvasMarkdownMode = false
+                val canvasNote = NoteTitleExtractor.isCanvas(loaded)
                 val shouldEdit =
                     when {
+                        canvasNote -> false
+
                         autoEditDocumentId == tab.documentId -> {
                             autoEditDocumentId = null
                             true
@@ -1775,6 +1805,9 @@ fun NotesViewerScreen(
 
                         else -> noteOpenMode == NotesOpenMode.Edit
                     }
+                if (autoEditDocumentId == tab.documentId && canvasNote) {
+                    autoEditDocumentId = null
+                }
                 isEditing = shouldEdit
                 previewDraftText = loaded
                 statusMessage = null
@@ -1784,6 +1817,7 @@ fun NotesViewerScreen(
                 draftText = ""
                 lastSavedText = null
                 previewDraftText = ""
+                canvasMarkdownMode = false
                 if (autoEditDocumentId == tab.documentId) {
                     autoEditDocumentId = null
                 }
@@ -1795,8 +1829,20 @@ fun NotesViewerScreen(
         noteLoading = false
     }
 
-    LaunchedEffect(useDualPane, selectedTabDocumentId, noteContent) {
-        if (useDualPane && selectedTabDocumentId != null && noteContent != null) {
+    val isCanvasNote =
+        remember(draftText, noteContent) {
+            NoteTitleExtractor.isCanvas(draftText.ifBlank { noteContent.orEmpty() })
+        }
+    val canvasSurfaceTab =
+        selectedTab?.takeIf {
+            isCanvasNote && !canvasMarkdownMode && noteContent != null
+        }
+
+    val hasOpenNoteContent = selectedTabDocumentId != null && noteContent != null
+    val canvasAllowsMarkdown = !isCanvasNote || canvasMarkdownMode
+    val dualPaneShowsMarkdown = useDualPane && hasOpenNoteContent && canvasAllowsMarkdown
+    LaunchedEffect(dualPaneShowsMarkdown, draftText) {
+        if (dualPaneShowsMarkdown) {
             isEditing = true
             previewDraftText = draftText
         }
@@ -2016,9 +2062,27 @@ fun NotesViewerScreen(
                                 onReorderTabs = { from, to -> reorderTabs(from, to) },
                                 onCreateNote = { requestCreateNewNote() },
                                 showEditActions = selectedTab != null && !noteLoading && noteContent != null,
-                                showEditPreviewToggle = !useDualPane,
+                                showEditPreviewToggle = !useDualPane && canvasSurfaceTab == null,
                                 isEditing = isEditing,
                                 isSaving = isSaving,
+                                isCanvasNote = isCanvasNote,
+                                canvasMarkdownMode = canvasMarkdownMode,
+                                onToggleCanvasMarkdown = {
+                                    if (canvasMarkdownMode) {
+                                        persistCurrentDraft {
+                                            canvasMarkdownMode = false
+                                            isEditing = false
+                                            draftText = noteContent.orEmpty()
+                                            lastSavedText = noteContent
+                                        }
+                                    } else {
+                                        canvasMarkdownMode = true
+                                        isEditing = useDualPane || noteOpenMode == NotesOpenMode.Edit
+                                        draftText = noteContent.orEmpty()
+                                        lastSavedText = noteContent
+                                        previewDraftText = noteContent.orEmpty()
+                                    }
+                                },
                                 onPreview = {
                                     persistCurrentDraft {
                                         isEditing = false
@@ -2051,6 +2115,19 @@ fun NotesViewerScreen(
                                         .background(MaterialTheme.colorScheme.surface),
                                 ) {
                                     when {
+                                        canvasSurfaceTab != null -> {
+                                            NotesCanvasPane(
+                                                isLoading = noteLoading,
+                                                treeUri = notesTreeUri?.let { Uri.parse(it) },
+                                                folderPath = canvasSurfaceTab.folderPath,
+                                                noteDocumentId = canvasSurfaceTab.documentId,
+                                                contentResolver = context.contentResolver,
+                                                onStatusMessage = { message ->
+                                                    statusMessage = message
+                                                },
+                                            )
+                                        }
+
                                         selectedTab != null && useDualPane -> {
                                             Row(modifier = Modifier.fillMaxSize()) {
                                                 NotesMarkdownEditorPane(
@@ -2311,12 +2388,13 @@ fun NotesViewerScreen(
             beginningTemplates = preferences.loadBeginningTemplates(),
             defaultBeginningTemplateId = preferences.loadDefaultBeginningTemplateId(),
             onDismiss = { showCreateNoteDialog = false },
-            onConfirm = { fileStem, noteTitle, beginningTemplateId ->
+            onConfirm = { fileStem, noteTitle, beginningTemplateId, isCanvas ->
                 showCreateNoteDialog = false
                 createNewNote(
                     fileStem = fileStem,
                     noteTitle = noteTitle,
                     beginningTemplateId = beginningTemplateId,
+                    isCanvas = isCanvas,
                 )
             },
         )
@@ -3100,6 +3178,9 @@ private fun NotesNavigationRow(
     showEditPreviewToggle: Boolean = true,
     isEditing: Boolean,
     isSaving: Boolean,
+    isCanvasNote: Boolean = false,
+    canvasMarkdownMode: Boolean = false,
+    onToggleCanvasMarkdown: () -> Unit = {},
     onPreview: () -> Unit,
     onEdit: () -> Unit,
     showCloseNote: Boolean,
@@ -3163,6 +3244,21 @@ private fun NotesNavigationRow(
                         .fillMaxWidth()
                         .padding(top = 2.dp),
                 )
+            }
+            if (showEditActions && isCanvasNote) {
+                IconButton(onClick = onToggleCanvasMarkdown) {
+                    if (canvasMarkdownMode) {
+                        Icon(
+                            imageVector = Icons.Filled.Brush,
+                            contentDescription = stringResource(R.string.markdown_notes_canvas),
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Filled.Description,
+                            contentDescription = stringResource(R.string.markdown_notes_canvas_markdown),
+                        )
+                    }
+                }
             }
             if (showEditActions && showEditPreviewToggle) {
                 if (isEditing) {

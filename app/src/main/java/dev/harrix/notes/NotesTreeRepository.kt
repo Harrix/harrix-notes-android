@@ -1,6 +1,8 @@
 ﻿package dev.harrix.notes
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Color
 import android.net.Uri
 import android.provider.DocumentsContract
 import kotlinx.coroutines.Dispatchers
@@ -8,6 +10,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 
@@ -690,6 +693,16 @@ class NotesTreeRepository(
         } ?: error("Could not save note")
     }
 
+    fun writeBytes(
+        uri: Uri,
+        bytes: ByteArray,
+    ) {
+        resolver.openOutputStream(uri, "w")?.use { output ->
+            output.write(bytes)
+            output.flush()
+        } ?: error("Could not save file")
+    }
+
     /** Drops cached listings for one directory so the next list reflects create/delete. */
     fun invalidateDirectory(
         treeUri: Uri,
@@ -709,10 +722,9 @@ class NotesTreeRepository(
         .toSet()
 
     /**
-     * Creates a Markdown file in [parentDocumentId].
-     * [fileStem] is the name without `.md`.
+     * Creates a folder-per-note package `{stem}/{stem}.md` under [parentDocumentId].
+     * When [isCanvas], also creates `img/canvas.png` and canvas frontmatter/body.
      * Content follows `@hsk-sync:new-note` (beginning template + optional personal data + `#` heading).
-     * Uses `text/markdown` when the provider accepts it, otherwise `text/plain`.
      */
     fun createMarkdownNote(
         treeUri: Uri,
@@ -721,51 +733,115 @@ class NotesTreeRepository(
         noteTitle: String,
         beginningTemplate: NewNoteContent.BeginningTemplate,
         personalData: NewNoteContent.PersonalData,
+        isCanvas: Boolean = false,
     ): NotesEntry.Note {
         val parentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, parentDocumentId)
         val existingNames =
             queryChildren(treeUri, parentDocumentId)
                 .map { it.name.lowercase(Locale.ROOT) }
                 .toSet()
-        val displayName = uniqueMarkdownDisplayName(fileStem, existingNames)
-        val created =
+        val packageStem = uniqueNotePackageStem(fileStem, existingNames)
+        val folderUri =
             DocumentsContract.createDocument(
                 resolver,
                 parentUri,
+                DocumentsContract.Document.MIME_TYPE_DIR,
+                packageStem,
+            ) ?: error("Could not create note folder")
+        val folderDocumentId = DocumentsContract.getDocumentId(folderUri)
+        val folderDocUri =
+            runCatching {
+                DocumentsContract.buildDocumentUriUsingTree(treeUri, folderDocumentId)
+            }.getOrDefault(folderUri)
+        val displayName = "$packageStem.md"
+        val created =
+            DocumentsContract.createDocument(
+                resolver,
+                folderDocUri,
                 "text/markdown",
                 displayName,
             ) ?: DocumentsContract.createDocument(
                 resolver,
-                parentUri,
+                folderDocUri,
                 "text/plain",
                 displayName,
             ) ?: error("Could not create note")
-        val heading = noteTitle.trim().ifEmpty { fileStem }
+        val heading = noteTitle.trim().ifEmpty { packageStem }
         val initialContent =
             NewNoteContent.build(
                 beginning = beginningTemplate.content,
                 heading = heading,
                 personal = personalData,
+                isCanvas = isCanvas,
             )
         runCatching { writeText(created, initialContent) }
+        if (isCanvas) {
+            createCanvasImageAssets(folderDocUri)
+        }
         val documentId = DocumentsContract.getDocumentId(created)
         val noteUri =
             runCatching {
                 DocumentsContract.buildDocumentUriUsingTree(treeUri, documentId)
             }.getOrDefault(created)
         invalidateDirectory(treeUri, parentDocumentId)
+        invalidateDirectory(treeUri, folderDocumentId)
         val contentTitle = NoteTitleExtractor.extract(initialContent).ifEmpty { heading }
         val label = contentTitle.ifEmpty { noteDisplayLabel(displayName) }
         if (contentTitle.isNotEmpty()) {
             titleByDocumentId[documentId] = contentTitle
         }
+        val containingFolder =
+            NotesPathSegment(
+                documentId = folderDocumentId,
+                name = packageStem,
+                uri = folderDocUri,
+            )
         return NotesEntry.Note(
             documentId = documentId,
             name = displayName,
             uri = noteUri,
             displayLabel = label,
+            containingFolder = containingFolder,
             lastModifiedEpochMs = System.currentTimeMillis(),
         )
+    }
+
+    private fun createCanvasImageAssets(folderUri: Uri) {
+        val imgFolderUri =
+            DocumentsContract.createDocument(
+                resolver,
+                folderUri,
+                DocumentsContract.Document.MIME_TYPE_DIR,
+                "img",
+            ) ?: error("Could not create img folder")
+        val pngUri =
+            DocumentsContract.createDocument(
+                resolver,
+                imgFolderUri,
+                "image/png",
+                "canvas.png",
+            ) ?: error("Could not create canvas.png")
+        writeBytes(pngUri, createBlankCanvasPngBytes())
+    }
+
+    private fun createBlankCanvasPngBytes(): ByteArray {
+        val bitmap =
+            Bitmap.createBitmap(
+                CanvasNoteDefaults.WIDTH_PX,
+                CanvasNoteDefaults.HEIGHT_PX,
+                Bitmap.Config.ARGB_8888,
+            )
+        bitmap.eraseColor(Color.WHITE)
+        return try {
+            ByteArrayOutputStream().use { stream ->
+                if (!bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)) {
+                    error("Could not encode blank canvas")
+                }
+                stream.toByteArray()
+            }
+        } finally {
+            bitmap.recycle()
+        }
     }
 
     /**
@@ -1139,6 +1215,36 @@ class NotesTreeRepository(
         }
 
         /**
+         * Unique folder-per-note stem: neither `{stem}` nor `{stem}.md` may already exist
+         * among sibling names (case-insensitive).
+         */
+        fun uniqueNotePackageStem(
+            fileStem: String,
+            existingLowercaseNames: Set<String>,
+        ): String {
+            val base =
+                normalizeMarkdownFileStem(fileStem).ifEmpty {
+                    "Untitled"
+                }
+            fun isFree(stem: String): Boolean {
+                val lower = stem.lowercase(Locale.ROOT)
+                return lower !in existingLowercaseNames &&
+                    "$lower.md" !in existingLowercaseNames
+            }
+            if (isFree(base)) {
+                return base
+            }
+            var index = 2
+            while (true) {
+                val candidate = "$base-$index"
+                if (isFree(candidate)) {
+                    return candidate
+                }
+                index += 1
+            }
+        }
+
+        /**
          * Duplicate naming: `Name_copy`, then `Name_copy_02`, `Name_copy_03`, …
          * Keeps `.md` / `.g.md` suffixes when present.
          */
@@ -1171,8 +1277,9 @@ class NotesTreeRepository(
             var index = 1
             while (true) {
                 val stem = String.format(Locale.ROOT, "Untitled_%02d", index)
-                val fileName = "$stem.md".lowercase(Locale.ROOT)
-                if (fileName !in existingLowercaseNames) {
+                val lower = stem.lowercase(Locale.ROOT)
+                val fileName = "$lower.md"
+                if (lower !in existingLowercaseNames && fileName !in existingLowercaseNames) {
                     return stem
                 }
                 index += 1

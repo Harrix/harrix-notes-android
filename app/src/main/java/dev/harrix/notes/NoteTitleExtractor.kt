@@ -8,6 +8,7 @@ object NoteTitleExtractor {
     private val FRONTMATTER_REGEX = Regex("^---\\r?\\n([\\s\\S]*?)\\r?\\n---\\r?\\n?")
     private val TITLE_LINE_REGEX = Regex("^title\\s*:\\s*(.*)$", RegexOption.IGNORE_CASE)
     private val ICON_LINE_REGEX = Regex("^icon\\s*:\\s*(.*)$", RegexOption.IGNORE_CASE)
+    private val TYPE_LINE_REGEX = Regex("^type\\s*:\\s*(.*)$", RegexOption.IGNORE_CASE)
     private val H1_REGEX = Regex("^#\\s+(.+)$")
     private val HTTP_URL_REGEX = Regex("^https?://", RegexOption.IGNORE_CASE)
     private val IMAGE_EXT_REGEX = Regex("\\.(png|jpe?g|gif|svg|webp|avif|ico)$", RegexOption.IGNORE_CASE)
@@ -15,9 +16,13 @@ object NoteTitleExtractor {
     data class Meta(
         val title: String,
         val icon: String,
+        /** YAML `type:` value when present (e.g. `canvas`). */
+        val type: String = "",
     )
 
     fun extract(text: String): String = extractMeta(text).title
+
+    fun isCanvas(text: String): Boolean = extractMeta(text).type.equals("canvas", ignoreCase = true)
 
     fun extractMeta(text: String): Meta {
         var src = text
@@ -27,17 +32,20 @@ object NoteTitleExtractor {
         val fmMatch = FRONTMATTER_REGEX.find(src)
         val title: String
         val icon: String
+        val type: String
         if (fmMatch != null) {
             val fm = fmMatch.groupValues[1]
             title =
                 titleFromFrontmatterBlock(fm)
                     .ifEmpty { firstH1AfterFrontmatter(src.substring(fmMatch.range.last + 1)) }
             icon = iconFromFrontmatterBlock(fm)
+            type = typeFromFrontmatterBlock(fm)
         } else {
             title = firstH1AfterFrontmatter(src)
             icon = ""
+            type = ""
         }
-        return Meta(title = stripHtmlComments(title), icon = icon)
+        return Meta(title = stripHtmlComments(title), icon = icon, type = type)
     }
 
     private fun titleFromFrontmatterBlock(fmText: String): String {
@@ -57,6 +65,17 @@ object NoteTitleExtractor {
             val icon = unquoteYamlScalar(match.groupValues[1])
             if (icon.isNotEmpty() && isNoteTreeEmojiIcon(icon)) {
                 return icon
+            }
+        }
+        return ""
+    }
+
+    private fun typeFromFrontmatterBlock(fmText: String): String {
+        for (line in fmText.lineSequence()) {
+            val match = TYPE_LINE_REGEX.find(line) ?: continue
+            val type = unquoteYamlScalar(match.groupValues[1])
+            if (type.isNotEmpty()) {
+                return type
             }
         }
         return ""

@@ -45,11 +45,17 @@ fun NotesCreateNoteDialog(
     beginningTemplates: List<NewNoteContent.BeginningTemplate>,
     defaultBeginningTemplateId: String,
     onDismiss: () -> Unit,
-    onConfirm: (fileStem: String, noteTitle: String, beginningTemplateId: String) -> Unit,
+    onConfirm: (
+        fileStem: String,
+        noteTitle: String,
+        beginningTemplateId: String,
+        isCanvas: Boolean,
+    ) -> Unit,
 ) {
     var noteTitle by remember { mutableStateOf("") }
     var fileStem by remember { mutableStateOf("") }
     var syncFileNameFromTitle by remember { mutableStateOf(true) }
+    var isCanvas by remember { mutableStateOf(false) }
     val templates =
         beginningTemplates.ifEmpty { NewNoteContent.defaultBeginningTemplates }
     var selectedTemplateId by remember {
@@ -89,11 +95,12 @@ fun NotesCreateNoteDialog(
             NotesTreeRepository.normalizeMarkdownFileStem(fileStem),
             noteTitle.trim(),
             selectedTemplate.id,
+            isCanvas,
         )
     }
 
     fun confirmUntitled() {
-        onConfirm(untitledFileStem, untitledFileStem, selectedTemplate.id)
+        onConfirm(untitledFileStem, untitledFileStem, selectedTemplate.id, isCanvas)
     }
 
     AlertDialog(
@@ -208,6 +215,27 @@ fun NotesCreateNoteDialog(
                     )
                     Text(
                         text = stringResource(R.string.markdown_notes_create_note_sync_file_name),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(start = 4.dp),
+                    )
+                }
+                Row(
+                    modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable(
+                            role = Role.Checkbox,
+                            onClick = { isCanvas = !isCanvas },
+                        )
+                        .padding(vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Checkbox(
+                        checked = isCanvas,
+                        onCheckedChange = null,
+                    )
+                    Text(
+                        text = stringResource(R.string.markdown_notes_create_note_canvas),
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(start = 4.dp),
                     )
