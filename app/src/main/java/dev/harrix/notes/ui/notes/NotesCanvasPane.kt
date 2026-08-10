@@ -3,8 +3,6 @@ package dev.harrix.notes.ui.notes
 import android.content.ContentResolver
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Canvas as AndroidCanvas
-import android.graphics.Color as AndroidColor
 import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
@@ -65,7 +63,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush as ComposeBrush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -94,6 +91,9 @@ import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import kotlin.math.min
 import kotlin.math.roundToInt
+import android.graphics.Canvas as AndroidCanvas
+import android.graphics.Color as AndroidColor
+import androidx.compose.ui.graphics.Brush as ComposeBrush
 
 private const val CanvasAutosaveDelayMs = 800L
 
@@ -603,12 +603,14 @@ fun NotesCanvasPane(
         ) {
             when {
                 isLoading -> NotesLoadingIndicator(modifier = Modifier.align(Alignment.Center))
+
                 loadError != null ->
                     Text(
                         text = loadError.orEmpty(),
                         color = MaterialTheme.colorScheme.error,
                         modifier = Modifier.padding(24.dp),
                     )
+
                 hasImage && session.displayBitmap != null && session.sourceBitmap != null -> {
                     val source = session.sourceBitmap!!
                     val display = session.displayBitmap!!

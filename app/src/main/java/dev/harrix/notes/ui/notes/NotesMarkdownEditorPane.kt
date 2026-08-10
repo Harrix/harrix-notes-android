@@ -445,11 +445,11 @@ fun NotesMarkdownEditorPane(
     errorMessage: String?,
     hasContent: Boolean,
     fontSizeSp: Int,
-    font: NotesContentFont = NotesContentFont.Default,
     highlightMaxChars: Int,
     controller: NotesMarkdownEditorController,
     onTextChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    font: NotesContentFont = NotesContentFont.Default,
 ) {
     val palette = rememberNotesEditorPalette()
     // 0 disables highlighting for every note; larger notes stay plain text.

@@ -26,10 +26,9 @@ enum class NotesContentFont(
     companion object {
         val Default: NotesContentFont = JetBrainsMono
 
-        fun fromStorageKey(key: String?): NotesContentFont =
-            entries.firstOrNull { it.storageKey.equals(key, ignoreCase = true) }
-                ?: entries.firstOrNull { it.name.equals(key, ignoreCase = true) }
-                ?: Default
+        fun fromStorageKey(key: String?): NotesContentFont = entries.firstOrNull { it.storageKey.equals(key, ignoreCase = true) }
+            ?: entries.firstOrNull { it.name.equals(key, ignoreCase = true) }
+            ?: Default
     }
 }
 

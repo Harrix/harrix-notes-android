@@ -830,7 +830,7 @@ private fun EditModeSettingsSection(modifier: Modifier = Modifier) {
         ContentFontDropdown(
             label = stringResource(R.string.settings_markdown_notes_editor_font),
             selected = editorFont,
-            onSelected = { font ->
+            onSelect = { font ->
                 editorFont = font
                 preferences.saveEditorFont(font)
             },
@@ -876,7 +876,7 @@ private fun ViewModeSettingsSection(modifier: Modifier = Modifier) {
         ContentFontDropdown(
             label = stringResource(R.string.settings_markdown_notes_preview_font),
             selected = previewFont,
-            onSelected = { font ->
+            onSelect = { font ->
                 previewFont = font
                 preferences.savePreviewFont(font)
             },
@@ -900,7 +900,7 @@ private fun ViewModeSettingsSection(modifier: Modifier = Modifier) {
 private fun ContentFontDropdown(
     label: String,
     selected: NotesContentFont,
-    onSelected: (NotesContentFont) -> Unit,
+    onSelect: (NotesContentFont) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -930,7 +930,7 @@ private fun ContentFontDropdown(
                     onClick = {
                         expanded = false
                         if (font != selected) {
-                            onSelected(font)
+                            onSelect(font)
                         }
                     },
                 )
@@ -940,14 +940,13 @@ private fun ContentFontDropdown(
 }
 
 @Composable
-private fun contentFontLabel(font: NotesContentFont): String =
-    stringResource(
-        when (font) {
-            NotesContentFont.System -> R.string.settings_markdown_notes_font_system
-            NotesContentFont.JetBrainsMono -> R.string.settings_markdown_notes_font_jetbrains_mono
-            NotesContentFont.FiraSans -> R.string.settings_markdown_notes_font_fira_sans
-        },
-    )
+private fun contentFontLabel(font: NotesContentFont): String = stringResource(
+    when (font) {
+        NotesContentFont.System -> R.string.settings_markdown_notes_font_system
+        NotesContentFont.JetBrainsMono -> R.string.settings_markdown_notes_font_jetbrains_mono
+        NotesContentFont.FiraSans -> R.string.settings_markdown_notes_font_fira_sans
+    },
+)
 
 /** @hsk-sync:new-note */
 @OptIn(ExperimentalMaterial3Api::class)

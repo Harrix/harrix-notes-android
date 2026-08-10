@@ -35,6 +35,7 @@ class NotesViewerViewModel(
     val noteContent = mutableStateOf<String?>(null)
     val noteLoading = mutableStateOf(false)
     val isEditing = mutableStateOf(false)
+
     /** When true, a canvas note shows Markdown editor/preview instead of the drawing surface. */
     val canvasMarkdownMode = mutableStateOf(false)
     val autoEditDocumentId = mutableStateOf<String?>(null)

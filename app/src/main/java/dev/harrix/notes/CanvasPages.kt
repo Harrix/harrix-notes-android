@@ -152,10 +152,9 @@ object CanvasPages {
     fun deletePage(
         resolver: ContentResolver,
         page: CanvasPageRef,
-    ): Boolean =
-        runCatching {
-            DocumentsContract.deleteDocument(resolver, page.uri)
-        }.getOrDefault(false)
+    ): Boolean = runCatching {
+        DocumentsContract.deleteDocument(resolver, page.uri)
+    }.getOrDefault(false)
 
     fun syncMarkdownImageLinks(
         markdown: String,

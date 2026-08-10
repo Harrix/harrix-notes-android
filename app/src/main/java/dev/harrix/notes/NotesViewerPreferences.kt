@@ -80,21 +80,19 @@ class NotesViewerPreferences(
     }
 
     /** Last canvas pen color (ARGB), or null if the user has never drawn yet. */
-    fun loadCanvasPenColorArgb(): Int? =
-        if (prefs.contains(KEY_CANVAS_PEN_COLOR_ARGB)) {
-            prefs.getInt(KEY_CANVAS_PEN_COLOR_ARGB, 0)
-        } else {
-            null
-        }
+    fun loadCanvasPenColorArgb(): Int? = if (prefs.contains(KEY_CANVAS_PEN_COLOR_ARGB)) {
+        prefs.getInt(KEY_CANVAS_PEN_COLOR_ARGB, 0)
+    } else {
+        null
+    }
 
     fun saveCanvasPenColorArgb(colorArgb: Int) {
         prefs.edit().putInt(KEY_CANVAS_PEN_COLOR_ARGB, colorArgb).apply()
     }
 
-    fun loadCanvasPenWidth(): Float =
-        prefs
-            .getFloat(KEY_CANVAS_PEN_WIDTH, DEFAULT_CANVAS_PEN_WIDTH)
-            .coerceIn(MIN_CANVAS_PEN_WIDTH, MAX_CANVAS_PEN_WIDTH)
+    fun loadCanvasPenWidth(): Float = prefs
+        .getFloat(KEY_CANVAS_PEN_WIDTH, DEFAULT_CANVAS_PEN_WIDTH)
+        .coerceIn(MIN_CANVAS_PEN_WIDTH, MAX_CANVAS_PEN_WIDTH)
 
     fun saveCanvasPenWidth(width: Float) {
         prefs
@@ -118,8 +116,7 @@ class NotesViewerPreferences(
             ).apply()
     }
 
-    fun loadPreviewFont(): NotesContentFont =
-        NotesContentFont.fromStorageKey(prefs.getString(KEY_PREVIEW_FONT, null))
+    fun loadPreviewFont(): NotesContentFont = NotesContentFont.fromStorageKey(prefs.getString(KEY_PREVIEW_FONT, null))
 
     fun savePreviewFont(font: NotesContentFont) {
         prefs.edit().putString(KEY_PREVIEW_FONT, font.storageKey).apply()
@@ -138,8 +135,7 @@ class NotesViewerPreferences(
             ).apply()
     }
 
-    fun loadEditorFont(): NotesContentFont =
-        NotesContentFont.fromStorageKey(prefs.getString(KEY_EDITOR_FONT, null))
+    fun loadEditorFont(): NotesContentFont = NotesContentFont.fromStorageKey(prefs.getString(KEY_EDITOR_FONT, null))
 
     fun saveEditorFont(font: NotesContentFont) {
         prefs.edit().putString(KEY_EDITOR_FONT, font.storageKey).apply()

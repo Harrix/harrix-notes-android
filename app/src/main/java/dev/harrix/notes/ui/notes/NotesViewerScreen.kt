@@ -170,6 +170,7 @@ private const val NotesIconsLabelMaxLines = 3
 private const val NotesIconsLabelCompactMaxLines = 2
 private const val NotesIconsLabelFontStepSp = 0.5f
 private val TopBarLogoSize = 28.dp
+
 /** Denser than Material default 48.dp so top-bar actions sit closer. */
 private val TopBarActionButtonSize = 40.dp
 

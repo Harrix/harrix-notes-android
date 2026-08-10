@@ -1,0 +1,27 @@
+---
+description: Format and quality-check Android sources via hsk after Android code changes
+alwaysApply: true
+---
+
+# hsk android check
+
+After completing Android code changes, before each `hsk android check` run `hsk android format` first.
+
+This repo root is the Android project (contains `gradlew.bat`). From the repo root:
+
+```text
+hsk android format .
+hsk android check .
+```
+
+Or run the same commands with cwd set to the project root and omit the folder (defaults to `.`).
+
+Run `hsk android format …`, then `hsk android check …`, and fix until it passes.
+Repeat this cycle up to **3 times maximum**. If it still fails after 3 iterations, stop and report the remaining errors.
+
+Do not finish while `hsk android check` still fails, unless the failure is environmental (missing JDK/SDK) and cannot be fixed in code.
+
+Equivalent Gradle from the project root:
+
+- format: `.\gradlew.bat spotlessApply`
+- check: `.\gradlew.bat qualityCheck` (`spotlessCheck` + `detekt` + `lintDebug`)

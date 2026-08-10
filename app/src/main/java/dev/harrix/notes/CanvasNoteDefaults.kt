@@ -12,18 +12,13 @@ object CanvasNoteDefaults {
     private val numberedNameRegex =
         Regex("""^canvas_(\d{2})\.png$""", RegexOption.IGNORE_CASE)
 
-    fun pageFileName(pageNumber1Based: Int): String =
-        String.format(java.util.Locale.ROOT, "canvas_%02d.png", pageNumber1Based)
+    fun pageFileName(pageNumber1Based: Int): String = String.format(java.util.Locale.ROOT, "canvas_%02d.png", pageNumber1Based)
 
-    fun pageRelativePath(pageNumber1Based: Int): String =
-        "$IMAGE_FOLDER/${pageFileName(pageNumber1Based)}"
+    fun pageRelativePath(pageNumber1Based: Int): String = "$IMAGE_FOLDER/${pageFileName(pageNumber1Based)}"
 
-    fun parsePageNumber(fileName: String): Int? =
-        numberedNameRegex.matchEntire(fileName.trim())?.groupValues?.get(1)?.toIntOrNull()
+    fun parsePageNumber(fileName: String): Int? = numberedNameRegex.matchEntire(fileName.trim())?.groupValues?.get(1)?.toIntOrNull()
 
-    fun isLegacyCanvasFile(fileName: String): Boolean =
-        fileName.equals(LEGACY_FILE_NAME, ignoreCase = true)
+    fun isLegacyCanvasFile(fileName: String): Boolean = fileName.equals(LEGACY_FILE_NAME, ignoreCase = true)
 
-    fun isCanvasPageFile(fileName: String): Boolean =
-        parsePageNumber(fileName) != null || isLegacyCanvasFile(fileName)
+    fun isCanvasPageFile(fileName: String): Boolean = parsePageNumber(fileName) != null || isLegacyCanvasFile(fileName)
 }
