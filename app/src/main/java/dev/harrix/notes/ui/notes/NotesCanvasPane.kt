@@ -31,6 +31,7 @@ import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.AutoFixOff
 import androidx.compose.material.icons.filled.Brush
+import androidx.compose.material.icons.filled.PanTool
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -143,6 +144,7 @@ fun NotesCanvasPane(
     var loadError by remember { mutableStateOf<String?>(null) }
     var hasImage by remember { mutableStateOf(false) }
     var tool by remember { mutableStateOf(CanvasTool.Pen) }
+    var drawingEnabled by remember { mutableStateOf(true) }
     var penColor by remember { mutableIntStateOf(initialPenColor) }
     var baseWidth by remember { mutableFloatStateOf(initialPenWidth) }
     var scale by remember { mutableFloatStateOf(1f) }
@@ -158,6 +160,7 @@ fun NotesCanvasPane(
     val latestScale by rememberUpdatedState(scale)
     val latestOffset by rememberUpdatedState(offset)
     val latestTool by rememberUpdatedState(tool)
+    val latestDrawingEnabled by rememberUpdatedState(drawingEnabled)
     val latestPenColor by rememberUpdatedState(penColor)
     val latestBaseWidth by rememberUpdatedState(baseWidth)
     val latestOnStatusMessage by rememberUpdatedState(onStatusMessage)
@@ -290,13 +293,19 @@ fun NotesCanvasPane(
     Column(modifier = modifier.fillMaxSize()) {
         CanvasToolbar(
             tool = tool,
+            drawingEnabled = drawingEnabled,
             penColor = penColor,
             baseWidth = baseWidth,
             canUndo = canUndo,
             canRedo = canRedo,
-            onToolChange = { tool = it },
+            onToolChange = { next ->
+                tool = next
+                drawingEnabled = true
+            },
+            onDrawingEnabledChange = { drawingEnabled = it },
             onColorChange = { color ->
                 penColor = color
+                drawingEnabled = true
                 preferences.saveCanvasPenColorArgb(color)
             },
             onWidthChange = { width ->
@@ -381,11 +390,17 @@ fun NotesCanvasPane(
                                 awaitEachGesture {
                                     val firstDown = awaitFirstDown(requireUnconsumed = false)
                                     var event = currentEvent
-                                    if (event.changes.count { it.pressed } >= 2) {
+                                    val panOnly =
+                                        !latestDrawingEnabled ||
+                                            event.changes.count { it.pressed } >= 2
+                                    if (panOnly) {
                                         do {
                                             event = awaitPointerEvent(PointerEventPass.Main)
-                                            scale =
-                                                (latestScale * event.calculateZoom()).coerceIn(0.4f, 5f)
+                                            if (event.changes.count { it.pressed } >= 2) {
+                                                scale =
+                                                    (latestScale * event.calculateZoom())
+                                                        .coerceIn(0.4f, 5f)
+                                            }
                                             offset = latestOffset + event.calculatePan()
                                             event.changes.forEach { it.consume() }
                                         } while (event.changes.any { it.pressed })
@@ -499,11 +514,13 @@ fun NotesCanvasPane(
 @Composable
 private fun CanvasToolbar(
     tool: CanvasTool,
+    drawingEnabled: Boolean,
     penColor: Int,
     baseWidth: Float,
     canUndo: Boolean,
     canRedo: Boolean,
     onToolChange: (CanvasTool) -> Unit,
+    onDrawingEnabledChange: (Boolean) -> Unit,
     onColorChange: (Int) -> Unit,
     onWidthChange: (Float) -> Unit,
     onUndo: () -> Unit,
@@ -521,12 +538,37 @@ private fun CanvasToolbar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
+                IconButton(
+                    onClick = {
+                        if (drawingEnabled) {
+                            onDrawingEnabledChange(false)
+                        } else {
+                            onDrawingEnabledChange(true)
+                        }
+                    },
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.PanTool,
+                        contentDescription =
+                        if (drawingEnabled) {
+                            stringResource(R.string.markdown_notes_canvas_pan)
+                        } else {
+                            stringResource(R.string.markdown_notes_canvas_draw)
+                        },
+                        tint =
+                        if (!drawingEnabled) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    )
+                }
                 IconButton(onClick = { onToolChange(CanvasTool.Pen) }) {
                     Icon(
                         imageVector = Icons.Filled.Brush,
                         contentDescription = stringResource(R.string.markdown_notes_canvas_pen),
                         tint =
-                        if (tool == CanvasTool.Pen) {
+                        if (drawingEnabled && tool == CanvasTool.Pen) {
                             MaterialTheme.colorScheme.primary
                         } else {
                             MaterialTheme.colorScheme.onSurfaceVariant
@@ -538,7 +580,7 @@ private fun CanvasToolbar(
                         imageVector = Icons.Filled.AutoFixOff,
                         contentDescription = stringResource(R.string.markdown_notes_canvas_eraser),
                         tint =
-                        if (tool == CanvasTool.Eraser) {
+                        if (drawingEnabled && tool == CanvasTool.Eraser) {
                             MaterialTheme.colorScheme.primary
                         } else {
                             MaterialTheme.colorScheme.onSurfaceVariant
@@ -558,7 +600,7 @@ private fun CanvasToolbar(
                     )
                 }
                 PenColors.forEach { color ->
-                    val selected = color == penColor && tool == CanvasTool.Pen
+                    val selected = drawingEnabled && color == penColor && tool == CanvasTool.Pen
                     val swatchOutline =
                         if (selected) {
                             MaterialTheme.colorScheme.primary

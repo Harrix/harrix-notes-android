@@ -153,6 +153,8 @@
     <string name="markdown_notes_canvas_markdown">Markdown</string>
     <string name="markdown_notes_canvas_pen">Перо</string>
     <string name="markdown_notes_canvas_eraser">Ластик</string>
+    <string name="markdown_notes_canvas_pan">Перемещение</string>
+    <string name="markdown_notes_canvas_draw">Рисование</string>
     <string name="markdown_notes_canvas_undo">Отменить</string>
     <string name="markdown_notes_canvas_redo">Повторить</string>
     <string name="markdown_notes_canvas_load_failed">Не удалось загрузить полотно</string>
