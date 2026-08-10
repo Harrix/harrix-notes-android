@@ -17,6 +17,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Redo
@@ -82,15 +84,21 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 private const val CanvasAutosaveDelayMs = 800L
+
+/** Brand drawing swatches (see project color guide). */
 private val PenColors =
     listOf(
-        AndroidColor.BLACK,
-        AndroidColor.WHITE,
-        AndroidColor.RED,
-        AndroidColor.BLUE,
-        AndroidColor.GREEN,
-        AndroidColor.rgb(0xFF, 0x98, 0x00),
-        AndroidColor.MAGENTA,
+        AndroidColor.parseColor("#121e28"), // almost black
+        AndroidColor.parseColor("#ffffff"), // white
+        AndroidColor.parseColor("#de2b26"), // logo / red
+        AndroidColor.parseColor("#cc584c"), // red
+        AndroidColor.parseColor("#2e86b7"), // blue
+        AndroidColor.parseColor("#79b1d1"), // cyan
+        AndroidColor.parseColor("#038387"), // turquoise
+        AndroidColor.parseColor("#4caf50"), // green
+        AndroidColor.parseColor("#35965f"), // green № 2
+        AndroidColor.parseColor("#ffa000"), // orange
+        AndroidColor.parseColor("#eec646"), // yellow
     )
 
 private data class StrokePoint(
@@ -599,6 +607,15 @@ private fun CanvasToolbar(
                         contentDescription = stringResource(R.string.markdown_notes_canvas_redo),
                     )
                 }
+            }
+            Row(
+                modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
                 PenColors.forEach { color ->
                     val selected = drawingEnabled && color == penColor && tool == CanvasTool.Pen
                     val swatchOutline =
