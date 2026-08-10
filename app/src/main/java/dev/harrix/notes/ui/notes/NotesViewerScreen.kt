@@ -170,6 +170,8 @@ private const val NotesIconsLabelMaxLines = 3
 private const val NotesIconsLabelCompactMaxLines = 2
 private const val NotesIconsLabelFontStepSp = 0.5f
 private val TopBarLogoSize = 28.dp
+/** Denser than Material default 48.dp so top-bar actions sit closer. */
+private val TopBarActionButtonSize = 40.dp
 
 @Composable
 fun NotesViewerScreen(
@@ -2629,123 +2631,131 @@ private fun NotesTopChrome(
                     modifier = Modifier.weight(1f),
                 )
             }
-            if (showSortViewMenu) {
+            CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+                if (showSortViewMenu) {
+                    Box {
+                        IconButton(
+                            onClick = { sortViewMenuExpanded = true },
+                            modifier = Modifier.size(TopBarActionButtonSize),
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Sort,
+                                contentDescription = stringResource(R.string.markdown_notes_sort_view_menu),
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = sortViewMenuExpanded,
+                            onDismissRequest = { sortViewMenuExpanded = false },
+                        ) {
+                            NotesFolderSortViewMenuContent(
+                                browseLayout = browseLayout,
+                                sortBy = sortBy,
+                                foldersFirst = foldersFirst,
+                                sortReverseOrder = sortReverseOrder,
+                                showGmdFiles = showGmdFiles,
+                                showNoteDates = showNoteDates,
+                                onBrowseLayoutChange = onBrowseLayoutChange,
+                                onSortByChange = onSortByChange,
+                                onFoldersFirstChange = onFoldersFirstChange,
+                                onSortReverseOrderChange = onSortReverseOrderChange,
+                                onShowGmdFilesChange = onShowGmdFilesChange,
+                                onShowNoteDatesChange = onShowNoteDatesChange,
+                            )
+                        }
+                    }
+                }
                 Box {
-                    IconButton(onClick = { sortViewMenuExpanded = true }) {
+                    IconButton(
+                        onClick = { onMenuExpandedChange(true) },
+                        modifier = Modifier.size(TopBarActionButtonSize),
+                    ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Sort,
-                            contentDescription = stringResource(R.string.markdown_notes_sort_view_menu),
+                            imageVector = Icons.Filled.MoreVert,
+                            contentDescription = stringResource(R.string.markdown_notes_menu),
                         )
                     }
                     DropdownMenu(
-                        expanded = sortViewMenuExpanded,
-                        onDismissRequest = { sortViewMenuExpanded = false },
+                        expanded = menuExpanded,
+                        onDismissRequest = { onMenuExpandedChange(false) },
                     ) {
-                        NotesFolderSortViewMenuContent(
-                            browseLayout = browseLayout,
-                            sortBy = sortBy,
-                            foldersFirst = foldersFirst,
-                            sortReverseOrder = sortReverseOrder,
-                            showGmdFiles = showGmdFiles,
-                            showNoteDates = showNoteDates,
-                            onBrowseLayoutChange = onBrowseLayoutChange,
-                            onSortByChange = onSortByChange,
-                            onFoldersFirstChange = onFoldersFirstChange,
-                            onSortReverseOrderChange = onSortReverseOrderChange,
-                            onShowGmdFilesChange = onShowGmdFilesChange,
-                            onShowNoteDatesChange = onShowNoteDatesChange,
-                        )
-                    }
-                }
-            }
-            Box {
-                IconButton(onClick = { onMenuExpandedChange(true) }) {
-                    Icon(
-                        imageVector = Icons.Filled.MoreVert,
-                        contentDescription = stringResource(R.string.markdown_notes_menu),
-                    )
-                }
-                DropdownMenu(
-                    expanded = menuExpanded,
-                    onDismissRequest = { onMenuExpandedChange(false) },
-                ) {
-                    if (noteOpen) {
+                        if (noteOpen) {
+                            NotesDropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = stringResource(R.string.markdown_notes_note_info),
+                                        maxLines = 2,
+                                    )
+                                },
+                                onClick = {
+                                    onMenuExpandedChange(false)
+                                    onOpenNoteInfo()
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Filled.Description,
+                                        contentDescription = null,
+                                    )
+                                },
+                            )
+                            HorizontalDivider()
+                        } else if (canPaste) {
+                            NotesDropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = stringResource(R.string.markdown_notes_paste),
+                                        maxLines = 2,
+                                    )
+                                },
+                                onClick = {
+                                    onMenuExpandedChange(false)
+                                    onPaste()
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Filled.ContentPaste,
+                                        contentDescription = null,
+                                    )
+                                },
+                            )
+                            HorizontalDivider()
+                        }
                         NotesDropdownMenuItem(
                             text = {
                                 Text(
-                                    text = stringResource(R.string.markdown_notes_note_info),
+                                    text = stringResource(R.string.markdown_notes_settings),
                                     maxLines = 2,
                                 )
                             },
                             onClick = {
                                 onMenuExpandedChange(false)
-                                onOpenNoteInfo()
+                                onOpenSettings()
                             },
                             leadingIcon = {
                                 Icon(
-                                    imageVector = Icons.Filled.Description,
+                                    imageVector = Icons.Filled.Settings,
                                     contentDescription = null,
                                 )
                             },
                         )
-                        HorizontalDivider()
-                    } else if (canPaste) {
                         NotesDropdownMenuItem(
                             text = {
                                 Text(
-                                    text = stringResource(R.string.markdown_notes_paste),
+                                    text = stringResource(R.string.markdown_notes_about),
                                     maxLines = 2,
                                 )
                             },
                             onClick = {
                                 onMenuExpandedChange(false)
-                                onPaste()
+                                onOpenAbout()
                             },
                             leadingIcon = {
                                 Icon(
-                                    imageVector = Icons.Filled.ContentPaste,
+                                    imageVector = Icons.Filled.Info,
                                     contentDescription = null,
                                 )
                             },
                         )
-                        HorizontalDivider()
                     }
-                    NotesDropdownMenuItem(
-                        text = {
-                            Text(
-                                text = stringResource(R.string.markdown_notes_settings),
-                                maxLines = 2,
-                            )
-                        },
-                        onClick = {
-                            onMenuExpandedChange(false)
-                            onOpenSettings()
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Filled.Settings,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-                    NotesDropdownMenuItem(
-                        text = {
-                            Text(
-                                text = stringResource(R.string.markdown_notes_about),
-                                maxLines = 2,
-                            )
-                        },
-                        onClick = {
-                            onMenuExpandedChange(false)
-                            onOpenAbout()
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Filled.Info,
-                                contentDescription = null,
-                            )
-                        },
-                    )
                 }
             }
         }
@@ -3262,47 +3272,59 @@ private fun NotesNavigationRow(
                         .padding(top = 2.dp),
                 )
             }
-            if (showEditActions && isCanvasNote) {
-                IconButton(onClick = onToggleCanvasMarkdown) {
-                    if (canvasMarkdownMode) {
-                        Icon(
-                            imageVector = Icons.Filled.Brush,
-                            contentDescription = stringResource(R.string.markdown_notes_canvas),
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Filled.Description,
-                            contentDescription = stringResource(R.string.markdown_notes_canvas_markdown),
-                        )
+            CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+                if (showEditActions && isCanvasNote) {
+                    IconButton(
+                        onClick = onToggleCanvasMarkdown,
+                        modifier = Modifier.size(TopBarActionButtonSize),
+                    ) {
+                        if (canvasMarkdownMode) {
+                            Icon(
+                                imageVector = Icons.Filled.Brush,
+                                contentDescription = stringResource(R.string.markdown_notes_canvas),
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Filled.Description,
+                                contentDescription = stringResource(R.string.markdown_notes_canvas_markdown),
+                            )
+                        }
                     }
                 }
-            }
-            if (showEditActions && showEditPreviewToggle) {
-                if (isEditing) {
+                if (showEditActions && showEditPreviewToggle) {
+                    if (isEditing) {
+                        IconButton(
+                            onClick = onPreview,
+                            enabled = !isSaving,
+                            modifier = Modifier.size(TopBarActionButtonSize),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Visibility,
+                                contentDescription = stringResource(R.string.markdown_notes_preview),
+                            )
+                        }
+                    } else {
+                        IconButton(
+                            onClick = onEdit,
+                            modifier = Modifier.size(TopBarActionButtonSize),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Edit,
+                                contentDescription = stringResource(R.string.markdown_notes_edit),
+                            )
+                        }
+                    }
+                }
+                if (showCloseNote) {
                     IconButton(
-                        onClick = onPreview,
-                        enabled = !isSaving,
+                        onClick = onCloseNote,
+                        modifier = Modifier.size(TopBarActionButtonSize),
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.Visibility,
-                            contentDescription = stringResource(R.string.markdown_notes_preview),
+                            imageVector = Icons.Filled.Close,
+                            contentDescription = stringResource(R.string.markdown_notes_close_tab),
                         )
                     }
-                } else {
-                    IconButton(onClick = onEdit) {
-                        Icon(
-                            imageVector = Icons.Filled.Edit,
-                            contentDescription = stringResource(R.string.markdown_notes_edit),
-                        )
-                    }
-                }
-            }
-            if (showCloseNote) {
-                IconButton(onClick = onCloseNote) {
-                    Icon(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = stringResource(R.string.markdown_notes_close_tab),
-                    )
                 }
             }
         }
