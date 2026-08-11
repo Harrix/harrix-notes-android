@@ -165,6 +165,7 @@
     <string name="markdown_notes_canvas_page_delete_cancel">キャンセル</string>
     <string name="markdown_notes_canvas_page_delete_last">唯一のページは削除できません</string>
     <string name="markdown_notes_canvas_page_failed">ページを更新できませんでした</string>
+    <string name="markdown_notes_canvas_paper">紙</string>
     <string name="markdown_notes_canvas_paper_light">明るい紙</string>
     <string name="markdown_notes_canvas_paper_dark">暗い紙</string>
     <string name="markdown_notes_canvas_paper_theme">テーマに合わせる</string>

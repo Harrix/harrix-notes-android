@@ -210,6 +210,7 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Cancel</string>
     <string name="markdown_notes_canvas_page_delete_last">Cannot delete the only page</string>
     <string name="markdown_notes_canvas_page_failed">Could not update pages</string>
+    <string name="markdown_notes_canvas_paper">Paper</string>
     <string name="markdown_notes_canvas_paper_light">Light paper</string>
     <string name="markdown_notes_canvas_paper_dark">Dark paper</string>
     <string name="markdown_notes_canvas_paper_theme">Match theme</string>

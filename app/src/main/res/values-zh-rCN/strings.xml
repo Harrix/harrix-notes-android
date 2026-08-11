@@ -165,6 +165,7 @@
     <string name="markdown_notes_canvas_page_delete_cancel">取消</string>
     <string name="markdown_notes_canvas_page_delete_last">无法删除唯一的页面</string>
     <string name="markdown_notes_canvas_page_failed">无法更新页面</string>
+    <string name="markdown_notes_canvas_paper">纸张</string>
     <string name="markdown_notes_canvas_paper_light">浅色纸张</string>
     <string name="markdown_notes_canvas_paper_dark">深色纸张</string>
     <string name="markdown_notes_canvas_paper_theme">跟随主题</string>

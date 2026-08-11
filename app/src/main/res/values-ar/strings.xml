@@ -165,6 +165,7 @@
     <string name="markdown_notes_canvas_page_delete_cancel">إلغاء</string>
     <string name="markdown_notes_canvas_page_delete_last">لا يمكن حذف الصفحة الوحيدة</string>
     <string name="markdown_notes_canvas_page_failed">تعذر تحديث الصفحات</string>
+    <string name="markdown_notes_canvas_paper">الورق</string>
     <string name="markdown_notes_canvas_paper_light">ورق فاتح</string>
     <string name="markdown_notes_canvas_paper_dark">ورق داكن</string>
     <string name="markdown_notes_canvas_paper_theme">مطابقة السمة</string>

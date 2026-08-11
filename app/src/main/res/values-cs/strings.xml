@@ -165,6 +165,7 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Zrušit</string>
     <string name="markdown_notes_canvas_page_delete_last">Nelze smazat jedinou stránku</string>
     <string name="markdown_notes_canvas_page_failed">Nepodařilo se aktualizovat stránky</string>
+    <string name="markdown_notes_canvas_paper">Papír</string>
     <string name="markdown_notes_canvas_paper_light">Světlý papír</string>
     <string name="markdown_notes_canvas_paper_dark">Tmavý papír</string>
     <string name="markdown_notes_canvas_paper_theme">Podle motivu</string>

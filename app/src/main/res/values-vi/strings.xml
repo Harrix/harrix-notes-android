@@ -165,6 +165,7 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Hủy</string>
     <string name="markdown_notes_canvas_page_delete_last">Không thể xóa trang duy nhất</string>
     <string name="markdown_notes_canvas_page_failed">Không thể cập nhật các trang</string>
+    <string name="markdown_notes_canvas_paper">Giấy</string>
     <string name="markdown_notes_canvas_paper_light">Giấy sáng</string>
     <string name="markdown_notes_canvas_paper_dark">Giấy tối</string>
     <string name="markdown_notes_canvas_paper_theme">Theo giao diện</string>

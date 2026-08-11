@@ -165,6 +165,7 @@
     <string name="markdown_notes_canvas_page_delete_cancel">İptal</string>
     <string name="markdown_notes_canvas_page_delete_last">Tek sayfa silinemez</string>
     <string name="markdown_notes_canvas_page_failed">Sayfalar güncellenemedi</string>
+    <string name="markdown_notes_canvas_paper">Kağıt</string>
     <string name="markdown_notes_canvas_paper_light">Açık kağıt</string>
     <string name="markdown_notes_canvas_paper_dark">Koyu kağıt</string>
     <string name="markdown_notes_canvas_paper_theme">Temaya uy</string>

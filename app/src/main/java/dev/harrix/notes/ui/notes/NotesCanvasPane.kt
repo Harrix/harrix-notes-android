@@ -57,7 +57,6 @@ import androidx.compose.material.icons.filled.PanTool
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
@@ -70,7 +69,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -1101,6 +1099,7 @@ private fun CanvasToolbar(
     var showCustomColorDialog by remember { mutableStateOf(false) }
     var colorMenuExpanded by remember { mutableStateOf(false) }
     var widthMenuExpanded by remember { mutableStateOf(false) }
+    var paperMenuExpanded by remember { mutableStateOf(false) }
     val isCustomColor = penColor !in PenColors
     val widthIconColor = MaterialTheme.colorScheme.onSurfaceVariant
     if (showCustomColorDialog) {
@@ -1141,7 +1140,7 @@ private fun CanvasToolbar(
                     widthIconColor = widthIconColor,
                     colorMenuExpanded = colorMenuExpanded,
                     widthMenuExpanded = widthMenuExpanded,
-                    vertical = true,
+                    paperMenuExpanded = paperMenuExpanded,
                     onToolChange = onToolChange,
                     onDrawingEnabledChange = onDrawingEnabledChange,
                     onColorChange = onColorChange,
@@ -1152,6 +1151,7 @@ private fun CanvasToolbar(
                     onClear = onClear,
                     onColorMenuExpandedChange = { colorMenuExpanded = it },
                     onWidthMenuExpandedChange = { widthMenuExpanded = it },
+                    onPaperMenuExpandedChange = { paperMenuExpanded = it },
                     onShowCustomColorDialog = { showCustomColorDialog = true },
                 )
             }
@@ -1178,7 +1178,7 @@ private fun CanvasToolbar(
                     widthIconColor = widthIconColor,
                     colorMenuExpanded = colorMenuExpanded,
                     widthMenuExpanded = widthMenuExpanded,
-                    vertical = false,
+                    paperMenuExpanded = paperMenuExpanded,
                     onToolChange = onToolChange,
                     onDrawingEnabledChange = onDrawingEnabledChange,
                     onColorChange = onColorChange,
@@ -1189,6 +1189,7 @@ private fun CanvasToolbar(
                     onClear = onClear,
                     onColorMenuExpandedChange = { colorMenuExpanded = it },
                     onWidthMenuExpandedChange = { widthMenuExpanded = it },
+                    onPaperMenuExpandedChange = { paperMenuExpanded = it },
                     onShowCustomColorDialog = { showCustomColorDialog = true },
                 )
             }
@@ -1211,7 +1212,7 @@ private fun CanvasToolbarButtons(
     widthIconColor: Color,
     colorMenuExpanded: Boolean,
     widthMenuExpanded: Boolean,
-    vertical: Boolean,
+    paperMenuExpanded: Boolean,
     onToolChange: (CanvasTool) -> Unit,
     onDrawingEnabledChange: (Boolean) -> Unit,
     onColorChange: (Int) -> Unit,
@@ -1222,6 +1223,7 @@ private fun CanvasToolbarButtons(
     onClear: () -> Unit,
     onColorMenuExpandedChange: (Boolean) -> Unit,
     onWidthMenuExpandedChange: (Boolean) -> Unit,
+    onPaperMenuExpandedChange: (Boolean) -> Unit,
     onShowCustomColorDialog: () -> Unit,
 ) {
     CanvasToolbarIconButton(
@@ -1504,6 +1506,78 @@ private fun CanvasToolbarButtons(
             }
         }
     }
+    Box {
+        val paperDescription = stringResource(R.string.markdown_notes_canvas_paper)
+        val paperIcon =
+            when (paperMode) {
+                CanvasPaperMode.Light -> Icons.Filled.LightMode
+                CanvasPaperMode.Dark -> Icons.Filled.DarkMode
+                CanvasPaperMode.FollowTheme -> Icons.Filled.BrightnessAuto
+            }
+        CanvasToolbarIconButton(
+            tooltip = paperDescription,
+            onClick = { onPaperMenuExpandedChange(true) },
+        ) {
+            Icon(
+                imageVector = paperIcon,
+                contentDescription = paperDescription,
+                tint = MaterialTheme.colorScheme.primary,
+            )
+        }
+        DropdownMenu(
+            expanded = paperMenuExpanded,
+            onDismissRequest = { onPaperMenuExpandedChange(false) },
+        ) {
+            NotesDropdownMenuItem(
+                text = { Text(stringResource(R.string.markdown_notes_canvas_paper_light)) },
+                onClick = {
+                    onPaperModeChange(CanvasPaperMode.Light)
+                    onPaperMenuExpandedChange(false)
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.LightMode,
+                        contentDescription = null,
+                    )
+                },
+                trailingIcon = {
+                    NotesMenuCheckbox(checked = paperMode == CanvasPaperMode.Light)
+                },
+            )
+            NotesDropdownMenuItem(
+                text = { Text(stringResource(R.string.markdown_notes_canvas_paper_dark)) },
+                onClick = {
+                    onPaperModeChange(CanvasPaperMode.Dark)
+                    onPaperMenuExpandedChange(false)
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.DarkMode,
+                        contentDescription = null,
+                    )
+                },
+                trailingIcon = {
+                    NotesMenuCheckbox(checked = paperMode == CanvasPaperMode.Dark)
+                },
+            )
+            NotesDropdownMenuItem(
+                text = { Text(stringResource(R.string.markdown_notes_canvas_paper_theme)) },
+                onClick = {
+                    onPaperModeChange(CanvasPaperMode.FollowTheme)
+                    onPaperMenuExpandedChange(false)
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.BrightnessAuto,
+                        contentDescription = null,
+                    )
+                },
+                trailingIcon = {
+                    NotesMenuCheckbox(checked = paperMode == CanvasPaperMode.FollowTheme)
+                },
+            )
+        }
+    }
     CanvasToolbarIconButton(
         tooltip = stringResource(R.string.markdown_notes_canvas_undo),
         onClick = onUndo,
@@ -1532,56 +1606,6 @@ private fun CanvasToolbarButtons(
         Icon(
             imageVector = Icons.Filled.DeleteSweep,
             contentDescription = stringResource(R.string.markdown_notes_canvas_clear),
-        )
-    }
-    if (vertical) {
-        HorizontalDivider(modifier = Modifier.width(28.dp))
-    } else {
-        VerticalDivider(modifier = Modifier.height(28.dp))
-    }
-    CanvasToolbarIconButton(
-        tooltip = stringResource(R.string.markdown_notes_canvas_paper_light),
-        onClick = { onPaperModeChange(CanvasPaperMode.Light) },
-    ) {
-        Icon(
-            imageVector = Icons.Filled.LightMode,
-            contentDescription = stringResource(R.string.markdown_notes_canvas_paper_light),
-            tint =
-            if (paperMode == CanvasPaperMode.Light) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            },
-        )
-    }
-    CanvasToolbarIconButton(
-        tooltip = stringResource(R.string.markdown_notes_canvas_paper_dark),
-        onClick = { onPaperModeChange(CanvasPaperMode.Dark) },
-    ) {
-        Icon(
-            imageVector = Icons.Filled.DarkMode,
-            contentDescription = stringResource(R.string.markdown_notes_canvas_paper_dark),
-            tint =
-            if (paperMode == CanvasPaperMode.Dark) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            },
-        )
-    }
-    CanvasToolbarIconButton(
-        tooltip = stringResource(R.string.markdown_notes_canvas_paper_theme),
-        onClick = { onPaperModeChange(CanvasPaperMode.FollowTheme) },
-    ) {
-        Icon(
-            imageVector = Icons.Filled.BrightnessAuto,
-            contentDescription = stringResource(R.string.markdown_notes_canvas_paper_theme),
-            tint =
-            if (paperMode == CanvasPaperMode.FollowTheme) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            },
         )
     }
 }

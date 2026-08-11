@@ -197,6 +197,7 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Отмена</string>
     <string name="markdown_notes_canvas_page_delete_last">Нельзя удалить единственную страницу</string>
     <string name="markdown_notes_canvas_page_failed">Не удалось обновить страницы</string>
+    <string name="markdown_notes_canvas_paper">Бумага</string>
     <string name="markdown_notes_canvas_paper_light">Светлая бумага</string>
     <string name="markdown_notes_canvas_paper_dark">Тёмная бумага</string>
     <string name="markdown_notes_canvas_paper_theme">Как тема</string>

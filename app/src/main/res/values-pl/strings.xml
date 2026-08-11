@@ -165,6 +165,7 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Anuluj</string>
     <string name="markdown_notes_canvas_page_delete_last">Nie można usunąć jedynej strony</string>
     <string name="markdown_notes_canvas_page_failed">Nie udało się zaktualizować stron</string>
+    <string name="markdown_notes_canvas_paper">Papier</string>
     <string name="markdown_notes_canvas_paper_light">Jasny papier</string>
     <string name="markdown_notes_canvas_paper_dark">Ciemny papier</string>
     <string name="markdown_notes_canvas_paper_theme">Jak motyw</string>

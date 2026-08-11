@@ -165,6 +165,7 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Annulla</string>
     <string name="markdown_notes_canvas_page_delete_last">Impossibile eliminare l\'unica pagina</string>
     <string name="markdown_notes_canvas_page_failed">Impossibile aggiornare le pagine</string>
+    <string name="markdown_notes_canvas_paper">Carta</string>
     <string name="markdown_notes_canvas_paper_light">Carta chiara</string>
     <string name="markdown_notes_canvas_paper_dark">Carta scura</string>
     <string name="markdown_notes_canvas_paper_theme">Come tema</string>

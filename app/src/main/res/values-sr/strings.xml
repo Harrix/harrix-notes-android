@@ -165,6 +165,7 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Откажи</string>
     <string name="markdown_notes_canvas_page_delete_last">Не може се обрисати једина страница</string>
     <string name="markdown_notes_canvas_page_failed">Није могуће ажурирати странице</string>
+    <string name="markdown_notes_canvas_paper">Папир</string>
     <string name="markdown_notes_canvas_paper_light">Светли папир</string>
     <string name="markdown_notes_canvas_paper_dark">Тамни папир</string>
     <string name="markdown_notes_canvas_paper_theme">Као тема</string>
