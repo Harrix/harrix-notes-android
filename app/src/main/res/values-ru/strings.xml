@@ -144,7 +144,7 @@
     <string name="markdown_notes_pinned">Закреплено</string>
     <string name="markdown_notes_pin_empty">пусто</string>
     <string name="markdown_notes_pin_how_title">Как закрепить</string>
-    <string name="markdown_notes_pin_how_message">Откройте меню папки или заметки (⋯ в списке или долгое нажатие в режиме значков) и выберите «Закрепить». Открепить можно из того же меню или долгим нажатием на элемент панели.</string>
+    <string name="markdown_notes_pin_how_message">Откройте меню папки или заметки (⋯) либо долгим нажатием в списке/значках и выберите «Закрепить». Закрепить можно и из меню ⋮ открытой заметки. Открепить — из тех же меню или долгим нажатием на элемент панели.</string>
     <string name="markdown_notes_pin_how_ok">OK</string>
     <string name="markdown_notes_folder_empty">Здесь нет заметок и папок</string>
     <string name="markdown_notes_load_failed">Не удалось загрузить заметки</string>

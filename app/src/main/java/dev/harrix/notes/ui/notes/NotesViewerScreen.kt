@@ -2399,6 +2399,30 @@ fun NotesViewerScreen(
                             preferences.saveShowNoteDates(value)
                         },
                         noteOpen = selectedTab != null,
+                        notePinned = selectedTab?.let { isPinned(it.documentId) } == true,
+                        canPinNote =
+                        selectedTab != null &&
+                            !selectedTab.isExternal &&
+                            !notesTreeUri.isNullOrBlank(),
+                        onPinNote = {
+                            val tab = selectedTab ?: return@NotesTopChrome
+                            if (tab.isExternal) {
+                                return@NotesTopChrome
+                            }
+                            pinNote(
+                                NotesEntry.Note(
+                                    documentId = tab.documentId,
+                                    name = tab.fileName.ifBlank { "${tab.title}.md" },
+                                    uri = tab.uri,
+                                    displayLabel = tab.title,
+                                ),
+                                tab.folderPath,
+                            )
+                        },
+                        onUnpinNote = {
+                            val tab = selectedTab ?: return@NotesTopChrome
+                            unpinByDocumentId(tab.documentId)
+                        },
                         canPaste =
                         selectedTab == null &&
                             notesClipboard != null &&
@@ -3035,6 +3059,10 @@ private fun NotesTopChrome(
     onShowGmdFilesChange: (Boolean) -> Unit,
     onShowNoteDatesChange: (Boolean) -> Unit,
     noteOpen: Boolean,
+    notePinned: Boolean,
+    canPinNote: Boolean,
+    onPinNote: () -> Unit,
+    onUnpinNote: () -> Unit,
     canPaste: Boolean,
     onPaste: () -> Unit,
     onOpenNoteInfo: () -> Unit,
@@ -3145,6 +3173,42 @@ private fun NotesTopChrome(
                                     )
                                 },
                             )
+                            if (canPinNote) {
+                                NotesDropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text =
+                                            stringResource(
+                                                if (notePinned) {
+                                                    R.string.markdown_notes_unpin
+                                                } else {
+                                                    R.string.markdown_notes_pin
+                                                },
+                                            ),
+                                            maxLines = 2,
+                                        )
+                                    },
+                                    onClick = {
+                                        onMenuExpandedChange(false)
+                                        if (notePinned) {
+                                            onUnpinNote()
+                                        } else {
+                                            onPinNote()
+                                        }
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector =
+                                            if (notePinned) {
+                                                Icons.Outlined.PushPin
+                                            } else {
+                                                Icons.Filled.PushPin
+                                            },
+                                            contentDescription = null,
+                                        )
+                                    },
+                                )
+                            }
                             HorizontalDivider()
                         } else if (canPaste) {
                             NotesDropdownMenuItem(

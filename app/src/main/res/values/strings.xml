@@ -156,7 +156,7 @@
     <string name="markdown_notes_pinned">Pinned</string>
     <string name="markdown_notes_pin_empty">empty</string>
     <string name="markdown_notes_pin_how_title">How to pin</string>
-    <string name="markdown_notes_pin_how_message">Open a folder or note menu (⋯ in list view, or long-press in icons view), then choose Pin. You can unpin from the same menu or by long-pressing an item in this bar.</string>
+    <string name="markdown_notes_pin_how_message">Open a folder or note menu (⋯), or long-press in icons/list view, then choose Pin. You can also pin from the ⋮ menu while a note is open. Unpin from the same menus or by long-pressing an item in this bar.</string>
     <string name="markdown_notes_pin_how_ok">OK</string>
     <string name="markdown_notes_folder_empty">No notes or folders here</string>
     <string name="markdown_notes_load_failed">Could not load notes</string>
