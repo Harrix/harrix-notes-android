@@ -84,6 +84,8 @@ import androidx.compose.ui.unit.dp
 import dev.harrix.notes.CanvasPageRef
 import dev.harrix.notes.CanvasPages
 import dev.harrix.notes.CanvasPaperMode
+import dev.harrix.notes.NewNoteContent
+import dev.harrix.notes.NoteTitleExtractor
 import dev.harrix.notes.NotesPathSegment
 import dev.harrix.notes.NotesRelativeDocuments
 import dev.harrix.notes.NotesViewerPreferences
@@ -177,7 +179,12 @@ fun NotesCanvasPane(
 ) {
     val scope = rememberCoroutineScope()
     val session = remember { CanvasSession() }
-    var paperMode by remember { mutableStateOf(preferences.loadCanvasPaperMode()) }
+    var paperMode by remember(noteDocumentId) {
+        mutableStateOf(
+            NoteTitleExtractor.extractCanvasPaperMode(noteMarkdown)
+                ?: preferences.loadCanvasPaperMode(),
+        )
+    }
     val paperColor = rememberCanvasPaperColor(paperMode)
     val fallbackPenColor = MaterialTheme.colorScheme.onSurface.toArgb()
     val initialPenColor = preferences.loadCanvasPenColorArgb() ?: fallbackPenColor
@@ -293,8 +300,7 @@ fun NotesCanvasPane(
         syncUndoFlags()
     }
 
-    suspend fun persistMarkdownForPages(updatedPages: List<CanvasPageRef>): Boolean {
-        val markdown = CanvasPages.syncMarkdownImageLinks(latestNoteMarkdown, updatedPages)
+    suspend fun persistNoteMarkdown(markdown: String): Boolean {
         val ok =
             withContext(Dispatchers.IO) {
                 runCatching {
@@ -308,6 +314,31 @@ fun NotesCanvasPane(
             latestOnNoteMarkdownChange(markdown)
         }
         return ok
+    }
+
+    suspend fun persistMarkdownForPages(updatedPages: List<CanvasPageRef>): Boolean {
+        val markdown = CanvasPages.syncMarkdownImageLinks(latestNoteMarkdown, updatedPages)
+        return persistNoteMarkdown(markdown)
+    }
+
+    fun applyPaperMode(mode: CanvasPaperMode) {
+        if (mode == paperMode) {
+            return
+        }
+        paperMode = mode
+        preferences.saveCanvasPaperMode(mode)
+        val markdown =
+            NewNoteContent.injectFrontmatterKey(
+                latestNoteMarkdown,
+                "paper",
+                mode.yamlKey,
+            )
+        scope.launch {
+            val ok = persistNoteMarkdown(markdown)
+            if (!ok) {
+                latestOnStatusMessage(saveFailedMessage)
+            }
+        }
     }
 
     LaunchedEffect(treeUri, folderPath, noteDocumentId, isLoading) {
@@ -573,10 +604,7 @@ fun NotesCanvasPane(
                 drawingEnabled = true
                 preferences.saveCanvasPenColorArgb(color)
             },
-            onPaperModeChange = { mode ->
-                paperMode = mode
-                preferences.saveCanvasPaperMode(mode)
-            },
+            onPaperModeChange = { mode -> applyPaperMode(mode) },
             onWidthChange = { width ->
                 baseWidth = width
                 preferences.saveCanvasPenWidth(width)

@@ -9,6 +9,7 @@ object NoteTitleExtractor {
     private val TITLE_LINE_REGEX = Regex("^title\\s*:\\s*(.*)$", RegexOption.IGNORE_CASE)
     private val ICON_LINE_REGEX = Regex("^icon\\s*:\\s*(.*)$", RegexOption.IGNORE_CASE)
     private val TYPE_LINE_REGEX = Regex("^type\\s*:\\s*(.*)$", RegexOption.IGNORE_CASE)
+    private val PAPER_LINE_REGEX = Regex("^paper\\s*:\\s*(.*)$", RegexOption.IGNORE_CASE)
     private val H1_REGEX = Regex("^#\\s+(.+)$")
     private val HTTP_URL_REGEX = Regex("^https?://", RegexOption.IGNORE_CASE)
     private val IMAGE_EXT_REGEX = Regex("\\.(png|jpe?g|gif|svg|webp|avif|ico)$", RegexOption.IGNORE_CASE)
@@ -18,11 +19,25 @@ object NoteTitleExtractor {
         val icon: String,
         /** YAML `type:` value when present (e.g. `canvas`). */
         val type: String = "",
+        /** YAML `paper:` value when present (`light` / `dark` / `theme`). */
+        val paper: String = "",
     )
 
     fun extract(text: String): String = extractMeta(text).title
 
     fun isCanvas(text: String): Boolean = extractMeta(text).type.equals("canvas", ignoreCase = true)
+
+    /** Canvas underlay from YAML `paper:`, or null when the key is absent / unknown. */
+    fun extractCanvasPaperMode(text: String): CanvasPaperMode? {
+        val raw = extractMeta(text).paper.trim()
+        if (raw.isEmpty()) {
+            return null
+        }
+        return CanvasPaperMode.entries.firstOrNull {
+            it.yamlKey.equals(raw, ignoreCase = true) ||
+                it.name.equals(raw, ignoreCase = true)
+        }
+    }
 
     fun extractMeta(text: String): Meta {
         var src = text
@@ -33,6 +48,7 @@ object NoteTitleExtractor {
         val title: String
         val icon: String
         val type: String
+        val paper: String
         if (fmMatch != null) {
             val fm = fmMatch.groupValues[1]
             title =
@@ -40,12 +56,14 @@ object NoteTitleExtractor {
                     .ifEmpty { firstH1AfterFrontmatter(src.substring(fmMatch.range.last + 1)) }
             icon = iconFromFrontmatterBlock(fm)
             type = typeFromFrontmatterBlock(fm)
+            paper = paperFromFrontmatterBlock(fm)
         } else {
             title = firstH1AfterFrontmatter(src)
             icon = ""
             type = ""
+            paper = ""
         }
-        return Meta(title = stripHtmlComments(title), icon = icon, type = type)
+        return Meta(title = stripHtmlComments(title), icon = icon, type = type, paper = paper)
     }
 
     private fun titleFromFrontmatterBlock(fmText: String): String {
@@ -76,6 +94,17 @@ object NoteTitleExtractor {
             val type = unquoteYamlScalar(match.groupValues[1])
             if (type.isNotEmpty()) {
                 return type
+            }
+        }
+        return ""
+    }
+
+    private fun paperFromFrontmatterBlock(fmText: String): String {
+        for (line in fmText.lineSequence()) {
+            val match = PAPER_LINE_REGEX.find(line) ?: continue
+            val paper = unquoteYamlScalar(match.groupValues[1])
+            if (paper.isNotEmpty()) {
+                return paper
             }
         }
         return ""

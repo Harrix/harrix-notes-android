@@ -124,7 +124,7 @@ object NewNoteContent {
 
     /**
      * Build note file content: beginning + personal data + `# heading`.
-     * When [isCanvas], injects `type: canvas` and an `img/canvas_01.png` image link.
+     * When [isCanvas], injects `type: canvas`, `paper:`, and an `img/canvas_01.png` image link.
      *
      * @hsk-sync:new-note
      */
@@ -133,10 +133,12 @@ object NewNoteContent {
         heading: String,
         personal: PersonalData,
         isCanvas: Boolean = false,
+        canvasPaper: CanvasPaperMode = CanvasPaperMode.Default,
     ): String {
         var withPersonal = applyPersonalDataToBeginning(beginning, personal).trimEnd()
         if (isCanvas) {
             withPersonal = injectFrontmatterKey(withPersonal, "type", "canvas")
+            withPersonal = injectFrontmatterKey(withPersonal, "paper", canvasPaper.yamlKey)
         }
         val title = heading.trim()
         return if (isCanvas) {

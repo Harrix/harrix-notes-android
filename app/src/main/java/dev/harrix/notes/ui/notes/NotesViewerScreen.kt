@@ -1092,6 +1092,7 @@ fun NotesViewerScreen(
                             beginningTemplate = beginningTemplate,
                             personalData = personalData,
                             isCanvas = isCanvas,
+                            canvasPaper = preferences.loadCanvasPaperMode(),
                         )
                     }
                 }.getOrElse { error ->

@@ -915,6 +915,7 @@ class NotesTreeRepository(
         beginningTemplate: NewNoteContent.BeginningTemplate,
         personalData: NewNoteContent.PersonalData,
         isCanvas: Boolean = false,
+        canvasPaper: CanvasPaperMode = CanvasPaperMode.Default,
     ): NotesEntry.Note {
         val parentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, parentDocumentId)
         val existingNames =
@@ -954,6 +955,7 @@ class NotesTreeRepository(
                 heading = heading,
                 personal = personalData,
                 isCanvas = isCanvas,
+                canvasPaper = canvasPaper,
             )
         runCatching { writeText(created, initialContent) }
         if (isCanvas) {
