@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,7 +21,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -65,7 +68,9 @@ private const val PinnedLabelMaxLines = 2
 private const val PinnedLabelCompactMaxLines = 1
 private const val PinnedLabelFontStepSp = 0.5f
 private val PinnedBarHorizontalPadding = 8.dp
-private val PinnedBarVerticalRailPadding = 8.dp
+
+/** Tight side inset for the landscape/fold left rail. */
+private val PinnedBarVerticalRailPadding = 2.dp
 
 @Composable
 fun NotesPinnedBar(
@@ -103,7 +108,8 @@ fun NotesPinnedBar(
             modifier
                 .fillMaxHeight()
                 .width(minItemWidth + PinnedBarVerticalRailPadding * 2)
-                .background(MaterialTheme.colorScheme.surface),
+                .background(MaterialTheme.colorScheme.surface)
+                .windowInsetsPadding(WindowInsets.statusBars),
         ) {
             val scrollState = rememberScrollState()
             Column(
@@ -114,7 +120,7 @@ fun NotesPinnedBar(
                     .verticalScroll(scrollState)
                     .padding(horizontal = PinnedBarVerticalRailPadding, vertical = barPadding),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 NotesPinnedBarColumnSlots(
                     items = items,
