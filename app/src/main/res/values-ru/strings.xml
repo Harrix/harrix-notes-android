@@ -130,6 +130,14 @@
     <string name="markdown_notes_delete_confirm_title">Удалить?</string>
     <string name="markdown_notes_delete_confirm_message">Удалить «%1$s»?</string>
     <string name="markdown_notes_delete_confirm">Удалить</string>
+    <string name="markdown_notes_external_changed_title">Заметка изменена извне</string>
+    <string name="markdown_notes_external_changed_message">«%1$s» изменилась вне приложения. Перезагрузить с диска или оставить открытую версию?</string>
+    <string name="markdown_notes_external_changed_reload">Обновить</string>
+    <string name="markdown_notes_external_changed_keep">Оставить открытую</string>
+    <string name="markdown_notes_external_deleted_title">Заметка удалена извне</string>
+    <string name="markdown_notes_external_deleted_message">«%1$s» удалена или перемещена вне приложения. Сохранить открытое содержимое обратно в папку заметок или закрыть вкладку?</string>
+    <string name="markdown_notes_external_deleted_save">Сохранить открытое</string>
+    <string name="markdown_notes_external_deleted_close">Закрыть вкладку</string>
     <string name="markdown_notes_delete_failed">Не удалось удалить</string>
     <string name="markdown_notes_copy_failed">Не удалось копировать</string>
     <string name="markdown_notes_paste_failed">Не удалось вставить</string>

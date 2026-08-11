@@ -710,6 +710,190 @@ class NotesTreeRepository(
         listingCache.remove(key)
     }
 
+    /**
+     * Stable fingerprint of direct children from the document provider (bypasses listing cache).
+     * Changes when files/folders are added, removed, renamed, or their mtime/size updates.
+     */
+    fun directoryFingerprint(
+        treeUri: Uri,
+        dirDocumentId: String,
+    ): String = queryChildren(treeUri, dirDocumentId)
+        .sortedWith(compareBy({ it.documentId }, { it.name }))
+        .joinToString("\n") { child ->
+            listOf(
+                child.documentId,
+                child.name,
+                child.lastModifiedEpochMs?.toString().orEmpty(),
+                child.sizeBytes?.toString().orEmpty(),
+                if (child.isDirectory) "d" else "f",
+            ).joinToString("\u0001")
+        }
+
+    /**
+     * Recreates a note under the first existing parent in [parentDocumentIds] (deepest first)
+     * and writes [content]. Prefer restoring `Stem/Stem.md` when the package folder still
+     * exists; otherwise creates a new folder-per-note package.
+     */
+    fun recreateMarkdownNoteWithContent(
+        treeUri: Uri,
+        parentDocumentIds: List<String>,
+        fileStem: String,
+        content: String,
+    ): NotesEntry.Note {
+        val parentDocumentId =
+            parentDocumentIds.firstOrNull { parentId ->
+                documentExists(DocumentsContract.buildDocumentUriUsingTree(treeUri, parentId))
+            } ?: error("Could not find parent folder to restore note")
+        val parentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, parentDocumentId)
+        val children = queryChildren(treeUri, parentDocumentId)
+        val baseStem =
+            normalizeMarkdownFileStem(fileStem).ifEmpty {
+                "Untitled"
+            }
+        val displayName = "$baseStem.md"
+        val parentName = queryDocumentInfo(parentUri)?.displayName
+        val restoreIntoParent =
+            parentName != null && parentName.equals(baseStem, ignoreCase = true)
+        val packageFolder =
+            children.firstOrNull { child ->
+                child.isDirectory && child.name.equals(baseStem, ignoreCase = true)
+            }
+        val targetFolderUri =
+            when {
+                restoreIntoParent -> parentUri
+                packageFolder != null -> packageFolder.uri
+                else -> null
+            }
+        val containingFolder =
+            when {
+                restoreIntoParent ->
+                    NotesPathSegment(
+                        documentId = parentDocumentId,
+                        name = parentName.orEmpty(),
+                        uri = parentUri,
+                    )
+
+                packageFolder != null ->
+                    NotesPathSegment(
+                        documentId = packageFolder.documentId,
+                        name = packageFolder.name,
+                        uri = packageFolder.uri,
+                    )
+
+                else -> null
+            }
+        if (targetFolderUri != null && containingFolder != null) {
+            val existingMd =
+                queryChildren(treeUri, containingFolder.documentId).firstOrNull { child ->
+                    !child.isDirectory && child.name.equals(displayName, ignoreCase = true)
+                }
+            val noteUri =
+                if (existingMd != null) {
+                    existingMd.uri
+                } else {
+                    DocumentsContract.createDocument(
+                        resolver,
+                        targetFolderUri,
+                        "text/markdown",
+                        displayName,
+                    ) ?: DocumentsContract.createDocument(
+                        resolver,
+                        targetFolderUri,
+                        "text/plain",
+                        displayName,
+                    ) ?: error("Could not recreate note file")
+                }
+            writeText(noteUri, content)
+            val documentId = DocumentsContract.getDocumentId(noteUri)
+            val treeNoteUri =
+                runCatching {
+                    DocumentsContract.buildDocumentUriUsingTree(treeUri, documentId)
+                }.getOrDefault(noteUri)
+            invalidateDirectory(treeUri, parentDocumentId)
+            invalidateDirectory(treeUri, containingFolder.documentId)
+            return noteEntryFromRestoredContent(
+                documentId = documentId,
+                displayName = displayName,
+                noteUri = treeNoteUri,
+                content = content,
+                packageStem = baseStem,
+                containingFolder = containingFolder,
+            )
+        }
+        val existingNames = children.map { it.name.lowercase(Locale.ROOT) }.toSet()
+        val packageStem = uniqueNotePackageStem(baseStem, existingNames)
+        val folderUri =
+            DocumentsContract.createDocument(
+                resolver,
+                parentUri,
+                DocumentsContract.Document.MIME_TYPE_DIR,
+                packageStem,
+            ) ?: error("Could not create note folder")
+        val folderDocumentId = DocumentsContract.getDocumentId(folderUri)
+        val folderDocUri =
+            runCatching {
+                DocumentsContract.buildDocumentUriUsingTree(treeUri, folderDocumentId)
+            }.getOrDefault(folderUri)
+        val packageDisplayName = "$packageStem.md"
+        val created =
+            DocumentsContract.createDocument(
+                resolver,
+                folderDocUri,
+                "text/markdown",
+                packageDisplayName,
+            ) ?: DocumentsContract.createDocument(
+                resolver,
+                folderDocUri,
+                "text/plain",
+                packageDisplayName,
+            ) ?: error("Could not create note")
+        writeText(created, content)
+        val documentId = DocumentsContract.getDocumentId(created)
+        val noteUri =
+            runCatching {
+                DocumentsContract.buildDocumentUriUsingTree(treeUri, documentId)
+            }.getOrDefault(created)
+        invalidateDirectory(treeUri, parentDocumentId)
+        invalidateDirectory(treeUri, folderDocumentId)
+        return noteEntryFromRestoredContent(
+            documentId = documentId,
+            displayName = packageDisplayName,
+            noteUri = noteUri,
+            content = content,
+            packageStem = packageStem,
+            containingFolder =
+            NotesPathSegment(
+                documentId = folderDocumentId,
+                name = packageStem,
+                uri = folderDocUri,
+            ),
+        )
+    }
+
+    private fun noteEntryFromRestoredContent(
+        documentId: String,
+        displayName: String,
+        noteUri: Uri,
+        content: String,
+        packageStem: String,
+        containingFolder: NotesPathSegment,
+    ): NotesEntry.Note {
+        val contentTitle = NoteTitleExtractor.extract(content).ifEmpty { packageStem }
+        val label = contentTitle.ifEmpty { noteDisplayLabel(displayName) }
+        if (contentTitle.isNotEmpty()) {
+            titleByDocumentId[documentId] = contentTitle
+        }
+        return NotesEntry.Note(
+            documentId = documentId,
+            name = displayName,
+            uri = noteUri,
+            displayLabel = label,
+            containingFolder = containingFolder,
+            lastModifiedEpochMs = System.currentTimeMillis(),
+            sizeBytes = content.toByteArray(Charsets.UTF_8).size.toLong(),
+        )
+    }
+
     /** Lowercased display names of direct children (files and folders). */
     fun childNamesLowercase(
         treeUri: Uri,

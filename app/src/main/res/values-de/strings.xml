@@ -163,4 +163,12 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Abbrechen</string>
     <string name="markdown_notes_canvas_page_delete_last">Die einzige Seite kann nicht gelöscht werden</string>
     <string name="markdown_notes_canvas_page_failed">Seiten konnten nicht aktualisiert werden</string>
+    <string name="markdown_notes_external_changed_title">Notiz extern geändert</string>
+    <string name="markdown_notes_external_changed_message">„%1$s“ wurde außerhalb der App geändert. Vom Datenträger neu laden oder die geöffnete Version behalten?</string>
+    <string name="markdown_notes_external_changed_reload">Neu laden</string>
+    <string name="markdown_notes_external_changed_keep">Geöffnete behalten</string>
+    <string name="markdown_notes_external_deleted_title">Notiz extern gelöscht</string>
+    <string name="markdown_notes_external_deleted_message">„%1$s“ wurde außerhalb der App gelöscht oder verschoben. Geöffneten Inhalt speichern oder Tab schließen?</string>
+    <string name="markdown_notes_external_deleted_save">Inhalt speichern</string>
+    <string name="markdown_notes_external_deleted_close">Tab schließen</string>
 </resources>

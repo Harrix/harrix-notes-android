@@ -163,4 +163,12 @@
     <string name="markdown_notes_canvas_page_delete_cancel">取消</string>
     <string name="markdown_notes_canvas_page_delete_last">无法删除唯一的页面</string>
     <string name="markdown_notes_canvas_page_failed">无法更新页面</string>
+    <string name="markdown_notes_external_changed_title">笔记已在外部更改</string>
+    <string name="markdown_notes_external_changed_message">“%1$s”已在应用外被更改。从磁盘重新加载，还是保留当前打开的版本？</string>
+    <string name="markdown_notes_external_changed_reload">重新加载</string>
+    <string name="markdown_notes_external_changed_keep">保留打开的版本</string>
+    <string name="markdown_notes_external_deleted_title">笔记已在外部删除</string>
+    <string name="markdown_notes_external_deleted_message">“%1$s”已在应用外被删除或移动。保存打开的内容，还是关闭标签页？</string>
+    <string name="markdown_notes_external_deleted_save">保存打开的内容</string>
+    <string name="markdown_notes_external_deleted_close">关闭标签页</string>
 </resources>

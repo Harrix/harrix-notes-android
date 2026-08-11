@@ -163,4 +163,12 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Cancelar</string>
     <string name="markdown_notes_canvas_page_delete_last">No se puede eliminar la única página</string>
     <string name="markdown_notes_canvas_page_failed">No se pudieron actualizar las páginas</string>
+    <string name="markdown_notes_external_changed_title">Nota cambiada externamente</string>
+    <string name="markdown_notes_external_changed_message">“%1$s” se cambió fuera de la app. ¿Recargar desde el disco o conservar la versión abierta?</string>
+    <string name="markdown_notes_external_changed_reload">Recargar</string>
+    <string name="markdown_notes_external_changed_keep">Conservar abierta</string>
+    <string name="markdown_notes_external_deleted_title">Nota eliminada externamente</string>
+    <string name="markdown_notes_external_deleted_message">“%1$s” se eliminó o movió fuera de la app. ¿Guardar el contenido abierto o cerrar la pestaña?</string>
+    <string name="markdown_notes_external_deleted_save">Guardar contenido</string>
+    <string name="markdown_notes_external_deleted_close">Cerrar pestaña</string>
 </resources>

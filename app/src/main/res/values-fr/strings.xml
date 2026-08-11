@@ -163,4 +163,12 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Annuler</string>
     <string name="markdown_notes_canvas_page_delete_last">Impossible de supprimer la seule page</string>
     <string name="markdown_notes_canvas_page_failed">Impossible de mettre à jour les pages</string>
+    <string name="markdown_notes_external_changed_title">Note modifiée en externe</string>
+    <string name="markdown_notes_external_changed_message">« %1$s » a été modifiée en dehors de l\'application. Recharger depuis le disque ou conserver la version ouverte ?</string>
+    <string name="markdown_notes_external_changed_reload">Recharger</string>
+    <string name="markdown_notes_external_changed_keep">Conserver l\'ouverte</string>
+    <string name="markdown_notes_external_deleted_title">Note supprimée en externe</string>
+    <string name="markdown_notes_external_deleted_message">« %1$s » a été supprimée ou déplacée en dehors de l\'application. Enregistrer le contenu ouvert ou fermer l\'onglet ?</string>
+    <string name="markdown_notes_external_deleted_save">Enregistrer le contenu</string>
+    <string name="markdown_notes_external_deleted_close">Fermer l\'onglet</string>
 </resources>

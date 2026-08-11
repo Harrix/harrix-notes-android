@@ -142,6 +142,14 @@
     <string name="markdown_notes_delete_confirm_title">Delete?</string>
     <string name="markdown_notes_delete_confirm_message">Delete “%1$s”?</string>
     <string name="markdown_notes_delete_confirm">Delete</string>
+    <string name="markdown_notes_external_changed_title">Note changed externally</string>
+    <string name="markdown_notes_external_changed_message">“%1$s” was changed outside the app. Reload from disk or keep the version currently open?</string>
+    <string name="markdown_notes_external_changed_reload">Reload</string>
+    <string name="markdown_notes_external_changed_keep">Keep open version</string>
+    <string name="markdown_notes_external_deleted_title">Note deleted externally</string>
+    <string name="markdown_notes_external_deleted_message">“%1$s” was deleted or moved outside the app. Save the open content back to the notes folder, or close the tab?</string>
+    <string name="markdown_notes_external_deleted_save">Save open content</string>
+    <string name="markdown_notes_external_deleted_close">Close tab</string>
     <string name="markdown_notes_delete_failed">Could not delete</string>
     <string name="markdown_notes_copy_failed">Could not copy</string>
     <string name="markdown_notes_paste_failed">Could not paste</string>

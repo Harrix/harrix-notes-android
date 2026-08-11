@@ -7,6 +7,8 @@ import androidx.lifecycle.AndroidViewModel
 import dev.harrix.notes.NotesClipboardEntry
 import dev.harrix.notes.NotesContentFont
 import dev.harrix.notes.NotesEntry
+import dev.harrix.notes.NotesExternalNoteConflict
+import dev.harrix.notes.NotesLoadedDocumentBaseline
 import dev.harrix.notes.NotesOpenMode
 import dev.harrix.notes.NotesPathSegment
 import dev.harrix.notes.NotesPinnedItem
@@ -82,6 +84,24 @@ class NotesViewerViewModel(
     var loadedNoteDocumentId: String? = null
     var loadedNoteUri: String? = null
 
+    /** Provider mtime/size after last successful load or save; used for external-change detection. */
+    var loadedNoteBaseline: NotesLoadedDocumentBaseline? = null
+
+    /** Fingerprints of directories last seen while browsing (current folder + expanded tree). */
+    val directoryFingerprints = mutableStateOf<Map<String, String>>(emptyMap())
+
+    /** Pending dialog when the selected open note changed or disappeared externally. */
+    val externalNoteConflict = mutableStateOf<NotesExternalNoteConflict?>(null)
+
+    /**
+     * While [isSaving] or until this uptime, skip external probes so our own write
+     * cannot race a "file changed" dialog.
+     */
+    var suppressExternalProbeUntilElapsedMs: Long = 0L
+
+    /** Bumps when the selected tab changes; stale async probes must not show dialogs. */
+    var externalProbeGeneration: Long = 0L
+
     var noteListFirstVisibleIndex: Int = 0
     var noteListFirstVisibleOffset: Int = 0
     var folderListFirstVisibleIndex: Int = 0
@@ -94,6 +114,7 @@ class NotesViewerViewModel(
     fun clearLoadedNote() {
         loadedNoteDocumentId = null
         loadedNoteUri = null
+        loadedNoteBaseline = null
         noteListFirstVisibleIndex = 0
         noteListFirstVisibleOffset = 0
     }
@@ -101,9 +122,21 @@ class NotesViewerViewModel(
     fun markNoteLoaded(
         documentId: String,
         uri: String,
+        baseline: NotesLoadedDocumentBaseline? = null,
     ) {
         loadedNoteDocumentId = documentId
         loadedNoteUri = uri
+        if (baseline != null) {
+            loadedNoteBaseline = baseline
+        }
+    }
+
+    fun rememberDirectoryFingerprint(
+        dirDocumentId: String,
+        fingerprint: String,
+    ) {
+        directoryFingerprints.value =
+            directoryFingerprints.value + (dirDocumentId to fingerprint)
     }
 
     fun resetFolderScroll() {

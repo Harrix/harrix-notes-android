@@ -163,4 +163,12 @@
     <string name="markdown_notes_canvas_page_delete_cancel">キャンセル</string>
     <string name="markdown_notes_canvas_page_delete_last">唯一のページは削除できません</string>
     <string name="markdown_notes_canvas_page_failed">ページを更新できませんでした</string>
+    <string name="markdown_notes_external_changed_title">ノートが外部で変更されました</string>
+    <string name="markdown_notes_external_changed_message">「%1$s」がアプリ外で変更されました。ディスクから再読み込みしますか？それとも開いている版を保ちますか？</string>
+    <string name="markdown_notes_external_changed_reload">再読み込み</string>
+    <string name="markdown_notes_external_changed_keep">開いている版を保持</string>
+    <string name="markdown_notes_external_deleted_title">ノートが外部で削除されました</string>
+    <string name="markdown_notes_external_deleted_message">「%1$s」がアプリ外で削除または移動されました。開いている内容を保存しますか？それともタブを閉じますか？</string>
+    <string name="markdown_notes_external_deleted_save">内容を保存</string>
+    <string name="markdown_notes_external_deleted_close">タブを閉じる</string>
 </resources>

@@ -163,4 +163,12 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Zrušit</string>
     <string name="markdown_notes_canvas_page_delete_last">Nelze smazat jedinou stránku</string>
     <string name="markdown_notes_canvas_page_failed">Nepodařilo se aktualizovat stránky</string>
+    <string name="markdown_notes_external_changed_title">Poznámka změněna externě</string>
+    <string name="markdown_notes_external_changed_message">„%1$s“ byla změněna mimo aplikaci. Načíst z disku znovu, nebo ponechat otevřenou verzi?</string>
+    <string name="markdown_notes_external_changed_reload">Načíst znovu</string>
+    <string name="markdown_notes_external_changed_keep">Ponechat otevřenou</string>
+    <string name="markdown_notes_external_deleted_title">Poznámka smazána externě</string>
+    <string name="markdown_notes_external_deleted_message">„%1$s“ byla smazána nebo přesunuta mimo aplikaci. Uložit otevřený obsah, nebo zavřít kartu?</string>
+    <string name="markdown_notes_external_deleted_save">Uložit obsah</string>
+    <string name="markdown_notes_external_deleted_close">Zavřít kartu</string>
 </resources>

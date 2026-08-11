@@ -122,6 +122,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.harrix.notes.NoteMetaUpdates
 import dev.harrix.notes.NoteTitleExtractor
@@ -132,8 +135,11 @@ import dev.harrix.notes.NotesClipboardMode
 import dev.harrix.notes.NotesDateFormats
 import dev.harrix.notes.NotesDocumentInfo
 import dev.harrix.notes.NotesEntry
+import dev.harrix.notes.NotesExternalNoteConflict
+import dev.harrix.notes.NotesExternalNoteProbe
 import dev.harrix.notes.NotesListDensity
 import dev.harrix.notes.NotesListingOptions
+import dev.harrix.notes.NotesLoadedDocumentBaseline
 import dev.harrix.notes.NotesOpenIntent
 import dev.harrix.notes.NotesOpenMode
 import dev.harrix.notes.NotesPathSegment
@@ -149,6 +155,7 @@ import dev.harrix.notes.blocksClipboardRelocation
 import dev.harrix.notes.mutationDocument
 import dev.harrix.notes.noteAssetFolderPath
 import dev.harrix.notes.notesFolderDisplayName
+import dev.harrix.notes.probeOpenNote
 import dev.harrix.notes.takeNotesFolderPermission
 import dev.harrix.notes.ui.adaptiveContentWidth
 import dev.harrix.notes.ui.isCompactHeight
@@ -247,7 +254,9 @@ fun NotesViewerScreen(
     var treeChildrenByFolderId by viewModel.treeChildrenByFolderId
     var treeExpandedFolderIds by viewModel.treeExpandedFolderIds
     var treeLoadingRoot by viewModel.treeLoadingRoot
+    var externalNoteConflict by viewModel.externalNoteConflict
     val editorController = remember { NotesMarkdownEditorController() }
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     fun reloadPath() {
         notesTreeUri = preferences.loadNotesTreeUri()
@@ -532,7 +541,7 @@ fun NotesViewerScreen(
                 runCatching { repository.writeText(uri, text) }
             }
         isSaving = false
-        return result
+        result
             .onSuccess {
                 lastSavedText = text
                 noteContent = text
@@ -593,7 +602,33 @@ fun NotesViewerScreen(
             }.onFailure { error ->
                 statusMessage =
                     error.message ?: context.getString(R.string.markdown_notes_save_failed)
-            }.isSuccess
+            }
+        if (result.isSuccess) {
+            val info =
+                withContext(Dispatchers.IO) {
+                    repository.queryDocumentInfo(uri)
+                }
+            val uriString = uri.toString()
+            val savedDocumentId =
+                openTabs.firstOrNull { it.uri == uri }?.documentId
+                    ?: selectedTabDocumentId
+            // Only refresh the baseline for the note currently shown in the editor.
+            if (savedDocumentId != null &&
+                viewModel.loadedNoteDocumentId == savedDocumentId &&
+                viewModel.loadedNoteUri == uriString
+            ) {
+                viewModel.loadedNoteBaseline =
+                    NotesLoadedDocumentBaseline(
+                        documentId = savedDocumentId,
+                        uri = uriString,
+                        lastModifiedEpochMs = info?.lastModifiedEpochMs,
+                        sizeBytes = info?.sizeBytes,
+                    )
+            }
+            viewModel.suppressExternalProbeUntilElapsedMs =
+                android.os.SystemClock.elapsedRealtime() + ExternalProbeQuietPeriodMs
+        }
+        return result.isSuccess
     }
 
     fun persistCurrentDraft(after: (() -> Unit)? = null) {
@@ -614,6 +649,9 @@ fun NotesViewerScreen(
 
     fun scheduleAutosave() {
         val tab = openTabs.firstOrNull { it.documentId == selectedTabDocumentId } ?: return
+        if (externalNoteConflict != null || noteLoading || isSaving) {
+            return
+        }
         if (!isEditing || draftText == lastSavedText) {
             return
         }
@@ -621,7 +659,15 @@ fun NotesViewerScreen(
         autosaveJob =
             scope.launch {
                 delay(AutosaveDelayMs)
-                if (isEditing && draftText != lastSavedText) {
+                val canSave =
+                    externalNoteConflict == null &&
+                        !noteLoading &&
+                        !isSaving &&
+                        isEditing
+                if (canSave &&
+                    draftText != lastSavedText &&
+                    selectedTabDocumentId == tab.documentId
+                ) {
                     saveNoteText(tab.uri, draftText)
                 }
             }
@@ -917,6 +963,8 @@ fun NotesViewerScreen(
                 }
             }
             if (selectedTabDocumentId != note.documentId) {
+                viewModel.externalProbeGeneration += 1
+                externalNoteConflict = null
                 noteLoading = true
                 noteContent = null
                 resetEditorState()
@@ -1234,6 +1282,15 @@ fun NotesViewerScreen(
                         repository.listChildren(treeUri, dir.documentId, dir.name)
                     }.getOrNull()
                 } ?: return@launch
+            val fingerprint =
+                withContext(Dispatchers.IO) {
+                    runCatching {
+                        repository.directoryFingerprint(treeUri, dir.documentId)
+                    }.getOrNull()
+                }
+            if (fingerprint != null) {
+                viewModel.rememberDirectoryFingerprint(dir.documentId, fingerprint)
+            }
             if (folderPath.lastOrNull()?.documentId != dir.documentId) {
                 putTreeChildren(
                     dir.documentId,
@@ -1245,6 +1302,288 @@ fun NotesViewerScreen(
             entries = withTitles
             putTreeChildren(dir.documentId, withTitles)
             enrichNoteMeta(treeUri, dir.documentId, withTitles, folderListRequestId)
+        }
+    }
+
+    fun closeTabWithoutSaving(documentId: String) {
+        autosaveJob?.cancel()
+        autosaveJob = null
+        val closingSelected = selectedTabDocumentId == documentId
+        openTabs = openTabs.filterNot { it.documentId == documentId }
+        if (!closingSelected) {
+            return
+        }
+        val nextId = openTabs.lastOrNull()?.documentId
+        selectedTabDocumentId = nextId
+        if (nextId == null) {
+            noteContent = null
+            noteLoading = false
+            resetEditorState()
+        } else {
+            noteLoading = true
+            noteContent = null
+            resetEditorState()
+        }
+    }
+
+    fun reloadSelectedNoteFromDisk() {
+        autosaveJob?.cancel()
+        autosaveJob = null
+        externalNoteConflict = null
+        isEditing = false
+        viewModel.clearLoadedNote()
+        // Keep draft until disk load finishes so the editor cannot autosave empty text.
+        noteLoading = true
+        noteContent = null
+    }
+
+    fun keepLocalAgainstExternal(conflict: NotesExternalNoteConflict.Modified) {
+        if (selectedTabDocumentId != conflict.tab.documentId) {
+            externalNoteConflict = null
+            return
+        }
+        viewModel.loadedNoteBaseline =
+            NotesLoadedDocumentBaseline(
+                documentId = conflict.tab.documentId,
+                uri = conflict.tab.uri.toString(),
+                lastModifiedEpochMs = conflict.diskLastModifiedEpochMs,
+                sizeBytes = conflict.diskSizeBytes,
+            )
+        externalNoteConflict = null
+    }
+
+    suspend fun refreshDirectoryFromExternal(
+        treeUri: Uri,
+        dirDocumentId: String,
+    ) {
+        repository.invalidateDirectory(treeUri, dirDocumentId)
+        val currentDir = folderPath.lastOrNull()
+        if (currentDir?.documentId == dirDocumentId) {
+            val listed =
+                withContext(Dispatchers.IO) {
+                    runCatching {
+                        repository.listChildren(treeUri, currentDir.documentId, currentDir.name)
+                    }.getOrNull()
+                } ?: return
+            if (folderPath.lastOrNull()?.documentId != currentDir.documentId) {
+                return
+            }
+            val withTitles = repository.applyTitleSource(listed, titleSource)
+            entries = withTitles
+            putTreeChildren(currentDir.documentId, withTitles)
+            enrichNoteMeta(treeUri, currentDir.documentId, withTitles, folderListRequestId)
+            return
+        }
+        val name =
+            treeChildrenByFolderId.values
+                .asSequence()
+                .flatten()
+                .filterIsInstance<NotesEntry.Folder>()
+                .firstOrNull { it.documentId == dirDocumentId }
+                ?.name
+                ?: treeRoot?.takeIf { it.documentId == dirDocumentId }?.name
+                ?: folderPath.firstOrNull { it.documentId == dirDocumentId }?.name
+                ?: return
+        val uri = DocumentsContract.buildDocumentUriUsingTree(treeUri, dirDocumentId)
+        loadTreeFolder(
+            treeUri,
+            NotesPathSegment(documentId = dirDocumentId, name = name, uri = uri),
+        )
+    }
+
+    suspend fun syncExternalChanges() {
+        if (externalNoteConflict != null || isSaving || noteLoading) {
+            return
+        }
+        if (android.os.SystemClock.elapsedRealtime() < viewModel.suppressExternalProbeUntilElapsedMs) {
+            return
+        }
+        val tree = notesTreeUri ?: return
+        val treeUri = Uri.parse(tree)
+        val dirsToCheck =
+            buildSet {
+                folderPath.lastOrNull()?.documentId?.let { add(it) }
+                treeRoot?.documentId?.let { add(it) }
+                addAll(treeExpandedFolderIds)
+            }
+        for (dirId in dirsToCheck) {
+            if (isSaving || noteLoading || externalNoteConflict != null) {
+                return
+            }
+            val fingerprint =
+                withContext(Dispatchers.IO) {
+                    runCatching { repository.directoryFingerprint(treeUri, dirId) }.getOrNull()
+                } ?: continue
+            val previous = viewModel.directoryFingerprints.value[dirId]
+            viewModel.rememberDirectoryFingerprint(dirId, fingerprint)
+            if (previous != null && previous != fingerprint) {
+                refreshDirectoryFromExternal(treeUri, dirId)
+            }
+        }
+
+        val selectedId = selectedTabDocumentId ?: return
+        val tab = openTabs.firstOrNull { it.documentId == selectedId } ?: return
+        if (noteLoading || isSaving) {
+            return
+        }
+        if (viewModel.loadedNoteDocumentId != tab.documentId ||
+            viewModel.loadedNoteUri != tab.uri.toString()
+        ) {
+            return
+        }
+        val knownTexts = listOfNotNull(lastSavedText, draftText).distinct()
+        val probeGeneration = viewModel.externalProbeGeneration
+        val probe =
+            withContext(Dispatchers.IO) {
+                repository.probeOpenNote(
+                    uri = tab.uri,
+                    documentId = tab.documentId,
+                    baseline = viewModel.loadedNoteBaseline,
+                    knownTexts = knownTexts,
+                )
+            }
+        // Tab may have changed while the probe ran — never alert for a non-selected note.
+        val probeStillValid =
+            probeGeneration == viewModel.externalProbeGeneration &&
+                selectedTabDocumentId == tab.documentId &&
+                !noteLoading &&
+                !isSaving &&
+                externalNoteConflict == null
+        if (!probeStillValid) {
+            return
+        }
+        when (probe) {
+            is NotesExternalNoteProbe.Unchanged -> {
+                viewModel.loadedNoteBaseline = probe.baseline
+                val displayName = probe.displayName
+                if (!displayName.isNullOrBlank() && displayName != tab.fileName) {
+                    openTabs =
+                        openTabs.map { openTab ->
+                            if (openTab.documentId != tab.documentId) {
+                                openTab
+                            } else {
+                                val nextTitle =
+                                    if (titleSource == NotesTitleSource.FileName) {
+                                        NotesTreeRepository.noteDisplayLabel(displayName)
+                                    } else {
+                                        openTab.title
+                                    }
+                                openTab.copy(fileName = displayName, title = nextTitle)
+                            }
+                        }
+                }
+            }
+
+            is NotesExternalNoteProbe.Modified -> {
+                // Content already matches what we have — refresh baseline only.
+                if (probe.diskText == draftText || probe.diskText == lastSavedText) {
+                    viewModel.loadedNoteBaseline =
+                        NotesLoadedDocumentBaseline(
+                            documentId = tab.documentId,
+                            uri = tab.uri.toString(),
+                            lastModifiedEpochMs = probe.diskLastModifiedEpochMs,
+                            sizeBytes = probe.diskSizeBytes,
+                        )
+                    return
+                }
+                autosaveJob?.cancel()
+                autosaveJob = null
+                externalNoteConflict =
+                    NotesExternalNoteConflict.Modified(
+                        tab = tab,
+                        diskLastModifiedEpochMs = probe.diskLastModifiedEpochMs,
+                        diskSizeBytes = probe.diskSizeBytes,
+                        diskText = probe.diskText,
+                    )
+            }
+
+            NotesExternalNoteProbe.Missing -> {
+                autosaveJob?.cancel()
+                autosaveJob = null
+                externalNoteConflict = NotesExternalNoteConflict.Deleted(tab = tab)
+            }
+        }
+    }
+
+    fun saveDeletedOpenNote(conflict: NotesExternalNoteConflict.Deleted) {
+        val tree = notesTreeUri
+        if (tree == null) {
+            statusMessage = context.getString(R.string.markdown_notes_save_failed)
+            return
+        }
+        scope.launch {
+            editorController.flush()
+            val tab = conflict.tab
+            val text = draftText
+            val treeUri = Uri.parse(tree)
+            val stem =
+                tab.fileName
+                    .substringBeforeLast('.')
+                    .ifBlank { tab.title }
+                    .ifBlank { "Untitled" }
+            val parentIds =
+                (
+                    tab.folderPath.map { it.documentId }.asReversed() +
+                        repository.rootSegment(treeUri).documentId
+                    ).distinct()
+            val result =
+                withContext(Dispatchers.IO) {
+                    runCatching {
+                        val note =
+                            repository.recreateMarkdownNoteWithContent(
+                                treeUri = treeUri,
+                                parentDocumentIds = parentIds,
+                                fileStem = stem,
+                                content = text,
+                            )
+                        val survivingPath =
+                            tab.folderPath.filter { segment ->
+                                repository.documentExists(segment.uri)
+                            }
+                        note to noteAssetFolderPath(survivingPath, note)
+                    }
+                }
+            result
+                .onSuccess { (note, pathForNote) ->
+                    openTabs =
+                        openTabs.map { openTab ->
+                            if (openTab.documentId == tab.documentId) {
+                                OpenNoteTab(
+                                    documentId = note.documentId,
+                                    uri = note.uri,
+                                    title = note.displayLabel,
+                                    fileName = note.name,
+                                    folderPath = pathForNote,
+                                    isExternal = false,
+                                )
+                            } else {
+                                openTab
+                            }
+                        }
+                    selectedTabDocumentId = note.documentId
+                    noteContent = text
+                    draftText = text
+                    lastSavedText = text
+                    previewDraftText = text
+                    viewModel.markNoteLoaded(
+                        note.documentId,
+                        note.uri.toString(),
+                        NotesLoadedDocumentBaseline(
+                            documentId = note.documentId,
+                            uri = note.uri.toString(),
+                            lastModifiedEpochMs = note.lastModifiedEpochMs,
+                            sizeBytes = note.sizeBytes,
+                        ),
+                    )
+                    externalNoteConflict = null
+                    statusMessage = null
+                    pathForNote.lastOrNull()?.documentId?.let { parentId ->
+                        reloadListingAfterMutation(parentId)
+                    }
+                }.onFailure { error ->
+                    statusMessage =
+                        error.message ?: context.getString(R.string.markdown_notes_save_failed)
+                }
         }
     }
 
@@ -1566,6 +1905,8 @@ fun NotesViewerScreen(
         if (documentId == selectedTabDocumentId) {
             return
         }
+        viewModel.externalProbeGeneration += 1
+        externalNoteConflict = null
         persistCurrentDraft {
             selectedTabDocumentId = documentId
             noteLoading = true
@@ -1792,48 +2133,81 @@ fun NotesViewerScreen(
             withContext(Dispatchers.IO) {
                 runCatching { repository.readText(tab.uri) }
             }
-        result
-            .onSuccess { loaded ->
-                noteContent = loaded
-                draftText = loaded
-                lastSavedText = loaded
-                canvasMarkdownMode = false
-                val canvasNote = NoteTitleExtractor.isCanvas(loaded)
-                val shouldEdit =
-                    when {
-                        canvasNote -> false
+        val loaded = result.getOrNull()
+        if (loaded != null) {
+            noteContent = loaded
+            draftText = loaded
+            lastSavedText = loaded
+            canvasMarkdownMode = false
+            val canvasNote = NoteTitleExtractor.isCanvas(loaded)
+            val shouldEdit =
+                when {
+                    canvasNote -> false
 
-                        autoEditDocumentId == tab.documentId -> {
-                            autoEditDocumentId = null
-                            true
-                        }
-
-                        useDualPaneState.value -> true
-
-                        else -> noteOpenMode == NotesOpenMode.Edit
+                    autoEditDocumentId == tab.documentId -> {
+                        autoEditDocumentId = null
+                        true
                     }
-                if (autoEditDocumentId == tab.documentId && canvasNote) {
-                    autoEditDocumentId = null
+
+                    useDualPaneState.value -> true
+
+                    else -> noteOpenMode == NotesOpenMode.Edit
                 }
-                isEditing = shouldEdit
-                previewDraftText = loaded
-                statusMessage = null
-                viewModel.markNoteLoaded(tab.documentId, tabUri)
-            }.onFailure { error ->
-                noteContent = null
-                draftText = ""
-                lastSavedText = null
-                previewDraftText = ""
-                canvasMarkdownMode = false
-                if (autoEditDocumentId == tab.documentId) {
-                    autoEditDocumentId = null
-                }
-                isEditing = false
-                statusMessage =
-                    error.message ?: context.getString(R.string.markdown_notes_load_failed)
-                viewModel.clearLoadedNote()
+            if (autoEditDocumentId == tab.documentId && canvasNote) {
+                autoEditDocumentId = null
             }
+            isEditing = shouldEdit
+            previewDraftText = loaded
+            statusMessage = null
+            val info =
+                withContext(Dispatchers.IO) {
+                    repository.queryDocumentInfo(tab.uri)
+                }
+            viewModel.markNoteLoaded(
+                tab.documentId,
+                tabUri,
+                NotesLoadedDocumentBaseline(
+                    documentId = tab.documentId,
+                    uri = tabUri,
+                    lastModifiedEpochMs = info?.lastModifiedEpochMs,
+                    sizeBytes = info?.sizeBytes,
+                ),
+            )
+        } else {
+            val error = result.exceptionOrNull()
+            noteContent = null
+            draftText = ""
+            lastSavedText = null
+            previewDraftText = ""
+            canvasMarkdownMode = false
+            if (autoEditDocumentId == tab.documentId) {
+                autoEditDocumentId = null
+            }
+            isEditing = false
+            statusMessage =
+                error?.message ?: context.getString(R.string.markdown_notes_load_failed)
+            viewModel.clearLoadedNote()
+        }
         noteLoading = false
+    }
+
+    val syncExternalChangesLatest =
+        rememberUpdatedState(
+            newValue =
+            suspend {
+                syncExternalChanges()
+            },
+        )
+    LaunchedEffect(lifecycleOwner, notesTreeUri) {
+        if (notesTreeUri == null) {
+            return@LaunchedEffect
+        }
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            while (true) {
+                syncExternalChangesLatest.value.invoke()
+                delay(ExternalSyncIntervalMs)
+            }
+        }
     }
 
     val isCanvasNote =
@@ -2467,9 +2841,81 @@ fun NotesViewerScreen(
             },
         )
     }
+    LaunchedEffect(externalNoteConflict, selectedTabDocumentId) {
+        val conflict = externalNoteConflict ?: return@LaunchedEffect
+        if (conflict.tab.documentId != selectedTabDocumentId) {
+            externalNoteConflict = null
+        }
+    }
+    val selectedConflict =
+        externalNoteConflict?.takeIf { it.tab.documentId == selectedTabDocumentId }
+    when (val conflict = selectedConflict) {
+        is NotesExternalNoteConflict.Modified -> {
+            val label = conflict.tab.title.ifBlank { conflict.tab.fileName }
+            AlertDialog(
+                onDismissRequest = { keepLocalAgainstExternal(conflict) },
+                title = { Text(stringResource(R.string.markdown_notes_external_changed_title)) },
+                text = {
+                    Text(
+                        text =
+                        stringResource(
+                            R.string.markdown_notes_external_changed_message,
+                            label,
+                        ),
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = { reloadSelectedNoteFromDisk() }) {
+                        Text(stringResource(R.string.markdown_notes_external_changed_reload))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { keepLocalAgainstExternal(conflict) }) {
+                        Text(stringResource(R.string.markdown_notes_external_changed_keep))
+                    }
+                },
+            )
+        }
+
+        is NotesExternalNoteConflict.Deleted -> {
+            val label = conflict.tab.title.ifBlank { conflict.tab.fileName }
+            AlertDialog(
+                onDismissRequest = { },
+                title = { Text(stringResource(R.string.markdown_notes_external_deleted_title)) },
+                text = {
+                    Text(
+                        text =
+                        stringResource(
+                            R.string.markdown_notes_external_deleted_message,
+                            label,
+                        ),
+                    )
+                },
+                confirmButton = {
+                    TextButton(onClick = { saveDeletedOpenNote(conflict) }) {
+                        Text(stringResource(R.string.markdown_notes_external_deleted_save))
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            externalNoteConflict = null
+                            closeTabWithoutSaving(conflict.tab.documentId)
+                        },
+                    ) {
+                        Text(stringResource(R.string.markdown_notes_external_deleted_close))
+                    }
+                },
+            )
+        }
+
+        null -> Unit
+    }
 }
 
 private const val AutosaveDelayMs = 800L
+private const val ExternalSyncIntervalMs = 3_000L
+private const val ExternalProbeQuietPeriodMs = 2_500L
 private val NotesTabMaxWidth = 128.dp
 private val NotesOpenTabsMenuMaxHeight = 360.dp
 private val NotesTabSwipeCloseThreshold = 40.dp

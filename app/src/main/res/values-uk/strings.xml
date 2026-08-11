@@ -163,4 +163,12 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Скасувати</string>
     <string name="markdown_notes_canvas_page_delete_last">Не можна видалити єдину сторінку</string>
     <string name="markdown_notes_canvas_page_failed">Не вдалося оновити сторінки</string>
+    <string name="markdown_notes_external_changed_title">Нотатку змінено ззовні</string>
+    <string name="markdown_notes_external_changed_message">«%1$s» змінено поза додатком. Перезавантажити з диска чи залишити відкриту версію?</string>
+    <string name="markdown_notes_external_changed_reload">Оновити</string>
+    <string name="markdown_notes_external_changed_keep">Залишити відкриту</string>
+    <string name="markdown_notes_external_deleted_title">Нотатку видалено ззовні</string>
+    <string name="markdown_notes_external_deleted_message">«%1$s» видалено або переміщено поза додатком. Зберегти відкритий вміст чи закрити вкладку?</string>
+    <string name="markdown_notes_external_deleted_save">Зберегти відкрите</string>
+    <string name="markdown_notes_external_deleted_close">Закрити вкладку</string>
 </resources>

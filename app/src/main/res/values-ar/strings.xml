@@ -163,4 +163,12 @@
     <string name="markdown_notes_canvas_page_delete_cancel">إلغاء</string>
     <string name="markdown_notes_canvas_page_delete_last">لا يمكن حذف الصفحة الوحيدة</string>
     <string name="markdown_notes_canvas_page_failed">تعذر تحديث الصفحات</string>
+    <string name="markdown_notes_external_changed_title">تم تغيير الملاحظة خارجيًا</string>
+    <string name="markdown_notes_external_changed_message">تم تغيير «%1$s» خارج التطبيق. أعد التحميل من القرص أم أبقِ النسخة المفتوحة؟</string>
+    <string name="markdown_notes_external_changed_reload">إعادة التحميل</string>
+    <string name="markdown_notes_external_changed_keep">الإبقاء على المفتوحة</string>
+    <string name="markdown_notes_external_deleted_title">تم حذف الملاحظة خارجيًا</string>
+    <string name="markdown_notes_external_deleted_message">تم حذف «%1$s» أو نقلها خارج التطبيق. احفظ المحتوى المفتوح أم أغلق علامة التبويب؟</string>
+    <string name="markdown_notes_external_deleted_save">حفظ المحتوى</string>
+    <string name="markdown_notes_external_deleted_close">إغلاق علامة التبويب</string>
 </resources>

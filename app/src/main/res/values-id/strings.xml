@@ -163,4 +163,12 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Batal</string>
     <string name="markdown_notes_canvas_page_delete_last">Tidak dapat menghapus satu-satunya halaman</string>
     <string name="markdown_notes_canvas_page_failed">Tidak dapat memperbarui halaman</string>
+    <string name="markdown_notes_external_changed_title">Catatan diubah secara eksternal</string>
+    <string name="markdown_notes_external_changed_message">“%1$s” diubah di luar aplikasi. Muat ulang dari disk atau simpan versi yang terbuka?</string>
+    <string name="markdown_notes_external_changed_reload">Muat ulang</string>
+    <string name="markdown_notes_external_changed_keep">Pertahankan yang terbuka</string>
+    <string name="markdown_notes_external_deleted_title">Catatan dihapus secara eksternal</string>
+    <string name="markdown_notes_external_deleted_message">“%1$s” dihapus atau dipindahkan di luar aplikasi. Simpan konten yang terbuka atau tutup tab?</string>
+    <string name="markdown_notes_external_deleted_save">Simpan konten</string>
+    <string name="markdown_notes_external_deleted_close">Tutup tab</string>
 </resources>
