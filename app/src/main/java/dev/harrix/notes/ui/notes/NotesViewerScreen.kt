@@ -4130,6 +4130,7 @@ private fun NotesFolderList(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun NotesFolderRow(
     folder: NotesEntry.Folder,
@@ -4159,7 +4160,10 @@ private fun NotesFolderRow(
         Modifier
             .fillMaxWidth()
             .height(rowHeight)
-            .clickable(onClick = onOpen)
+            .combinedClickable(
+                onClick = onOpen,
+                onLongClick = { menuExpanded = true },
+            )
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -4209,6 +4213,7 @@ private fun NotesFolderRow(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun NotesNoteRow(
     note: NotesEntry.Note,
@@ -4237,7 +4242,10 @@ private fun NotesNoteRow(
         Modifier
             .fillMaxWidth()
             .height(rowHeight)
-            .clickable(onClick = onOpen)
+            .combinedClickable(
+                onClick = onOpen,
+                onLongClick = { menuExpanded = true },
+            )
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
