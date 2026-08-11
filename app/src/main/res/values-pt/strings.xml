@@ -133,6 +133,8 @@
     <string name="markdown_notes_canvas">Tela</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
     <string name="markdown_notes_canvas_pen">Caneta</string>
+    <string name="markdown_notes_canvas_pen_color">Cor da caneta</string>
+    <string name="markdown_notes_canvas_stroke_width">Espessura do traço</string>
     <string name="markdown_notes_canvas_eraser">Borracha</string>
     <string name="markdown_notes_canvas_custom_color">Cor personalizada</string>
     <string name="markdown_notes_canvas_custom_color_title">Escolher cor</string>

@@ -133,6 +133,8 @@
     <string name="markdown_notes_canvas">Lienzo</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
     <string name="markdown_notes_canvas_pen">Lápiz</string>
+    <string name="markdown_notes_canvas_pen_color">Color del lápiz</string>
+    <string name="markdown_notes_canvas_stroke_width">Grosor del trazo</string>
     <string name="markdown_notes_canvas_eraser">Borrador</string>
     <string name="markdown_notes_canvas_custom_color">Color personalizado</string>
     <string name="markdown_notes_canvas_custom_color_title">Elegir color</string>

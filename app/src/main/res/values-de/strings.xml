@@ -133,6 +133,8 @@
     <string name="markdown_notes_canvas">Canvas</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
     <string name="markdown_notes_canvas_pen">Stift</string>
+    <string name="markdown_notes_canvas_pen_color">Stiftfarbe</string>
+    <string name="markdown_notes_canvas_stroke_width">Strichstärke</string>
     <string name="markdown_notes_canvas_eraser">Radierer</string>
     <string name="markdown_notes_canvas_custom_color">Eigene Farbe</string>
     <string name="markdown_notes_canvas_custom_color_title">Farbe wählen</string>

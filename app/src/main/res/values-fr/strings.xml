@@ -133,6 +133,8 @@
     <string name="markdown_notes_canvas">Canvas</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
     <string name="markdown_notes_canvas_pen">Stylo</string>
+    <string name="markdown_notes_canvas_pen_color">Couleur du stylo</string>
+    <string name="markdown_notes_canvas_stroke_width">Épaisseur du trait</string>
     <string name="markdown_notes_canvas_eraser">Gomme</string>
     <string name="markdown_notes_canvas_custom_color">Couleur personnalisée</string>
     <string name="markdown_notes_canvas_custom_color_title">Choisir une couleur</string>

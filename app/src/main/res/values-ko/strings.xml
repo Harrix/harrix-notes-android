@@ -133,6 +133,8 @@
     <string name="markdown_notes_canvas">캔버스</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
     <string name="markdown_notes_canvas_pen">펜</string>
+    <string name="markdown_notes_canvas_pen_color">펜 색상</string>
+    <string name="markdown_notes_canvas_stroke_width">선 두께</string>
     <string name="markdown_notes_canvas_eraser">지우개</string>
     <string name="markdown_notes_canvas_custom_color">사용자 지정 색상</string>
     <string name="markdown_notes_canvas_custom_color_title">색상 선택</string>

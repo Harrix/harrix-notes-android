@@ -133,6 +133,8 @@
     <string name="markdown_notes_canvas">لوحة</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
     <string name="markdown_notes_canvas_pen">قلم</string>
+    <string name="markdown_notes_canvas_pen_color">لون القلم</string>
+    <string name="markdown_notes_canvas_stroke_width">سُمك الخط</string>
     <string name="markdown_notes_canvas_eraser">ممحاة</string>
     <string name="markdown_notes_canvas_custom_color">لون مخصص</string>
     <string name="markdown_notes_canvas_custom_color_title">اختر لونًا</string>

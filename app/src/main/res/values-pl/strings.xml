@@ -133,6 +133,8 @@
     <string name="markdown_notes_canvas">Canvas</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
     <string name="markdown_notes_canvas_pen">Pióro</string>
+    <string name="markdown_notes_canvas_pen_color">Kolor pióra</string>
+    <string name="markdown_notes_canvas_stroke_width">Grubość linii</string>
     <string name="markdown_notes_canvas_eraser">Gumka</string>
     <string name="markdown_notes_canvas_custom_color">Własny kolor</string>
     <string name="markdown_notes_canvas_custom_color_title">Wybierz kolor</string>

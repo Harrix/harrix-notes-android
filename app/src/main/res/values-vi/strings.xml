@@ -133,6 +133,8 @@
     <string name="markdown_notes_canvas">Canvas</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
     <string name="markdown_notes_canvas_pen">Bút</string>
+    <string name="markdown_notes_canvas_pen_color">Màu bút</string>
+    <string name="markdown_notes_canvas_stroke_width">Độ dày nét</string>
     <string name="markdown_notes_canvas_eraser">Tẩy</string>
     <string name="markdown_notes_canvas_custom_color">Màu tùy chỉnh</string>
     <string name="markdown_notes_canvas_custom_color_title">Chọn màu</string>

@@ -25,6 +25,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,6 +46,7 @@ import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PanTool
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -78,6 +81,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -98,6 +104,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.roundToInt
 import android.graphics.Canvas as AndroidCanvas
@@ -893,6 +900,17 @@ private fun CanvasPageBar(
     }
 }
 
+private val PenWidthPresets =
+    listOf(4f, 8f, 12f, 18f, 24f)
+
+/** Visible stroke height for the width toolbar icon (not 1:1 with canvas px). */
+private fun canvasWidthIconStrokeDp(baseWidth: Float): Dp {
+    val min = NotesViewerPreferences.MIN_CANVAS_PEN_WIDTH
+    val max = NotesViewerPreferences.MAX_CANVAS_PEN_WIDTH
+    val t = ((baseWidth - min) / (max - min)).coerceIn(0f, 1f)
+    return (4f + t * 12f).dp
+}
+
 @Composable
 private fun CanvasToolbar(
     tool: CanvasTool,
@@ -913,7 +931,10 @@ private fun CanvasToolbar(
     onClear: () -> Unit,
 ) {
     var showCustomColorDialog by remember { mutableStateOf(false) }
+    var colorMenuExpanded by remember { mutableStateOf(false) }
+    var widthMenuExpanded by remember { mutableStateOf(false) }
     val isCustomColor = penColor !in PenColors
+    val widthIconColor = MaterialTheme.colorScheme.onSurfaceVariant
     if (showCustomColorDialog) {
         CanvasCustomColorDialog(
             initialColor = penColor,
@@ -926,201 +947,334 @@ private fun CanvasToolbar(
         )
     }
     Surface(tonalElevation = 2.dp) {
-        Column(
+        Row(
             modifier =
             Modifier
                 .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
                 .padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Row(
-                modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            IconButton(
+                onClick = {
+                    if (drawingEnabled) {
+                        onDrawingEnabledChange(false)
+                    } else {
+                        onDrawingEnabledChange(true)
+                    }
+                },
             ) {
+                Icon(
+                    imageVector = Icons.Filled.PanTool,
+                    contentDescription =
+                    if (drawingEnabled) {
+                        stringResource(R.string.markdown_notes_canvas_pan)
+                    } else {
+                        stringResource(R.string.markdown_notes_canvas_draw)
+                    },
+                    tint =
+                    if (!drawingEnabled) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                )
+            }
+            IconButton(onClick = { onToolChange(CanvasTool.Pen) }) {
+                Icon(
+                    imageVector = Icons.Filled.Brush,
+                    contentDescription = stringResource(R.string.markdown_notes_canvas_pen),
+                    tint =
+                    if (drawingEnabled && tool == CanvasTool.Pen) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                )
+            }
+            IconButton(onClick = { onToolChange(CanvasTool.Eraser) }) {
+                Icon(
+                    imageVector = Icons.Filled.AutoFixOff,
+                    contentDescription = stringResource(R.string.markdown_notes_canvas_eraser),
+                    tint =
+                    if (drawingEnabled && tool == CanvasTool.Eraser) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                )
+            }
+            Box {
+                val penColorDescription = stringResource(R.string.markdown_notes_canvas_pen_color)
                 IconButton(
                     onClick = {
-                        if (drawingEnabled) {
-                            onDrawingEnabledChange(false)
-                        } else {
-                            onDrawingEnabledChange(true)
-                        }
+                        colorMenuExpanded = true
+                        onToolChange(CanvasTool.Pen)
+                        onDrawingEnabledChange(true)
                     },
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.PanTool,
-                        contentDescription =
-                        if (drawingEnabled) {
-                            stringResource(R.string.markdown_notes_canvas_pan)
-                        } else {
-                            stringResource(R.string.markdown_notes_canvas_draw)
-                        },
-                        tint =
-                        if (!drawingEnabled) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
+                    Box(
+                        modifier =
+                        Modifier
+                            .size(22.dp)
+                            .semantics { contentDescription = penColorDescription }
+                            .background(Color(penColor), CircleShape)
+                            .border(
+                                1.dp,
+                                MaterialTheme.colorScheme.outlineVariant,
+                                CircleShape,
+                            ),
                     )
                 }
-                IconButton(onClick = { onToolChange(CanvasTool.Pen) }) {
-                    Icon(
-                        imageVector = Icons.Filled.Brush,
-                        contentDescription = stringResource(R.string.markdown_notes_canvas_pen),
-                        tint =
-                        if (drawingEnabled && tool == CanvasTool.Pen) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                    )
-                }
-                IconButton(onClick = { onToolChange(CanvasTool.Eraser) }) {
-                    Icon(
-                        imageVector = Icons.Filled.AutoFixOff,
-                        contentDescription = stringResource(R.string.markdown_notes_canvas_eraser),
-                        tint =
-                        if (drawingEnabled && tool == CanvasTool.Eraser) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                    )
-                }
-                IconButton(onClick = onUndo, enabled = canUndo) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Undo,
-                        contentDescription = stringResource(R.string.markdown_notes_canvas_undo),
-                    )
-                }
-                IconButton(onClick = onRedo, enabled = canRedo) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Redo,
-                        contentDescription = stringResource(R.string.markdown_notes_canvas_redo),
-                    )
-                }
-                IconButton(onClick = onClear, enabled = canClear) {
-                    Icon(
-                        imageVector = Icons.Filled.DeleteSweep,
-                        contentDescription = stringResource(R.string.markdown_notes_canvas_clear),
-                    )
-                }
-                VerticalDivider(modifier = Modifier.height(28.dp))
-                IconButton(onClick = { onPaperModeChange(CanvasPaperMode.Light) }) {
-                    Icon(
-                        imageVector = Icons.Filled.LightMode,
-                        contentDescription = stringResource(R.string.markdown_notes_canvas_paper_light),
-                        tint =
-                        if (paperMode == CanvasPaperMode.Light) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                    )
-                }
-                IconButton(onClick = { onPaperModeChange(CanvasPaperMode.Dark) }) {
-                    Icon(
-                        imageVector = Icons.Filled.DarkMode,
-                        contentDescription = stringResource(R.string.markdown_notes_canvas_paper_dark),
-                        tint =
-                        if (paperMode == CanvasPaperMode.Dark) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                    )
-                }
-                IconButton(onClick = { onPaperModeChange(CanvasPaperMode.FollowTheme) }) {
-                    Icon(
-                        imageVector = Icons.Filled.BrightnessAuto,
-                        contentDescription = stringResource(R.string.markdown_notes_canvas_paper_theme),
-                        tint =
-                        if (paperMode == CanvasPaperMode.FollowTheme) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                    )
+                DropdownMenu(
+                    expanded = colorMenuExpanded,
+                    onDismissRequest = { colorMenuExpanded = false },
+                ) {
+                    Column(
+                        modifier =
+                        Modifier
+                            .padding(12.dp)
+                            .widthIn(max = 220.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        PenColors.chunked(4).forEach { rowColors ->
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                rowColors.forEach { color ->
+                                    ColorSwatch(
+                                        color = Color(color),
+                                        selected = color == penColor,
+                                        onClick = {
+                                            onToolChange(CanvasTool.Pen)
+                                            onColorChange(color)
+                                            colorMenuExpanded = false
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Box(
+                                modifier =
+                                Modifier
+                                    .size(28.dp)
+                                    .padding(2.dp)
+                                    .background(
+                                        brush =
+                                        ComposeBrush.sweepGradient(
+                                            listOf(
+                                                Color(0xFFE53935),
+                                                Color(0xFFFFB300),
+                                                Color(0xFF43A047),
+                                                Color(0xFF1E88E5),
+                                                Color(0xFF8E24AA),
+                                                Color(0xFFE53935),
+                                            ),
+                                        ),
+                                        shape = CircleShape,
+                                    )
+                                    .then(
+                                        if (isCustomColor) {
+                                            Modifier.background(Color(penColor), CircleShape)
+                                        } else {
+                                            Modifier
+                                        },
+                                    )
+                                    .border(
+                                        width = if (isCustomColor) 2.dp else 1.dp,
+                                        color =
+                                        if (isCustomColor) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.outlineVariant
+                                        },
+                                        shape = CircleShape,
+                                    )
+                                    .clickable {
+                                        colorMenuExpanded = false
+                                        showCustomColorDialog = true
+                                    },
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                if (!isCustomColor) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Palette,
+                                        contentDescription =
+                                        stringResource(R.string.markdown_notes_canvas_custom_color),
+                                        tint = Color.White,
+                                        modifier = Modifier.size(16.dp),
+                                    )
+                                }
+                            }
+                            Text(
+                                text = stringResource(R.string.markdown_notes_canvas_custom_color),
+                                style = MaterialTheme.typography.labelLarge,
+                                modifier =
+                                Modifier.clickable {
+                                    colorMenuExpanded = false
+                                    showCustomColorDialog = true
+                                },
+                            )
+                        }
+                    }
                 }
             }
-            Row(
-                modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                PenColors.forEach { color ->
-                    val selected = drawingEnabled && color == penColor && tool == CanvasTool.Pen
-                    ColorSwatch(
-                        color = Color(color),
-                        selected = selected,
-                        onClick = {
-                            onToolChange(CanvasTool.Pen)
-                            onColorChange(color)
-                        },
-                    )
+            Box {
+                val strokeWidthDescription = stringResource(R.string.markdown_notes_canvas_stroke_width)
+                IconButton(onClick = { widthMenuExpanded = true }) {
+                    Canvas(
+                        modifier =
+                        Modifier
+                            .size(24.dp)
+                            .semantics { contentDescription = strokeWidthDescription },
+                    ) {
+                        val stroke = canvasWidthIconStrokeDp(baseWidth).toPx()
+                        drawLine(
+                            color = widthIconColor,
+                            start = Offset(2.dp.toPx(), size.height / 2f),
+                            end = Offset(size.width - 2.dp.toPx(), size.height / 2f),
+                            strokeWidth = stroke,
+                            cap = StrokeCap.Round,
+                        )
+                    }
                 }
-                val customSelected = drawingEnabled && isCustomColor && tool == CanvasTool.Pen
-                Box(
-                    modifier =
-                    Modifier
-                        .size(28.dp)
-                        .padding(2.dp)
-                        .background(
-                            brush =
-                            ComposeBrush.sweepGradient(
-                                listOf(
-                                    Color(0xFFE53935),
-                                    Color(0xFFFFB300),
-                                    Color(0xFF43A047),
-                                    Color(0xFF1E88E5),
-                                    Color(0xFF8E24AA),
-                                    Color(0xFFE53935),
-                                ),
-                            ),
-                            shape = CircleShape,
-                        )
-                        .then(
-                            if (isCustomColor) {
-                                Modifier.background(Color(penColor), CircleShape)
-                            } else {
-                                Modifier
-                            },
-                        )
-                        .border(
-                            width = if (customSelected) 2.dp else 1.dp,
-                            color =
-                            if (customSelected) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.outlineVariant
-                            },
-                            shape = CircleShape,
-                        )
-                        .clickable { showCustomColorDialog = true },
-                    contentAlignment = Alignment.Center,
+                DropdownMenu(
+                    expanded = widthMenuExpanded,
+                    onDismissRequest = { widthMenuExpanded = false },
                 ) {
-                    if (!isCustomColor) {
-                        Icon(
-                            imageVector = Icons.Filled.Palette,
-                            contentDescription = stringResource(R.string.markdown_notes_canvas_custom_color),
-                            tint = Color.White,
-                            modifier = Modifier.size(16.dp),
+                    Column(
+                        modifier =
+                        Modifier
+                            .padding(12.dp)
+                            .width(220.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.markdown_notes_canvas_stroke_width),
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                        Canvas(
+                            modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(28.dp),
+                        ) {
+                            val stroke = canvasWidthIconStrokeDp(baseWidth).toPx()
+                            drawLine(
+                                color = widthIconColor,
+                                start = Offset(8.dp.toPx(), size.height / 2f),
+                                end = Offset(size.width - 8.dp.toPx(), size.height / 2f),
+                                strokeWidth = stroke,
+                                cap = StrokeCap.Round,
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            PenWidthPresets.forEach { preset ->
+                                val selected = abs(baseWidth - preset) < 0.5f
+                                Box(
+                                    modifier =
+                                    Modifier
+                                        .size(36.dp)
+                                        .border(
+                                            width = if (selected) 2.dp else 1.dp,
+                                            color =
+                                            if (selected) {
+                                                MaterialTheme.colorScheme.primary
+                                            } else {
+                                                MaterialTheme.colorScheme.outlineVariant
+                                            },
+                                            shape = RoundedCornerShape(8.dp),
+                                        )
+                                        .clickable { onWidthChange(preset) },
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Canvas(modifier = Modifier.size(24.dp)) {
+                                        drawLine(
+                                            color = widthIconColor,
+                                            start = Offset(4.dp.toPx(), size.height / 2f),
+                                            end = Offset(size.width - 4.dp.toPx(), size.height / 2f),
+                                            strokeWidth = canvasWidthIconStrokeDp(preset).toPx(),
+                                            cap = StrokeCap.Round,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        Slider(
+                            value = baseWidth,
+                            onValueChange = onWidthChange,
+                            valueRange =
+                            NotesViewerPreferences.MIN_CANVAS_PEN_WIDTH..NotesViewerPreferences.MAX_CANVAS_PEN_WIDTH,
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
                 }
             }
-            Slider(
-                value = baseWidth,
-                onValueChange = onWidthChange,
-                valueRange =
-                NotesViewerPreferences.MIN_CANVAS_PEN_WIDTH..NotesViewerPreferences.MAX_CANVAS_PEN_WIDTH,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            IconButton(onClick = onUndo, enabled = canUndo) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Undo,
+                    contentDescription = stringResource(R.string.markdown_notes_canvas_undo),
+                )
+            }
+            IconButton(onClick = onRedo, enabled = canRedo) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Redo,
+                    contentDescription = stringResource(R.string.markdown_notes_canvas_redo),
+                )
+            }
+            IconButton(onClick = onClear, enabled = canClear) {
+                Icon(
+                    imageVector = Icons.Filled.DeleteSweep,
+                    contentDescription = stringResource(R.string.markdown_notes_canvas_clear),
+                )
+            }
+            VerticalDivider(modifier = Modifier.height(28.dp))
+            IconButton(onClick = { onPaperModeChange(CanvasPaperMode.Light) }) {
+                Icon(
+                    imageVector = Icons.Filled.LightMode,
+                    contentDescription = stringResource(R.string.markdown_notes_canvas_paper_light),
+                    tint =
+                    if (paperMode == CanvasPaperMode.Light) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                )
+            }
+            IconButton(onClick = { onPaperModeChange(CanvasPaperMode.Dark) }) {
+                Icon(
+                    imageVector = Icons.Filled.DarkMode,
+                    contentDescription = stringResource(R.string.markdown_notes_canvas_paper_dark),
+                    tint =
+                    if (paperMode == CanvasPaperMode.Dark) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                )
+            }
+            IconButton(onClick = { onPaperModeChange(CanvasPaperMode.FollowTheme) }) {
+                Icon(
+                    imageVector = Icons.Filled.BrightnessAuto,
+                    contentDescription = stringResource(R.string.markdown_notes_canvas_paper_theme),
+                    tint =
+                    if (paperMode == CanvasPaperMode.FollowTheme) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                )
+            }
         }
     }
 }

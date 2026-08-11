@@ -178,6 +178,8 @@
     <string name="markdown_notes_canvas">Canvas</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
     <string name="markdown_notes_canvas_pen">Pen</string>
+    <string name="markdown_notes_canvas_pen_color">Pen color</string>
+    <string name="markdown_notes_canvas_stroke_width">Stroke width</string>
     <string name="markdown_notes_canvas_eraser">Eraser</string>
     <string name="markdown_notes_canvas_custom_color">Custom color</string>
     <string name="markdown_notes_canvas_custom_color_title">Choose color</string>

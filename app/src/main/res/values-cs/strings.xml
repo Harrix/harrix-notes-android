@@ -133,6 +133,8 @@
     <string name="markdown_notes_canvas">Plátno</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
     <string name="markdown_notes_canvas_pen">Pero</string>
+    <string name="markdown_notes_canvas_pen_color">Barva pera</string>
+    <string name="markdown_notes_canvas_stroke_width">Tloušťka čáry</string>
     <string name="markdown_notes_canvas_eraser">Guma</string>
     <string name="markdown_notes_canvas_custom_color">Vlastní barva</string>
     <string name="markdown_notes_canvas_custom_color_title">Vybrat barvu</string>

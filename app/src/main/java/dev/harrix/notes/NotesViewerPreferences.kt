@@ -437,7 +437,7 @@ class NotesViewerPreferences(
         private const val KEY_EDITOR_FONT = "editor_font"
 
         const val DEFAULT_PERSONAL_DATA_AUTHOR = "noname"
-        const val DEFAULT_CANVAS_PEN_WIDTH = 6f
+        const val DEFAULT_CANVAS_PEN_WIDTH = 12f
         const val MIN_CANVAS_PEN_WIDTH = 2f
         const val MAX_CANVAS_PEN_WIDTH = 28f
 

@@ -133,6 +133,8 @@
     <string name="markdown_notes_canvas">Canvas</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
     <string name="markdown_notes_canvas_pen">Pen</string>
+    <string name="markdown_notes_canvas_pen_color">Pendikte kleur</string>
+    <string name="markdown_notes_canvas_stroke_width">Lijndikte</string>
     <string name="markdown_notes_canvas_eraser">Gum</string>
     <string name="markdown_notes_canvas_custom_color">Aangepaste kleur</string>
     <string name="markdown_notes_canvas_custom_color_title">Kleur kiezen</string>

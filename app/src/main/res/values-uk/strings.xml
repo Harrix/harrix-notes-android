@@ -133,6 +133,8 @@
     <string name="markdown_notes_canvas">Полотно</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
     <string name="markdown_notes_canvas_pen">Перо</string>
+    <string name="markdown_notes_canvas_pen_color">Колір пера</string>
+    <string name="markdown_notes_canvas_stroke_width">Товщина лінії</string>
     <string name="markdown_notes_canvas_eraser">Гумка</string>
     <string name="markdown_notes_canvas_custom_color">Власний колір</string>
     <string name="markdown_notes_canvas_custom_color_title">Вибір кольору</string>

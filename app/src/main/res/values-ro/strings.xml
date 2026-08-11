@@ -133,6 +133,8 @@
     <string name="markdown_notes_canvas">Canvas</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
     <string name="markdown_notes_canvas_pen">Stilou</string>
+    <string name="markdown_notes_canvas_pen_color">Culoare stilou</string>
+    <string name="markdown_notes_canvas_stroke_width">Grosime linie</string>
     <string name="markdown_notes_canvas_eraser">Radieră</string>
     <string name="markdown_notes_canvas_custom_color">Culoare personalizată</string>
     <string name="markdown_notes_canvas_custom_color_title">Alegeți culoarea</string>

@@ -133,6 +133,8 @@
     <string name="markdown_notes_canvas">Kanvas</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
     <string name="markdown_notes_canvas_pen">Pena</string>
+    <string name="markdown_notes_canvas_pen_color">Warna pena</string>
+    <string name="markdown_notes_canvas_stroke_width">Ketebalan garis</string>
     <string name="markdown_notes_canvas_eraser">Penghapus</string>
     <string name="markdown_notes_canvas_custom_color">Warna kustom</string>
     <string name="markdown_notes_canvas_custom_color_title">Pilih warna</string>

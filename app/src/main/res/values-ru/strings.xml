@@ -165,6 +165,8 @@
     <string name="markdown_notes_canvas">Полотно</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
     <string name="markdown_notes_canvas_pen">Перо</string>
+    <string name="markdown_notes_canvas_pen_color">Цвет пера</string>
+    <string name="markdown_notes_canvas_stroke_width">Толщина линии</string>
     <string name="markdown_notes_canvas_eraser">Ластик</string>
     <string name="markdown_notes_canvas_custom_color">Свой цвет</string>
     <string name="markdown_notes_canvas_custom_color_title">Выбор цвета</string>

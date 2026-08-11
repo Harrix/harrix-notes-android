@@ -133,6 +133,8 @@
     <string name="markdown_notes_canvas">キャンバス</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
     <string name="markdown_notes_canvas_pen">ペン</string>
+    <string name="markdown_notes_canvas_pen_color">ペンの色</string>
+    <string name="markdown_notes_canvas_stroke_width">線の太さ</string>
     <string name="markdown_notes_canvas_eraser">消しゴム</string>
     <string name="markdown_notes_canvas_custom_color">カスタムカラー</string>
     <string name="markdown_notes_canvas_custom_color_title">色を選択</string>

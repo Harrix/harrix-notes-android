@@ -133,6 +133,8 @@
     <string name="markdown_notes_canvas">Палатно</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
     <string name="markdown_notes_canvas_pen">Пяро</string>
+    <string name="markdown_notes_canvas_pen_color">Колер пяра</string>
+    <string name="markdown_notes_canvas_stroke_width">Таўшчыня лініі</string>
     <string name="markdown_notes_canvas_eraser">Сцірка</string>
     <string name="markdown_notes_canvas_custom_color">Уласны колер</string>
     <string name="markdown_notes_canvas_custom_color_title">Выбар колеру</string>

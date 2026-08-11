@@ -133,6 +133,8 @@
     <string name="markdown_notes_canvas">画布</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
     <string name="markdown_notes_canvas_pen">画笔</string>
+    <string name="markdown_notes_canvas_pen_color">笔颜色</string>
+    <string name="markdown_notes_canvas_stroke_width">线宽</string>
     <string name="markdown_notes_canvas_eraser">橡皮擦</string>
     <string name="markdown_notes_canvas_custom_color">自定义颜色</string>
     <string name="markdown_notes_canvas_custom_color_title">选择颜色</string>

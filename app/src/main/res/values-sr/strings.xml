@@ -133,6 +133,8 @@
     <string name="markdown_notes_canvas">Платно</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
     <string name="markdown_notes_canvas_pen">Оловка</string>
+    <string name="markdown_notes_canvas_pen_color">Боја оловке</string>
+    <string name="markdown_notes_canvas_stroke_width">Дебљина линије</string>
     <string name="markdown_notes_canvas_eraser">Гумица</string>
     <string name="markdown_notes_canvas_custom_color">Прилагођена боја</string>
     <string name="markdown_notes_canvas_custom_color_title">Изабери боју</string>
