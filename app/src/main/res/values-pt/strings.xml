@@ -163,6 +163,9 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Cancelar</string>
     <string name="markdown_notes_canvas_page_delete_last">Não é possível excluir a única página</string>
     <string name="markdown_notes_canvas_page_failed">Não foi possível atualizar as páginas</string>
+    <string name="markdown_notes_canvas_paper_light">Papel claro</string>
+    <string name="markdown_notes_canvas_paper_dark">Papel escuro</string>
+    <string name="markdown_notes_canvas_paper_theme">Como o tema</string>
     <string name="markdown_notes_external_changed_title">Nota alterada externamente</string>
     <string name="markdown_notes_external_changed_message">“%1$s” foi alterada fora do app. Recarregar do disco ou manter a versão aberta?</string>
     <string name="markdown_notes_external_changed_reload">Recarregar</string>

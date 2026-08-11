@@ -163,6 +163,9 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Откажи</string>
     <string name="markdown_notes_canvas_page_delete_last">Не може се обрисати једина страница</string>
     <string name="markdown_notes_canvas_page_failed">Није могуће ажурирати странице</string>
+    <string name="markdown_notes_canvas_paper_light">Светли папир</string>
+    <string name="markdown_notes_canvas_paper_dark">Тамни папир</string>
+    <string name="markdown_notes_canvas_paper_theme">Као тема</string>
     <string name="markdown_notes_external_changed_title">Белешка је споља измењена</string>
     <string name="markdown_notes_external_changed_message">„%1$s“ је измењена ван апликације. Поново учитати са диска или задржати отворену верзију?</string>
     <string name="markdown_notes_external_changed_reload">Поново учитај</string>

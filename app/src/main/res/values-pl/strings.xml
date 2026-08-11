@@ -163,6 +163,9 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Anuluj</string>
     <string name="markdown_notes_canvas_page_delete_last">Nie można usunąć jedynej strony</string>
     <string name="markdown_notes_canvas_page_failed">Nie udało się zaktualizować stron</string>
+    <string name="markdown_notes_canvas_paper_light">Jasny papier</string>
+    <string name="markdown_notes_canvas_paper_dark">Ciemny papier</string>
+    <string name="markdown_notes_canvas_paper_theme">Jak motyw</string>
     <string name="markdown_notes_external_changed_title">Notatka zmieniona zewnętrznie</string>
     <string name="markdown_notes_external_changed_message">„%1$s” została zmieniona poza aplikacją. Wczytać ponownie z dysku czy zachować otwartą wersję?</string>
     <string name="markdown_notes_external_changed_reload">Wczytaj ponownie</string>

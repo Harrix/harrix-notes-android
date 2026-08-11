@@ -163,6 +163,9 @@
     <string name="markdown_notes_canvas_page_delete_cancel">İptal</string>
     <string name="markdown_notes_canvas_page_delete_last">Tek sayfa silinemez</string>
     <string name="markdown_notes_canvas_page_failed">Sayfalar güncellenemedi</string>
+    <string name="markdown_notes_canvas_paper_light">Açık kağıt</string>
+    <string name="markdown_notes_canvas_paper_dark">Koyu kağıt</string>
+    <string name="markdown_notes_canvas_paper_theme">Temaya uy</string>
     <string name="markdown_notes_external_changed_title">Not dışarıdan değişti</string>
     <string name="markdown_notes_external_changed_message">“%1$s” uygulama dışında değiştirildi. Diskten yeniden yükleyin veya açık sürümü tutun?</string>
     <string name="markdown_notes_external_changed_reload">Yeniden yükle</string>

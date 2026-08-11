@@ -163,6 +163,9 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Zrušit</string>
     <string name="markdown_notes_canvas_page_delete_last">Nelze smazat jedinou stránku</string>
     <string name="markdown_notes_canvas_page_failed">Nepodařilo se aktualizovat stránky</string>
+    <string name="markdown_notes_canvas_paper_light">Světlý papír</string>
+    <string name="markdown_notes_canvas_paper_dark">Tmavý papír</string>
+    <string name="markdown_notes_canvas_paper_theme">Podle motivu</string>
     <string name="markdown_notes_external_changed_title">Poznámka změněna externě</string>
     <string name="markdown_notes_external_changed_message">„%1$s“ byla změněna mimo aplikaci. Načíst z disku znovu, nebo ponechat otevřenou verzi?</string>
     <string name="markdown_notes_external_changed_reload">Načíst znovu</string>

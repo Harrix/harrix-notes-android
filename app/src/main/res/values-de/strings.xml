@@ -163,6 +163,9 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Abbrechen</string>
     <string name="markdown_notes_canvas_page_delete_last">Die einzige Seite kann nicht gelöscht werden</string>
     <string name="markdown_notes_canvas_page_failed">Seiten konnten nicht aktualisiert werden</string>
+    <string name="markdown_notes_canvas_paper_light">Helles Papier</string>
+    <string name="markdown_notes_canvas_paper_dark">Dunkles Papier</string>
+    <string name="markdown_notes_canvas_paper_theme">Wie Design</string>
     <string name="markdown_notes_external_changed_title">Notiz extern geändert</string>
     <string name="markdown_notes_external_changed_message">„%1$s“ wurde außerhalb der App geändert. Vom Datenträger neu laden oder die geöffnete Version behalten?</string>
     <string name="markdown_notes_external_changed_reload">Neu laden</string>

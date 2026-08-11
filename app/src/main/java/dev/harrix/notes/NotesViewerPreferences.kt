@@ -103,6 +103,12 @@ class NotesViewerPreferences(
             ).apply()
     }
 
+    fun loadCanvasPaperMode(): CanvasPaperMode = CanvasPaperMode.fromStorageKey(prefs.getString(KEY_CANVAS_PAPER_MODE, null))
+
+    fun saveCanvasPaperMode(mode: CanvasPaperMode) {
+        prefs.edit().putString(KEY_CANVAS_PAPER_MODE, mode.name).apply()
+    }
+
     fun loadPreviewFontSizeSp(): Int = prefs
         .getInt(KEY_PREVIEW_FONT_SIZE_SP, DEFAULT_PREVIEW_FONT_SIZE_SP)
         .coerceIn(AppPreferences.MIN_FONT_SIZE_SP, AppPreferences.MAX_FONT_SIZE_SP)
@@ -426,6 +432,7 @@ class NotesViewerPreferences(
         private const val KEY_DEFAULT_BEGINNING_TEMPLATE_ID = "default_beginning_template_id"
         private const val KEY_CANVAS_PEN_COLOR_ARGB = "canvas_pen_color_argb"
         private const val KEY_CANVAS_PEN_WIDTH = "canvas_pen_width"
+        private const val KEY_CANVAS_PAPER_MODE = "canvas_paper_mode"
         private const val KEY_PREVIEW_FONT = "preview_font"
         private const val KEY_EDITOR_FONT = "editor_font"
 

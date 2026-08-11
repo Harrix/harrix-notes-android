@@ -163,6 +163,9 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Скасаваць</string>
     <string name="markdown_notes_canvas_page_delete_last">Нельга выдаліць адзіную старонку</string>
     <string name="markdown_notes_canvas_page_failed">Не ўдалося абнавіць старонкі</string>
+    <string name="markdown_notes_canvas_paper_light">Светлая папера</string>
+    <string name="markdown_notes_canvas_paper_dark">Цёмная папера</string>
+    <string name="markdown_notes_canvas_paper_theme">Як тэма</string>
     <string name="markdown_notes_external_changed_title">Нататка зменена звонку</string>
     <string name="markdown_notes_external_changed_message">«%1$s» зменена па-за праграмай. Перазагрузіць з дыска ці пакінуць адкрытую версію?</string>
     <string name="markdown_notes_external_changed_reload">Абнавіць</string>

@@ -163,6 +163,9 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Annuler</string>
     <string name="markdown_notes_canvas_page_delete_last">Impossible de supprimer la seule page</string>
     <string name="markdown_notes_canvas_page_failed">Impossible de mettre à jour les pages</string>
+    <string name="markdown_notes_canvas_paper_light">Papier clair</string>
+    <string name="markdown_notes_canvas_paper_dark">Papier sombre</string>
+    <string name="markdown_notes_canvas_paper_theme">Suivre le thème</string>
     <string name="markdown_notes_external_changed_title">Note modifiée en externe</string>
     <string name="markdown_notes_external_changed_message">« %1$s » a été modifiée en dehors de l\'application. Recharger depuis le disque ou conserver la version ouverte ?</string>
     <string name="markdown_notes_external_changed_reload">Recharger</string>

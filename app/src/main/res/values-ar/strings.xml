@@ -163,6 +163,9 @@
     <string name="markdown_notes_canvas_page_delete_cancel">إلغاء</string>
     <string name="markdown_notes_canvas_page_delete_last">لا يمكن حذف الصفحة الوحيدة</string>
     <string name="markdown_notes_canvas_page_failed">تعذر تحديث الصفحات</string>
+    <string name="markdown_notes_canvas_paper_light">ورق فاتح</string>
+    <string name="markdown_notes_canvas_paper_dark">ورق داكن</string>
+    <string name="markdown_notes_canvas_paper_theme">مطابقة السمة</string>
     <string name="markdown_notes_external_changed_title">تم تغيير الملاحظة خارجيًا</string>
     <string name="markdown_notes_external_changed_message">تم تغيير «%1$s» خارج التطبيق. أعد التحميل من القرص أم أبقِ النسخة المفتوحة؟</string>
     <string name="markdown_notes_external_changed_reload">إعادة التحميل</string>

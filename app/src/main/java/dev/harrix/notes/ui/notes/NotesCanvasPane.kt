@@ -35,9 +35,12 @@ import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoFixOff
+import androidx.compose.material.icons.filled.BrightnessAuto
 import androidx.compose.material.icons.filled.Brush
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PanTool
 import androidx.compose.material3.AlertDialog
@@ -48,6 +51,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -79,10 +83,13 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import dev.harrix.notes.CanvasPageRef
 import dev.harrix.notes.CanvasPages
+import dev.harrix.notes.CanvasPaperMode
 import dev.harrix.notes.NotesPathSegment
 import dev.harrix.notes.NotesRelativeDocuments
 import dev.harrix.notes.NotesViewerPreferences
 import dev.harrix.notes.R
+import dev.harrix.notes.ui.theme.DarkColorScheme
+import dev.harrix.notes.ui.theme.LightColorScheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -131,6 +138,16 @@ private enum class CanvasTool {
     Eraser,
 }
 
+@Composable
+private fun rememberCanvasPaperColor(mode: CanvasPaperMode): Color {
+    val themeSurface = MaterialTheme.colorScheme.surface
+    return when (mode) {
+        CanvasPaperMode.Light -> LightColorScheme.surface
+        CanvasPaperMode.Dark -> DarkColorScheme.surface
+        CanvasPaperMode.FollowTheme -> themeSurface
+    }
+}
+
 private class CanvasSession {
     var imageUri: Uri? = null
     var sourceBitmap: Bitmap? = null
@@ -160,7 +177,8 @@ fun NotesCanvasPane(
 ) {
     val scope = rememberCoroutineScope()
     val session = remember { CanvasSession() }
-    val paperColor = MaterialTheme.colorScheme.surface
+    var paperMode by remember { mutableStateOf(preferences.loadCanvasPaperMode()) }
+    val paperColor = rememberCanvasPaperColor(paperMode)
     val fallbackPenColor = MaterialTheme.colorScheme.onSurface.toArgb()
     val initialPenColor = preferences.loadCanvasPenColorArgb() ?: fallbackPenColor
     val initialPenWidth = preferences.loadCanvasPenWidth()
@@ -540,6 +558,7 @@ fun NotesCanvasPane(
             tool = tool,
             drawingEnabled = drawingEnabled,
             penColor = penColor,
+            paperMode = paperMode,
             baseWidth = baseWidth,
             canUndo = canUndo,
             canRedo = canRedo,
@@ -553,6 +572,10 @@ fun NotesCanvasPane(
                 penColor = color
                 drawingEnabled = true
                 preferences.saveCanvasPenColorArgb(color)
+            },
+            onPaperModeChange = { mode ->
+                paperMode = mode
+                preferences.saveCanvasPaperMode(mode)
             },
             onWidthChange = { width ->
                 baseWidth = width
@@ -847,6 +870,7 @@ private fun CanvasToolbar(
     tool: CanvasTool,
     drawingEnabled: Boolean,
     penColor: Int,
+    paperMode: CanvasPaperMode,
     baseWidth: Float,
     canUndo: Boolean,
     canRedo: Boolean,
@@ -854,6 +878,7 @@ private fun CanvasToolbar(
     onToolChange: (CanvasTool) -> Unit,
     onDrawingEnabledChange: (Boolean) -> Unit,
     onColorChange: (Int) -> Unit,
+    onPaperModeChange: (CanvasPaperMode) -> Unit,
     onWidthChange: (Float) -> Unit,
     onUndo: () -> Unit,
     onRedo: () -> Unit,
@@ -880,7 +905,10 @@ private fun CanvasToolbar(
                 .padding(horizontal = 8.dp, vertical = 4.dp),
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
@@ -949,6 +977,43 @@ private fun CanvasToolbar(
                     Icon(
                         imageVector = Icons.Filled.DeleteSweep,
                         contentDescription = stringResource(R.string.markdown_notes_canvas_clear),
+                    )
+                }
+                VerticalDivider(modifier = Modifier.height(28.dp))
+                IconButton(onClick = { onPaperModeChange(CanvasPaperMode.Light) }) {
+                    Icon(
+                        imageVector = Icons.Filled.LightMode,
+                        contentDescription = stringResource(R.string.markdown_notes_canvas_paper_light),
+                        tint =
+                        if (paperMode == CanvasPaperMode.Light) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    )
+                }
+                IconButton(onClick = { onPaperModeChange(CanvasPaperMode.Dark) }) {
+                    Icon(
+                        imageVector = Icons.Filled.DarkMode,
+                        contentDescription = stringResource(R.string.markdown_notes_canvas_paper_dark),
+                        tint =
+                        if (paperMode == CanvasPaperMode.Dark) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    )
+                }
+                IconButton(onClick = { onPaperModeChange(CanvasPaperMode.FollowTheme) }) {
+                    Icon(
+                        imageVector = Icons.Filled.BrightnessAuto,
+                        contentDescription = stringResource(R.string.markdown_notes_canvas_paper_theme),
+                        tint =
+                        if (paperMode == CanvasPaperMode.FollowTheme) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                     )
                 }
             }

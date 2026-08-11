@@ -163,6 +163,9 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Скасувати</string>
     <string name="markdown_notes_canvas_page_delete_last">Не можна видалити єдину сторінку</string>
     <string name="markdown_notes_canvas_page_failed">Не вдалося оновити сторінки</string>
+    <string name="markdown_notes_canvas_paper_light">Світлий папір</string>
+    <string name="markdown_notes_canvas_paper_dark">Темний папір</string>
+    <string name="markdown_notes_canvas_paper_theme">Як тема</string>
     <string name="markdown_notes_external_changed_title">Нотатку змінено ззовні</string>
     <string name="markdown_notes_external_changed_message">«%1$s» змінено поза додатком. Перезавантажити з диска чи залишити відкриту версію?</string>
     <string name="markdown_notes_external_changed_reload">Оновити</string>

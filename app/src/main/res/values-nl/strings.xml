@@ -163,6 +163,9 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Annuleren</string>
     <string name="markdown_notes_canvas_page_delete_last">De enige pagina kan niet worden verwijderd</string>
     <string name="markdown_notes_canvas_page_failed">Pagina\'s konden niet worden bijgewerkt</string>
+    <string name="markdown_notes_canvas_paper_light">Licht papier</string>
+    <string name="markdown_notes_canvas_paper_dark">Donker papier</string>
+    <string name="markdown_notes_canvas_paper_theme">Zoals thema</string>
     <string name="markdown_notes_external_changed_title">Notitie extern gewijzigd</string>
     <string name="markdown_notes_external_changed_message">“%1$s” is buiten de app gewijzigd. Opnieuw laden vanaf schijf of de geopende versie behouden?</string>
     <string name="markdown_notes_external_changed_reload">Opnieuw laden</string>

@@ -163,6 +163,9 @@
     <string name="markdown_notes_canvas_page_delete_cancel">취소</string>
     <string name="markdown_notes_canvas_page_delete_last">유일한 페이지는 삭제할 수 없습니다</string>
     <string name="markdown_notes_canvas_page_failed">페이지를 업데이트할 수 없습니다</string>
+    <string name="markdown_notes_canvas_paper_light">밝은 종이</string>
+    <string name="markdown_notes_canvas_paper_dark">어두운 종이</string>
+    <string name="markdown_notes_canvas_paper_theme">테마에 맞춤</string>
     <string name="markdown_notes_external_changed_title">노트가 외부에서 변경됨</string>
     <string name="markdown_notes_external_changed_message">“%1$s”이(가) 앱 외부에서 변경되었습니다. 디스크에서 다시 로드할까요, 아니면 열린 버전을 유지할까요?</string>
     <string name="markdown_notes_external_changed_reload">다시 로드</string>

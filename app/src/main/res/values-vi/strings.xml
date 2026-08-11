@@ -163,6 +163,9 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Hủy</string>
     <string name="markdown_notes_canvas_page_delete_last">Không thể xóa trang duy nhất</string>
     <string name="markdown_notes_canvas_page_failed">Không thể cập nhật các trang</string>
+    <string name="markdown_notes_canvas_paper_light">Giấy sáng</string>
+    <string name="markdown_notes_canvas_paper_dark">Giấy tối</string>
+    <string name="markdown_notes_canvas_paper_theme">Theo giao diện</string>
     <string name="markdown_notes_external_changed_title">Ghi chú đã thay đổi bên ngoài</string>
     <string name="markdown_notes_external_changed_message">“%1$s” đã bị thay đổi ngoài ứng dụng. Tải lại từ đĩa hay giữ phiên bản đang mở?</string>
     <string name="markdown_notes_external_changed_reload">Tải lại</string>

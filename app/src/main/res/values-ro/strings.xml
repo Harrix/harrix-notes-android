@@ -163,6 +163,9 @@
     <string name="markdown_notes_canvas_page_delete_cancel">Anulare</string>
     <string name="markdown_notes_canvas_page_delete_last">Nu se poate șterge singura pagină</string>
     <string name="markdown_notes_canvas_page_failed">Nu s-au putut actualiza paginile</string>
+    <string name="markdown_notes_canvas_paper_light">Hârtie deschisă</string>
+    <string name="markdown_notes_canvas_paper_dark">Hârtie închisă</string>
+    <string name="markdown_notes_canvas_paper_theme">Ca tema</string>
     <string name="markdown_notes_external_changed_title">Notă modificată extern</string>
     <string name="markdown_notes_external_changed_message">„%1$s” a fost modificată în afara aplicației. Reîncărcați de pe disc sau păstrați versiunea deschisă?</string>
     <string name="markdown_notes_external_changed_reload">Reîncarcă</string>

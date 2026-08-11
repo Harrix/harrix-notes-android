@@ -163,6 +163,9 @@
     <string name="markdown_notes_canvas_page_delete_cancel">取消</string>
     <string name="markdown_notes_canvas_page_delete_last">无法删除唯一的页面</string>
     <string name="markdown_notes_canvas_page_failed">无法更新页面</string>
+    <string name="markdown_notes_canvas_paper_light">浅色纸张</string>
+    <string name="markdown_notes_canvas_paper_dark">深色纸张</string>
+    <string name="markdown_notes_canvas_paper_theme">跟随主题</string>
     <string name="markdown_notes_external_changed_title">笔记已在外部更改</string>
     <string name="markdown_notes_external_changed_message">“%1$s”已在应用外被更改。从磁盘重新加载，还是保留当前打开的版本？</string>
     <string name="markdown_notes_external_changed_reload">重新加载</string>
