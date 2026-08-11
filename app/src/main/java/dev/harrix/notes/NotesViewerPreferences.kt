@@ -106,7 +106,7 @@ class NotesViewerPreferences(
     fun loadCanvasPaperMode(): CanvasPaperMode = CanvasPaperMode.fromStorageKey(prefs.getString(KEY_CANVAS_PAPER_MODE, null))
 
     fun saveCanvasPaperMode(mode: CanvasPaperMode) {
-        prefs.edit().putString(KEY_CANVAS_PAPER_MODE, mode.name).apply()
+        prefs.edit().putString(KEY_CANVAS_PAPER_MODE, mode.yamlKey).apply()
     }
 
     fun loadPreviewFontSizeSp(): Int = prefs

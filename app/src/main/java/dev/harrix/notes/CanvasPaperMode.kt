@@ -4,21 +4,34 @@ package dev.harrix.notes
  * Canvas page underlay only (does not alter PNG pixels).
  *
  * Default is [Light] so near-black ink stays visible regardless of app theme.
+ * Persisted per note as YAML `paper: light|dark|theme`.
  */
-enum class CanvasPaperMode {
+enum class CanvasPaperMode(
+    /** Value stored in note YAML `paper:` and SharedPreferences. */
+    val yamlKey: String,
+) {
     /** Fixed light paper ([dev.harrix.notes.ui.theme.LightColorScheme] surface). */
-    Light,
+    Light("light"),
 
     /** Fixed dark paper ([dev.harrix.notes.ui.theme.DarkColorScheme] surface). */
-    Dark,
+    Dark("dark"),
 
     /** Follow current Material theme surface. */
-    FollowTheme,
+    FollowTheme("theme"),
     ;
 
     companion object {
         val Default: CanvasPaperMode = Light
 
-        fun fromStorageKey(key: String?): CanvasPaperMode = entries.firstOrNull { it.name.equals(key, ignoreCase = true) } ?: Default
+        fun fromStorageKey(key: String?): CanvasPaperMode {
+            val normalized = key?.trim().orEmpty()
+            if (normalized.isEmpty()) {
+                return Default
+            }
+            return entries.firstOrNull {
+                it.yamlKey.equals(normalized, ignoreCase = true) ||
+                    it.name.equals(normalized, ignoreCase = true)
+            } ?: Default
+        }
     }
 }
