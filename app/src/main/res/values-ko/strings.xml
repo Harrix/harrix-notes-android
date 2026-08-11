@@ -74,6 +74,7 @@
     <string name="markdown_notes_sort_folders_first">폴더를 위로</string>
     <string name="markdown_notes_sort_reverse">역순</string>
     <string name="markdown_notes_sort_show_gmd">.g.md 파일 표시</string>
+    <string name="markdown_notes_gmd_caption">.g.md</string>
     <string name="settings_markdown_notes_pinned_bar">고정 막대</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">고정된 막대 표시</string>
     <string name="settings_markdown_notes_max_pinned">최대 고정 항목</string>

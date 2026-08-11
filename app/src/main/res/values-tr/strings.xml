@@ -74,6 +74,7 @@
     <string name="markdown_notes_sort_folders_first">Klasörler üstte</string>
     <string name="markdown_notes_sort_reverse">Ters sıra</string>
     <string name="markdown_notes_sort_show_gmd">.g.md dosyalarını göster</string>
+    <string name="markdown_notes_gmd_caption">.g.md</string>
     <string name="settings_markdown_notes_pinned_bar">Sabitlenmiş çubuk</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Sabitlenmiş çubuğu göster</string>
     <string name="settings_markdown_notes_max_pinned">Maksimum sabitlenen öğe</string>

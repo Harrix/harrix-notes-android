@@ -86,6 +86,7 @@
     <string name="markdown_notes_sort_folders_first">Папки наверху</string>
     <string name="markdown_notes_sort_reverse">В обратном порядке</string>
     <string name="markdown_notes_sort_show_gmd">Показывать .g.md файлы</string>
+    <string name="markdown_notes_gmd_caption">.g.md</string>
     <string name="settings_markdown_notes_pinned_bar">Панель закреплений</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Показывать панель закреплений</string>
     <string name="settings_markdown_notes_max_pinned">Макс. закреплений</string>

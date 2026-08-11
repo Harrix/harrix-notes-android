@@ -74,6 +74,7 @@
     <string name="markdown_notes_sort_folders_first">Папки зверху</string>
     <string name="markdown_notes_sort_reverse">У зворотному порядку</string>
     <string name="markdown_notes_sort_show_gmd">Показувати файли .g.md</string>
+    <string name="markdown_notes_gmd_caption">.g.md</string>
     <string name="settings_markdown_notes_pinned_bar">Закріплена панель</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Показати закріплену панель</string>
     <string name="settings_markdown_notes_max_pinned">Максимальна кількість закріплених елементів</string>

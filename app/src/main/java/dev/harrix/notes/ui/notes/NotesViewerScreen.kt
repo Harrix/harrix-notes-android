@@ -4295,8 +4295,14 @@ private fun NotesNoteRow(
     var menuExpanded by remember { mutableStateOf(false) }
     val iconSize = density.iconSizeDp.dp
     val menuButtonSize = density.mergedButtonHeightDp.dp
+    val gmdCaption =
+        if (NotesTreeRepository.isGMd(note.name)) {
+            stringResource(R.string.markdown_notes_gmd_caption)
+        } else {
+            null
+        }
     val rowHeight =
-        if (showDate) {
+        if (showDate || gmdCaption != null) {
             density.listRowHeightWithDateDp.dp
         } else {
             density.listRowHeightDp.dp
@@ -4319,6 +4325,7 @@ private fun NotesNoteRow(
             title = note.displayLabel,
             lastModifiedEpochMs = note.lastModifiedEpochMs,
             showDate = showDate,
+            caption = gmdCaption,
             modifier = Modifier.weight(1f),
         )
         if (pinned) {
@@ -4366,6 +4373,7 @@ private fun NotesListTitleBlock(
     lastModifiedEpochMs: Long?,
     showDate: Boolean,
     modifier: Modifier = Modifier,
+    caption: String? = null,
 ) {
     Column(modifier = modifier) {
         Text(
@@ -4374,11 +4382,22 @@ private fun NotesListTitleBlock(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-        if (showDate) {
-            val dateText =
+        val dateText =
+            if (showDate) {
                 lastModifiedEpochMs?.let { NotesDateFormats.formatListDateTime(it) }.orEmpty()
+            } else {
+                ""
+            }
+        val subtitle =
+            when {
+                !caption.isNullOrBlank() && dateText.isNotBlank() -> "$caption · $dateText"
+                !caption.isNullOrBlank() -> caption
+                dateText.isNotBlank() -> dateText
+                else -> null
+            }
+        if (subtitle != null) {
             Text(
-                text = dateText,
+                text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -4458,9 +4477,16 @@ private fun NotesNoteIconCell(
     onDelete: () -> Unit,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
+    val gmdCaption =
+        if (NotesTreeRepository.isGMd(note.name)) {
+            stringResource(R.string.markdown_notes_gmd_caption)
+        } else {
+            null
+        }
     Box(modifier = Modifier.fillMaxWidth()) {
         NotesIconCell(
             label = note.displayLabel,
+            caption = gmdCaption,
             density = density,
             icon = {
                 Box {
@@ -4660,9 +4686,10 @@ private fun NotesEntryContextMenu(
 private fun NotesIconCell(
     label: String,
     density: NotesListDensity,
-    icon: @Composable () -> Unit,
     onOpen: () -> Unit,
+    icon: @Composable () -> Unit,
     onLongClick: (() -> Unit)? = null,
+    caption: String? = null,
 ) {
     val verticalPadding = density.verticalPaddingDp.dp
     Column(
@@ -4690,6 +4717,15 @@ private fun NotesIconCell(
                 .fillMaxWidth()
                 .heightIn(min = 36.dp),
         )
+        if (!caption.isNullOrBlank()) {
+            Text(
+                text = caption,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 

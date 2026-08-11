@@ -74,6 +74,7 @@
     <string name="markdown_notes_sort_folders_first">Ordner oben</string>
     <string name="markdown_notes_sort_reverse">Umgekehrte Reihenfolge</string>
     <string name="markdown_notes_sort_show_gmd">.g.md-Dateien anzeigen</string>
+    <string name="markdown_notes_gmd_caption">.g.md</string>
     <string name="settings_markdown_notes_pinned_bar">Angepinnte Leiste</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Angepinnte Leiste anzeigen</string>
     <string name="settings_markdown_notes_max_pinned">Max. angeheftete Elemente</string>

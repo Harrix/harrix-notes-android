@@ -74,6 +74,7 @@
     <string name="markdown_notes_sort_folders_first">Фасцикле на врху</string>
     <string name="markdown_notes_sort_reverse">Обрнути редослед</string>
     <string name="markdown_notes_sort_show_gmd">Прикажи .g.md датотеке</string>
+    <string name="markdown_notes_gmd_caption">.g.md</string>
     <string name="settings_markdown_notes_pinned_bar">Трака са закаченим ставкама</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Прикажи траку са закаченим ставкама</string>
     <string name="settings_markdown_notes_max_pinned">Максималан број закачених ставки</string>

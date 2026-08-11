@@ -74,6 +74,7 @@
     <string name="markdown_notes_sort_folders_first">Dosare deasupra</string>
     <string name="markdown_notes_sort_reverse">Ordine inversă</string>
     <string name="markdown_notes_sort_show_gmd">Afișează fișiere .g.md</string>
+    <string name="markdown_notes_gmd_caption">.g.md</string>
     <string name="settings_markdown_notes_pinned_bar">Bară fixată</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Afișează bara fixată</string>
     <string name="settings_markdown_notes_max_pinned">Numărul maxim de articole fixate</string>

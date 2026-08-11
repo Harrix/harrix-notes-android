@@ -74,6 +74,7 @@
     <string name="markdown_notes_sort_folders_first">Carpetas arriba</string>
     <string name="markdown_notes_sort_reverse">Orden inverso</string>
     <string name="markdown_notes_sort_show_gmd">Mostrar archivos .g.md</string>
+    <string name="markdown_notes_gmd_caption">.g.md</string>
     <string name="settings_markdown_notes_pinned_bar">Barra de fijados</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Mostrar barra de fijados</string>
     <string name="settings_markdown_notes_max_pinned">Máx. elementos fijados</string>

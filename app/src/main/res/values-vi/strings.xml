@@ -74,6 +74,7 @@
     <string name="markdown_notes_sort_folders_first">Thư mục lên trên</string>
     <string name="markdown_notes_sort_reverse">Thứ tự ngược</string>
     <string name="markdown_notes_sort_show_gmd">Hiện tệp .g.md</string>
+    <string name="markdown_notes_gmd_caption">.g.md</string>
     <string name="settings_markdown_notes_pinned_bar">Thanh ghim</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Hiển thị thanh được ghim</string>
     <string name="settings_markdown_notes_max_pinned">Các mục được ghim tối đa</string>

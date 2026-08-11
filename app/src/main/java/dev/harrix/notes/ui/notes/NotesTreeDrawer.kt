@@ -38,6 +38,7 @@ import dev.harrix.notes.NotesListDensity
 import dev.harrix.notes.NotesListingOptions
 import dev.harrix.notes.NotesPathSegment
 import dev.harrix.notes.NotesSortBy
+import dev.harrix.notes.NotesTreeRepository
 import dev.harrix.notes.NotesViewerPreferences
 import dev.harrix.notes.R
 import dev.harrix.notes.ui.adaptiveDrawerWidth
@@ -216,13 +217,20 @@ private fun NotesTreeNoteRow(
         } else {
             MaterialTheme.typography.bodyMedium
         }
+    val isGmd = NotesTreeRepository.isGMd(note.name)
     // Align note content with folder label (start padding + expand control).
     val contentStart = 8 + density.treeMergedButtonHeightDp + depth * 10
+    val rowHeight =
+        if (isGmd) {
+            density.treeRowHeightDp + 12
+        } else {
+            density.treeRowHeightDp
+        }
     Row(
         modifier =
         Modifier
             .fillMaxWidth()
-            .height(density.treeRowHeightDp.dp)
+            .height(rowHeight.dp)
             .background(
                 if (selected) {
                     MaterialTheme.colorScheme.secondaryContainer
@@ -235,14 +243,24 @@ private fun NotesTreeNoteRow(
     ) {
         NotesNoteGlyph(icon = note.displayIcon, size = iconSize)
         Spacer(modifier = Modifier.width(6.dp))
-        Text(
-            text = note.displayLabel,
-            style = textStyle,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = note.displayLabel,
+                style = textStyle,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (isGmd) {
+                Text(
+                    text = stringResource(R.string.markdown_notes_gmd_caption),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
     }
 }
 

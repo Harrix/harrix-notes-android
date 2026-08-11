@@ -74,6 +74,7 @@
     <string name="markdown_notes_sort_folders_first">Složky nahoře</string>
     <string name="markdown_notes_sort_reverse">Obrácené pořadí</string>
     <string name="markdown_notes_sort_show_gmd">Zobrazit soubory .g.md</string>
+    <string name="markdown_notes_gmd_caption">.g.md</string>
     <string name="settings_markdown_notes_pinned_bar">Připnutá lišta</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Zobrazit připnutý pruh</string>
     <string name="settings_markdown_notes_max_pinned">Maximální počet připnutých položek</string>

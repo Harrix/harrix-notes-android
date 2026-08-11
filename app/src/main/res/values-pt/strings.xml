@@ -74,6 +74,7 @@
     <string name="markdown_notes_sort_folders_first">Pastas no topo</string>
     <string name="markdown_notes_sort_reverse">Ordem inversa</string>
     <string name="markdown_notes_sort_show_gmd">Mostrar ficheiros .g.md</string>
+    <string name="markdown_notes_gmd_caption">.g.md</string>
     <string name="settings_markdown_notes_pinned_bar">Barra de afixados</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Mostrar barra de afixados</string>
     <string name="settings_markdown_notes_max_pinned">Máx. elementos afixados</string>

@@ -74,6 +74,7 @@
     <string name="markdown_notes_sort_folders_first">المجلدات في الأعلى</string>
     <string name="markdown_notes_sort_reverse">ترتيب عكسي</string>
     <string name="markdown_notes_sort_show_gmd">إظهار ملفات .g.md</string>
+    <string name="markdown_notes_gmd_caption">.g.md</string>
     <string name="settings_markdown_notes_pinned_bar">شريط مثبت</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">إظهار الشريط المثبت</string>
     <string name="settings_markdown_notes_max_pinned">الحد الأقصى للعناصر المثبتة</string>

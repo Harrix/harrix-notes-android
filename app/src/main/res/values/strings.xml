@@ -98,6 +98,7 @@
     <string name="markdown_notes_sort_folders_first">Folders on top</string>
     <string name="markdown_notes_sort_reverse">Reverse order</string>
     <string name="markdown_notes_sort_show_gmd">Show .g.md files</string>
+    <string name="markdown_notes_gmd_caption">.g.md</string>
     <string name="settings_markdown_notes_pinned_bar">Pinned bar</string>
     <string name="settings_markdown_notes_pinned_bar_enabled">Show pinned bar</string>
     <string name="settings_markdown_notes_max_pinned">Max pinned items</string>
