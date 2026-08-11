@@ -4,6 +4,7 @@ package dev.harrix.notes
  * Display labels for pinned bar / settings rows.
  * When several pins share the same title, shows a short path that highlights
  * the first differing folder, e.g. `Folder1/.../Note` vs `Folder2/.../Note`.
+ * Year/date note titles also get a parent folder prefix (`cases/2026`).
  */
 fun pinnedDisplayLabels(
     items: List<NotesPinnedItem>,
@@ -22,16 +23,22 @@ fun pinnedDisplayLabels(
             .eachCount()
             .filter { (title, count) -> title != homeLabel && count > 1 }
             .keys
-    if (ambiguousTitles.isEmpty()) {
-        return baseById
-    }
-
     val result = baseById.toMutableMap()
-    for (title in ambiguousTitles) {
-        val group = items.filter { baseById[it.id] == title }
-        val paths = group.map { pinnedPathSegments(it, title) }
-        group.forEachIndexed { index, item ->
-            result[item.id] = formatDisambiguatedPath(paths[index], paths)
+    if (ambiguousTitles.isNotEmpty()) {
+        for (title in ambiguousTitles) {
+            val group = items.filter { baseById[it.id] == title }
+            val paths = group.map { pinnedPathSegments(it, title) }
+            group.forEachIndexed { index, item ->
+                result[item.id] = formatDisambiguatedPath(paths[index], paths)
+            }
+        }
+    }
+    for (item in items) {
+        if (item.kind == NotesPinnedKind.Note) {
+            val current = result[item.id]
+            if (current != null) {
+                result[item.id] = contextualNoteTitle(current, item.folderPath)
+            }
         }
     }
     return result

@@ -98,4 +98,8 @@ data class OpenNoteTab(
      * (Android “Open with” / Share). External tabs use a distinct chip color.
      */
     val isExternal: Boolean = false,
-)
+) {
+    /** Tab chip / tabs popup label; year/date titles include the parent folder. */
+    val displayTitle: String
+        get() = contextualNoteTitle(title, folderPath)
+}

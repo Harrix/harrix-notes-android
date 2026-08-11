@@ -3599,7 +3599,7 @@ private fun NotesOpenTabMenuRow(
                 },
         )
         Text(
-            text = tab.title,
+            text = tab.displayTitle,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
             maxLines = 2,
@@ -3764,7 +3764,7 @@ private fun NotesNavigationRow(
                 ) {
                     openTabs.forEach { tab ->
                         NotesTabChip(
-                            title = tab.title,
+                            title = tab.displayTitle,
                             selected = tab.documentId == selectedTabDocumentId,
                             onSelect = { onSelectTab(tab.documentId) },
                             onClose = { onCloseTab(tab.documentId) },
