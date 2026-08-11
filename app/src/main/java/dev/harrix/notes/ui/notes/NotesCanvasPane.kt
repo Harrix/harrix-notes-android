@@ -50,6 +50,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Slider
@@ -61,6 +62,7 @@ import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -642,20 +644,6 @@ fun NotesCanvasPane(
             },
             onClear = { showClearPageDialog = true },
         )
-        CanvasPageBar(
-            pageIndex = pageIndex,
-            pageCount = pages.size,
-            onPrevious = { goToPage(pageIndex - 1) },
-            onNext = { goToPage(pageIndex + 1) },
-            onAdd = { addPage() },
-            onDelete = {
-                if (pages.size <= 1) {
-                    latestOnStatusMessage(deleteLastMessage)
-                } else {
-                    showDeletePageDialog = true
-                }
-            },
-        )
         Box(
             modifier =
             Modifier
@@ -836,8 +824,24 @@ fun NotesCanvasPane(
                 }
             }
         }
+        CanvasPageBar(
+            pageIndex = pageIndex,
+            pageCount = pages.size,
+            onPrevious = { goToPage(pageIndex - 1) },
+            onNext = { goToPage(pageIndex + 1) },
+            onAdd = { addPage() },
+            onDelete = {
+                if (pages.size <= 1) {
+                    latestOnStatusMessage(deleteLastMessage)
+                } else {
+                    showDeletePageDialog = true
+                }
+            },
+        )
     }
 }
+
+private val CanvasPageBarButtonSize = 36.dp
 
 @Composable
 private fun CanvasPageBar(
@@ -849,58 +853,66 @@ private fun CanvasPageBar(
     onDelete: () -> Unit,
 ) {
     Surface(tonalElevation = 1.dp) {
-        Row(
-            modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(
-                    onClick = onPrevious,
-                    enabled = pageIndex > 0 && pageCount > 0,
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                        contentDescription = stringResource(R.string.markdown_notes_canvas_page_prev),
+        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+            Row(
+                modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 0.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = onPrevious,
+                        enabled = pageIndex > 0 && pageCount > 0,
+                        modifier = Modifier.size(CanvasPageBarButtonSize),
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                            contentDescription = stringResource(R.string.markdown_notes_canvas_page_prev),
+                        )
+                    }
+                    Text(
+                        text =
+                        stringResource(
+                            R.string.markdown_notes_canvas_page_indicator,
+                            if (pageCount == 0) 0 else pageIndex + 1,
+                            pageCount,
+                        ),
+                        style = MaterialTheme.typography.labelLarge,
                     )
+                    IconButton(
+                        onClick = onNext,
+                        enabled = pageIndex < pageCount - 1,
+                        modifier = Modifier.size(CanvasPageBarButtonSize),
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = stringResource(R.string.markdown_notes_canvas_page_next),
+                        )
+                    }
                 }
-                Text(
-                    text =
-                    stringResource(
-                        R.string.markdown_notes_canvas_page_indicator,
-                        if (pageCount == 0) 0 else pageIndex + 1,
-                        pageCount,
-                    ),
-                    style = MaterialTheme.typography.titleSmall,
-                )
-                IconButton(
-                    onClick = onNext,
-                    enabled = pageIndex < pageCount - 1,
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = stringResource(R.string.markdown_notes_canvas_page_next),
-                    )
-                }
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onAdd) {
-                    Icon(
-                        imageVector = Icons.Filled.Add,
-                        contentDescription = stringResource(R.string.markdown_notes_canvas_page_add),
-                    )
-                }
-                IconButton(
-                    onClick = onDelete,
-                    enabled = pageCount > 1,
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Delete,
-                        contentDescription = stringResource(R.string.markdown_notes_canvas_page_delete),
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = onAdd,
+                        modifier = Modifier.size(CanvasPageBarButtonSize),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = stringResource(R.string.markdown_notes_canvas_page_add),
+                        )
+                    }
+                    IconButton(
+                        onClick = onDelete,
+                        enabled = pageCount > 1,
+                        modifier = Modifier.size(CanvasPageBarButtonSize),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = stringResource(R.string.markdown_notes_canvas_page_delete),
+                        )
+                    }
                 }
             }
         }
