@@ -47,14 +47,19 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PanTool
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.VerticalDivider
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -911,6 +916,31 @@ private fun canvasWidthIconStrokeDp(baseWidth: Float): Dp {
     return (4f + t * 12f).dp
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CanvasToolbarIconButton(
+    tooltip: String,
+    onClick: () -> Unit,
+    enabled: Boolean = true,
+    content: @Composable () -> Unit,
+) {
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        tooltip = {
+            PlainTooltip {
+                Text(text = tooltip)
+            }
+        },
+        state = rememberTooltipState(),
+    ) {
+        IconButton(
+            onClick = onClick,
+            enabled = enabled,
+            content = content,
+        )
+    }
+}
+
 @Composable
 private fun CanvasToolbar(
     tool: CanvasTool,
@@ -956,7 +986,13 @@ private fun CanvasToolbar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            IconButton(
+            CanvasToolbarIconButton(
+                tooltip =
+                if (drawingEnabled) {
+                    stringResource(R.string.markdown_notes_canvas_pan)
+                } else {
+                    stringResource(R.string.markdown_notes_canvas_draw)
+                },
                 onClick = {
                     if (drawingEnabled) {
                         onDrawingEnabledChange(false)
@@ -981,7 +1017,10 @@ private fun CanvasToolbar(
                     },
                 )
             }
-            IconButton(onClick = { onToolChange(CanvasTool.Pen) }) {
+            CanvasToolbarIconButton(
+                tooltip = stringResource(R.string.markdown_notes_canvas_pen),
+                onClick = { onToolChange(CanvasTool.Pen) },
+            ) {
                 Icon(
                     imageVector = Icons.Filled.Brush,
                     contentDescription = stringResource(R.string.markdown_notes_canvas_pen),
@@ -993,7 +1032,10 @@ private fun CanvasToolbar(
                     },
                 )
             }
-            IconButton(onClick = { onToolChange(CanvasTool.Eraser) }) {
+            CanvasToolbarIconButton(
+                tooltip = stringResource(R.string.markdown_notes_canvas_eraser),
+                onClick = { onToolChange(CanvasTool.Eraser) },
+            ) {
                 Icon(
                     imageVector = Icons.Filled.AutoFixOff,
                     contentDescription = stringResource(R.string.markdown_notes_canvas_eraser),
@@ -1007,7 +1049,8 @@ private fun CanvasToolbar(
             }
             Box {
                 val penColorDescription = stringResource(R.string.markdown_notes_canvas_pen_color)
-                IconButton(
+                CanvasToolbarIconButton(
+                    tooltip = penColorDescription,
                     onClick = {
                         colorMenuExpanded = true
                         onToolChange(CanvasTool.Pen)
@@ -1127,7 +1170,10 @@ private fun CanvasToolbar(
             }
             Box {
                 val strokeWidthDescription = stringResource(R.string.markdown_notes_canvas_stroke_width)
-                IconButton(onClick = { widthMenuExpanded = true }) {
+                CanvasToolbarIconButton(
+                    tooltip = strokeWidthDescription,
+                    onClick = { widthMenuExpanded = true },
+                ) {
                     Canvas(
                         modifier =
                         Modifier
@@ -1220,26 +1266,41 @@ private fun CanvasToolbar(
                     }
                 }
             }
-            IconButton(onClick = onUndo, enabled = canUndo) {
+            CanvasToolbarIconButton(
+                tooltip = stringResource(R.string.markdown_notes_canvas_undo),
+                onClick = onUndo,
+                enabled = canUndo,
+            ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Undo,
                     contentDescription = stringResource(R.string.markdown_notes_canvas_undo),
                 )
             }
-            IconButton(onClick = onRedo, enabled = canRedo) {
+            CanvasToolbarIconButton(
+                tooltip = stringResource(R.string.markdown_notes_canvas_redo),
+                onClick = onRedo,
+                enabled = canRedo,
+            ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Redo,
                     contentDescription = stringResource(R.string.markdown_notes_canvas_redo),
                 )
             }
-            IconButton(onClick = onClear, enabled = canClear) {
+            CanvasToolbarIconButton(
+                tooltip = stringResource(R.string.markdown_notes_canvas_clear),
+                onClick = onClear,
+                enabled = canClear,
+            ) {
                 Icon(
                     imageVector = Icons.Filled.DeleteSweep,
                     contentDescription = stringResource(R.string.markdown_notes_canvas_clear),
                 )
             }
             VerticalDivider(modifier = Modifier.height(28.dp))
-            IconButton(onClick = { onPaperModeChange(CanvasPaperMode.Light) }) {
+            CanvasToolbarIconButton(
+                tooltip = stringResource(R.string.markdown_notes_canvas_paper_light),
+                onClick = { onPaperModeChange(CanvasPaperMode.Light) },
+            ) {
                 Icon(
                     imageVector = Icons.Filled.LightMode,
                     contentDescription = stringResource(R.string.markdown_notes_canvas_paper_light),
@@ -1251,7 +1312,10 @@ private fun CanvasToolbar(
                     },
                 )
             }
-            IconButton(onClick = { onPaperModeChange(CanvasPaperMode.Dark) }) {
+            CanvasToolbarIconButton(
+                tooltip = stringResource(R.string.markdown_notes_canvas_paper_dark),
+                onClick = { onPaperModeChange(CanvasPaperMode.Dark) },
+            ) {
                 Icon(
                     imageVector = Icons.Filled.DarkMode,
                     contentDescription = stringResource(R.string.markdown_notes_canvas_paper_dark),
@@ -1263,7 +1327,10 @@ private fun CanvasToolbar(
                     },
                 )
             }
-            IconButton(onClick = { onPaperModeChange(CanvasPaperMode.FollowTheme) }) {
+            CanvasToolbarIconButton(
+                tooltip = stringResource(R.string.markdown_notes_canvas_paper_theme),
+                onClick = { onPaperModeChange(CanvasPaperMode.FollowTheme) },
+            ) {
                 Icon(
                     imageVector = Icons.Filled.BrightnessAuto,
                     contentDescription = stringResource(R.string.markdown_notes_canvas_paper_theme),
