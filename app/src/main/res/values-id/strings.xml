@@ -139,9 +139,8 @@
     <string name="markdown_notes_canvas_eraser">Penghapus</string>
     <string name="markdown_notes_canvas_custom_color">Warna kustom</string>
     <string name="markdown_notes_canvas_custom_color_title">Pilih warna</string>
-    <string name="markdown_notes_canvas_custom_color_hue">Hue</string>
-    <string name="markdown_notes_canvas_custom_color_saturation">Saturasi</string>
-    <string name="markdown_notes_canvas_custom_color_value">Kecerahan</string>
+    <string name="markdown_notes_canvas_custom_color_hex">Hex</string>
+    <string name="markdown_notes_canvas_custom_color_copy">Salin warna</string>
     <string name="markdown_notes_canvas_custom_color_ok">OK</string>
     <string name="markdown_notes_canvas_custom_color_cancel">Batal</string>
     <string name="markdown_notes_canvas_pan">Geser kanvas</string>

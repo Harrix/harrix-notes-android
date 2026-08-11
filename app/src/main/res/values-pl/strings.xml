@@ -139,9 +139,8 @@
     <string name="markdown_notes_canvas_eraser">Gumka</string>
     <string name="markdown_notes_canvas_custom_color">Własny kolor</string>
     <string name="markdown_notes_canvas_custom_color_title">Wybierz kolor</string>
-    <string name="markdown_notes_canvas_custom_color_hue">Odcień</string>
-    <string name="markdown_notes_canvas_custom_color_saturation">Nasycenie</string>
-    <string name="markdown_notes_canvas_custom_color_value">Jasność</string>
+    <string name="markdown_notes_canvas_custom_color_hex">Hex</string>
+    <string name="markdown_notes_canvas_custom_color_copy">Kopiuj kolor</string>
     <string name="markdown_notes_canvas_custom_color_ok">OK</string>
     <string name="markdown_notes_canvas_custom_color_cancel">Anuluj</string>
     <string name="markdown_notes_canvas_pan">Przesuń canvas</string>

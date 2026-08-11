@@ -171,9 +171,8 @@
     <string name="markdown_notes_canvas_eraser">Ластик</string>
     <string name="markdown_notes_canvas_custom_color">Свой цвет</string>
     <string name="markdown_notes_canvas_custom_color_title">Выбор цвета</string>
-    <string name="markdown_notes_canvas_custom_color_hue">Оттенок</string>
-    <string name="markdown_notes_canvas_custom_color_saturation">Насыщенность</string>
-    <string name="markdown_notes_canvas_custom_color_value">Яркость</string>
+    <string name="markdown_notes_canvas_custom_color_hex">HEX</string>
+    <string name="markdown_notes_canvas_custom_color_copy">Копировать</string>
     <string name="markdown_notes_canvas_custom_color_ok">OK</string>
     <string name="markdown_notes_canvas_custom_color_cancel">Отмена</string>
     <string name="markdown_notes_canvas_pan">Перемещение</string>

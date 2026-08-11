@@ -139,9 +139,8 @@
     <string name="markdown_notes_canvas_eraser">Гумка</string>
     <string name="markdown_notes_canvas_custom_color">Власний колір</string>
     <string name="markdown_notes_canvas_custom_color_title">Вибір кольору</string>
-    <string name="markdown_notes_canvas_custom_color_hue">Відтінок</string>
-    <string name="markdown_notes_canvas_custom_color_saturation">Насиченість</string>
-    <string name="markdown_notes_canvas_custom_color_value">Яскравість</string>
+    <string name="markdown_notes_canvas_custom_color_hex">HEX</string>
+    <string name="markdown_notes_canvas_custom_color_copy">Копіювати</string>
     <string name="markdown_notes_canvas_custom_color_ok">OK</string>
     <string name="markdown_notes_canvas_custom_color_cancel">Скасувати</string>
     <string name="markdown_notes_canvas_pan">Переміщення</string>

@@ -139,9 +139,8 @@
     <string name="markdown_notes_canvas_eraser">Guma</string>
     <string name="markdown_notes_canvas_custom_color">Vlastní barva</string>
     <string name="markdown_notes_canvas_custom_color_title">Vybrat barvu</string>
-    <string name="markdown_notes_canvas_custom_color_hue">Odstín</string>
-    <string name="markdown_notes_canvas_custom_color_saturation">Sytost</string>
-    <string name="markdown_notes_canvas_custom_color_value">Jas</string>
+    <string name="markdown_notes_canvas_custom_color_hex">Hex</string>
+    <string name="markdown_notes_canvas_custom_color_copy">Kopírovat barvu</string>
     <string name="markdown_notes_canvas_custom_color_ok">OK</string>
     <string name="markdown_notes_canvas_custom_color_cancel">Zrušit</string>
     <string name="markdown_notes_canvas_pan">Posunout plátno</string>

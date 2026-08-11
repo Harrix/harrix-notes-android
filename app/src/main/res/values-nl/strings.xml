@@ -139,9 +139,8 @@
     <string name="markdown_notes_canvas_eraser">Gum</string>
     <string name="markdown_notes_canvas_custom_color">Aangepaste kleur</string>
     <string name="markdown_notes_canvas_custom_color_title">Kleur kiezen</string>
-    <string name="markdown_notes_canvas_custom_color_hue">Tint</string>
-    <string name="markdown_notes_canvas_custom_color_saturation">Verzadiging</string>
-    <string name="markdown_notes_canvas_custom_color_value">Helderheid</string>
+    <string name="markdown_notes_canvas_custom_color_hex">Hex</string>
+    <string name="markdown_notes_canvas_custom_color_copy">Kleur kopiëren</string>
     <string name="markdown_notes_canvas_custom_color_ok">OK</string>
     <string name="markdown_notes_canvas_custom_color_cancel">Annuleren</string>
     <string name="markdown_notes_canvas_pan">Canvas verplaatsen</string>

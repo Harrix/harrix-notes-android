@@ -139,9 +139,8 @@
     <string name="markdown_notes_canvas_eraser">Гумица</string>
     <string name="markdown_notes_canvas_custom_color">Прилагођена боја</string>
     <string name="markdown_notes_canvas_custom_color_title">Изабери боју</string>
-    <string name="markdown_notes_canvas_custom_color_hue">Нијанса</string>
-    <string name="markdown_notes_canvas_custom_color_saturation">Засићеност</string>
-    <string name="markdown_notes_canvas_custom_color_value">Осветљеност</string>
+    <string name="markdown_notes_canvas_custom_color_hex">HEX</string>
+    <string name="markdown_notes_canvas_custom_color_copy">Копирај боју</string>
     <string name="markdown_notes_canvas_custom_color_ok">OK</string>
     <string name="markdown_notes_canvas_custom_color_cancel">Откажи</string>
     <string name="markdown_notes_canvas_pan">Померај платно</string>

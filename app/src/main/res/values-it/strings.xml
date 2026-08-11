@@ -139,9 +139,8 @@
     <string name="markdown_notes_canvas_eraser">Gomma</string>
     <string name="markdown_notes_canvas_custom_color">Colore personalizzato</string>
     <string name="markdown_notes_canvas_custom_color_title">Scegli colore</string>
-    <string name="markdown_notes_canvas_custom_color_hue">Tonalità</string>
-    <string name="markdown_notes_canvas_custom_color_saturation">Saturazione</string>
-    <string name="markdown_notes_canvas_custom_color_value">Luminosità</string>
+    <string name="markdown_notes_canvas_custom_color_hex">Hex</string>
+    <string name="markdown_notes_canvas_custom_color_copy">Copia colore</string>
     <string name="markdown_notes_canvas_custom_color_ok">OK</string>
     <string name="markdown_notes_canvas_custom_color_cancel">Annulla</string>
     <string name="markdown_notes_canvas_pan">Sposta canvas</string>

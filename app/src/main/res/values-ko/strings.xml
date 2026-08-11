@@ -139,9 +139,8 @@
     <string name="markdown_notes_canvas_eraser">지우개</string>
     <string name="markdown_notes_canvas_custom_color">사용자 지정 색상</string>
     <string name="markdown_notes_canvas_custom_color_title">색상 선택</string>
-    <string name="markdown_notes_canvas_custom_color_hue">색조</string>
-    <string name="markdown_notes_canvas_custom_color_saturation">채도</string>
-    <string name="markdown_notes_canvas_custom_color_value">밝기</string>
+    <string name="markdown_notes_canvas_custom_color_hex">HEX</string>
+    <string name="markdown_notes_canvas_custom_color_copy">색 복사</string>
     <string name="markdown_notes_canvas_custom_color_ok">OK</string>
     <string name="markdown_notes_canvas_custom_color_cancel">취소</string>
     <string name="markdown_notes_canvas_pan">캔버스 이동</string>

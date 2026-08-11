@@ -139,9 +139,8 @@
     <string name="markdown_notes_canvas_eraser">Silgi</string>
     <string name="markdown_notes_canvas_custom_color">Özel renk</string>
     <string name="markdown_notes_canvas_custom_color_title">Renk seç</string>
-    <string name="markdown_notes_canvas_custom_color_hue">Ton</string>
-    <string name="markdown_notes_canvas_custom_color_saturation">Doygunluk</string>
-    <string name="markdown_notes_canvas_custom_color_value">Parlaklık</string>
+    <string name="markdown_notes_canvas_custom_color_hex">Hex</string>
+    <string name="markdown_notes_canvas_custom_color_copy">Rengi kopyala</string>
     <string name="markdown_notes_canvas_custom_color_ok">OK</string>
     <string name="markdown_notes_canvas_custom_color_cancel">İptal</string>
     <string name="markdown_notes_canvas_pan">Tuvali kaydır</string>

@@ -16,6 +16,8 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,6 +34,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
@@ -42,6 +45,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoFixOff
 import androidx.compose.material.icons.filled.BrightnessAuto
 import androidx.compose.material.icons.filled.Brush
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
@@ -58,6 +62,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
@@ -81,12 +86,14 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerInputChange
@@ -94,10 +101,13 @@ import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
@@ -1608,6 +1618,30 @@ private fun ColorSwatch(
     )
 }
 
+private fun canvasColorToHex(argb: Int): String = String.format(java.util.Locale.ROOT, "#%06X", 0xFFFFFF and argb)
+
+private fun canvasParseHexColor(raw: String): Int? {
+    val trimmed = raw.trim()
+    val hex =
+        when {
+            trimmed.startsWith("#") -> trimmed.drop(1)
+            else -> trimmed
+        }
+    if (hex.length != 6 && hex.length != 3) {
+        return null
+    }
+    if (!hex.all { it in '0'..'9' || it in 'a'..'f' || it in 'A'..'F' }) {
+        return null
+    }
+    val normalized =
+        if (hex.length == 3) {
+            hex.map { "$it$it" }.joinToString("")
+        } else {
+            hex
+        }
+    return runCatching { AndroidColor.parseColor("#$normalized") }.getOrNull()
+}
+
 @Composable
 private fun CanvasCustomColorDialog(
     initialColor: Int,
@@ -1620,55 +1654,119 @@ private fun CanvasCustomColorDialog(
         }
     var hue by remember { mutableFloatStateOf(initialHsv[0]) }
     var saturation by remember { mutableFloatStateOf(initialHsv[1]) }
-    var value by remember { mutableFloatStateOf(initialHsv[2].coerceAtLeast(0.05f)) }
+    var value by remember { mutableFloatStateOf(initialHsv[2]) }
+    var hexText by remember { mutableStateOf(canvasColorToHex(initialColor)) }
+    var hexFromPicker by remember { mutableStateOf(true) }
     val previewArgb =
         remember(hue, saturation, value) {
             AndroidColor.HSVToColor(floatArrayOf(hue, saturation, value))
         }
+    val clipboard = LocalClipboardManager.current
+    val copyDescription = stringResource(R.string.markdown_notes_canvas_custom_color_copy)
+
+    LaunchedEffect(previewArgb) {
+        if (hexFromPicker) {
+            hexText = canvasColorToHex(previewArgb)
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.markdown_notes_canvas_custom_color_title)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Box(
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                CanvasSaturationValuePicker(
+                    hue = hue,
+                    saturation = saturation,
+                    value = value,
+                    onChange = { nextSaturation, nextValue ->
+                        hexFromPicker = true
+                        saturation = nextSaturation
+                        value = nextValue
+                    },
                     modifier =
                     Modifier
                         .fillMaxWidth()
-                        .height(48.dp)
-                        .background(Color(previewArgb), RoundedCornerShape(8.dp))
+                        .height(180.dp)
+                        .clip(RoundedCornerShape(8.dp))
                         .border(
                             1.dp,
                             MaterialTheme.colorScheme.outlineVariant,
                             RoundedCornerShape(8.dp),
                         ),
                 )
-                Text(
-                    text = stringResource(R.string.markdown_notes_canvas_custom_color_hue),
-                    style = MaterialTheme.typography.labelMedium,
+                CanvasHueBar(
+                    hue = hue,
+                    onHueChange = { nextHue ->
+                        hexFromPicker = true
+                        hue = nextHue
+                    },
+                    modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(28.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .border(
+                            1.dp,
+                            MaterialTheme.colorScheme.outlineVariant,
+                            RoundedCornerShape(8.dp),
+                        ),
                 )
-                Slider(
-                    value = hue,
-                    onValueChange = { hue = it },
-                    valueRange = 0f..360f,
-                )
-                Text(
-                    text = stringResource(R.string.markdown_notes_canvas_custom_color_saturation),
-                    style = MaterialTheme.typography.labelMedium,
-                )
-                Slider(
-                    value = saturation,
-                    onValueChange = { saturation = it },
-                    valueRange = 0f..1f,
-                )
-                Text(
-                    text = stringResource(R.string.markdown_notes_canvas_custom_color_value),
-                    style = MaterialTheme.typography.labelMedium,
-                )
-                Slider(
-                    value = value,
-                    onValueChange = { value = it },
-                    valueRange = 0f..1f,
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Box(
+                        modifier =
+                        Modifier
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(previewArgb))
+                            .border(
+                                1.dp,
+                                MaterialTheme.colorScheme.outlineVariant,
+                                RoundedCornerShape(8.dp),
+                            ),
+                    )
+                    OutlinedTextField(
+                        value = hexText,
+                        onValueChange = { next ->
+                            val filtered =
+                                next
+                                    .filter { it == '#' || it.isDigit() || it in 'a'..'f' || it in 'A'..'F' }
+                                    .take(7)
+                            hexText = filtered
+                            hexFromPicker = false
+                            val parsed = canvasParseHexColor(filtered)
+                            if (parsed != null) {
+                                val hsv = FloatArray(3)
+                                AndroidColor.colorToHSV(parsed, hsv)
+                                hue = hsv[0]
+                                saturation = hsv[1]
+                                value = hsv[2]
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        label = { Text(stringResource(R.string.markdown_notes_canvas_custom_color_hex)) },
+                        keyboardOptions =
+                        KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Characters,
+                        ),
+                        isError = canvasParseHexColor(hexText) == null,
+                    )
+                    IconButton(
+                        onClick = {
+                            clipboard.setText(AnnotatedString(canvasColorToHex(previewArgb)))
+                        },
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.ContentCopy,
+                            contentDescription = copyDescription,
+                        )
+                    }
+                }
             }
         },
         confirmButton = {
@@ -1682,6 +1780,120 @@ private fun CanvasCustomColorDialog(
             }
         },
     )
+}
+
+@Composable
+private fun CanvasSaturationValuePicker(
+    hue: Float,
+    saturation: Float,
+    value: Float,
+    onChange: (saturation: Float, value: Float) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val hueColor = Color(AndroidColor.HSVToColor(floatArrayOf(hue, 1f, 1f)))
+    Box(
+        modifier =
+        modifier
+            .pointerInput(hue) {
+                fun update(position: Offset) {
+                    val nextSaturation = (position.x / size.width).coerceIn(0f, 1f)
+                    val nextValue = 1f - (position.y / size.height).coerceIn(0f, 1f)
+                    onChange(nextSaturation, nextValue)
+                }
+                detectTapGestures(onTap = { offset -> update(offset) })
+            }
+            .pointerInput(hue) {
+                detectDragGestures { change, _ ->
+                    change.consume()
+                    val nextSaturation = (change.position.x / size.width).coerceIn(0f, 1f)
+                    val nextValue = 1f - (change.position.y / size.height).coerceIn(0f, 1f)
+                    onChange(nextSaturation, nextValue)
+                }
+            },
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawRect(
+                brush =
+                ComposeBrush.horizontalGradient(
+                    colors = listOf(Color.White, hueColor),
+                ),
+            )
+            drawRect(
+                brush =
+                ComposeBrush.verticalGradient(
+                    colors = listOf(Color.Transparent, Color.Black),
+                ),
+            )
+            val selector =
+                Offset(
+                    saturation * size.width,
+                    (1f - value) * size.height,
+                )
+            drawCircle(
+                color = Color.White,
+                radius = 8.dp.toPx(),
+                center = selector,
+                style = Stroke(width = 2.dp.toPx()),
+            )
+            drawCircle(
+                color = Color.Black,
+                radius = 8.dp.toPx(),
+                center = selector,
+                style = Stroke(width = 1.dp.toPx()),
+            )
+        }
+    }
+}
+
+@Composable
+private fun CanvasHueBar(
+    hue: Float,
+    onHueChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val rainbow =
+        listOf(
+            Color(0xFFFF0000),
+            Color(0xFFFFFF00),
+            Color(0xFF00FF00),
+            Color(0xFF00FFFF),
+            Color(0xFF0000FF),
+            Color(0xFFFF00FF),
+            Color(0xFFFF0000),
+        )
+    Box(
+        modifier =
+        modifier
+            .pointerInput(Unit) {
+                fun update(position: Offset) {
+                    onHueChange((position.x / size.width).coerceIn(0f, 1f) * 360f)
+                }
+                detectTapGestures(onTap = { offset -> update(offset) })
+            }
+            .pointerInput(Unit) {
+                detectDragGestures { change, _ ->
+                    change.consume()
+                    onHueChange((change.position.x / size.width).coerceIn(0f, 1f) * 360f)
+                }
+            },
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawRect(brush = ComposeBrush.horizontalGradient(colors = rainbow))
+            val x = (hue / 360f).coerceIn(0f, 1f) * size.width
+            drawLine(
+                color = Color.White,
+                start = Offset(x, 0f),
+                end = Offset(x, size.height),
+                strokeWidth = 3.dp.toPx(),
+            )
+            drawLine(
+                color = Color.Black,
+                start = Offset(x, 0f),
+                end = Offset(x, size.height),
+                strokeWidth = 1.dp.toPx(),
+            )
+        }
+    }
 }
 
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawLiveStroke(

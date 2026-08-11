@@ -139,9 +139,8 @@
     <string name="markdown_notes_canvas_eraser">Radierer</string>
     <string name="markdown_notes_canvas_custom_color">Eigene Farbe</string>
     <string name="markdown_notes_canvas_custom_color_title">Farbe wählen</string>
-    <string name="markdown_notes_canvas_custom_color_hue">Farbton</string>
-    <string name="markdown_notes_canvas_custom_color_saturation">Sättigung</string>
-    <string name="markdown_notes_canvas_custom_color_value">Helligkeit</string>
+    <string name="markdown_notes_canvas_custom_color_hex">Hex</string>
+    <string name="markdown_notes_canvas_custom_color_copy">Farbe kopieren</string>
     <string name="markdown_notes_canvas_custom_color_ok">OK</string>
     <string name="markdown_notes_canvas_custom_color_cancel">Abbrechen</string>
     <string name="markdown_notes_canvas_pan">Canvas verschieben</string>

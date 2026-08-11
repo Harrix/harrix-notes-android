@@ -139,9 +139,8 @@
     <string name="markdown_notes_canvas_eraser">Borrador</string>
     <string name="markdown_notes_canvas_custom_color">Color personalizado</string>
     <string name="markdown_notes_canvas_custom_color_title">Elegir color</string>
-    <string name="markdown_notes_canvas_custom_color_hue">Tono</string>
-    <string name="markdown_notes_canvas_custom_color_saturation">Saturación</string>
-    <string name="markdown_notes_canvas_custom_color_value">Brillo</string>
+    <string name="markdown_notes_canvas_custom_color_hex">Hex</string>
+    <string name="markdown_notes_canvas_custom_color_copy">Copiar color</string>
     <string name="markdown_notes_canvas_custom_color_ok">OK</string>
     <string name="markdown_notes_canvas_custom_color_cancel">Cancelar</string>
     <string name="markdown_notes_canvas_pan">Mover lienzo</string>

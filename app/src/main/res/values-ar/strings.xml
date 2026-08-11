@@ -139,9 +139,8 @@
     <string name="markdown_notes_canvas_eraser">ممحاة</string>
     <string name="markdown_notes_canvas_custom_color">لون مخصص</string>
     <string name="markdown_notes_canvas_custom_color_title">اختر لونًا</string>
-    <string name="markdown_notes_canvas_custom_color_hue">درجة اللون</string>
-    <string name="markdown_notes_canvas_custom_color_saturation">التشبع</string>
-    <string name="markdown_notes_canvas_custom_color_value">السطوع</string>
+    <string name="markdown_notes_canvas_custom_color_hex">Hex</string>
+    <string name="markdown_notes_canvas_custom_color_copy">نسخ اللون</string>
     <string name="markdown_notes_canvas_custom_color_ok">OK</string>
     <string name="markdown_notes_canvas_custom_color_cancel">إلغاء</string>
     <string name="markdown_notes_canvas_pan">تحريك اللوحة</string>
