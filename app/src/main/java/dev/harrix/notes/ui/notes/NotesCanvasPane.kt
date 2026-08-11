@@ -237,6 +237,7 @@ fun NotesCanvasPane(
     var canRedo by remember { mutableStateOf(false) }
     var displayRevision by remember { mutableIntStateOf(0) }
     var autosaveJob by remember { mutableStateOf<Job?>(null) }
+    var toolbarMenuOpen by remember { mutableStateOf(false) }
     val loadFailedMessage = stringResource(R.string.markdown_notes_canvas_load_failed)
     val saveFailedMessage = stringResource(R.string.markdown_notes_canvas_save_failed)
     val pageFailedMessage = stringResource(R.string.markdown_notes_canvas_page_failed)
@@ -247,6 +248,7 @@ fun NotesCanvasPane(
     val latestDrawingEnabled by rememberUpdatedState(drawingEnabled)
     val latestPenColor by rememberUpdatedState(penColor)
     val latestBaseWidth by rememberUpdatedState(baseWidth)
+    val latestToolbarMenuOpen by rememberUpdatedState(toolbarMenuOpen)
     val latestOnStatusMessage by rememberUpdatedState(onStatusMessage)
     val latestNoteMarkdown by rememberUpdatedState(noteMarkdown)
     val latestOnNoteMarkdownChange by rememberUpdatedState(onNoteMarkdownChange)
@@ -663,6 +665,7 @@ fun NotesCanvasPane(
                 scheduleAutosave()
             },
             onClear = { showClearPageDialog = true },
+            onMenuOpenChange = { toolbarMenuOpen = it },
         )
     }
 
@@ -742,7 +745,17 @@ fun NotesCanvasPane(
 
                                 awaitEachGesture {
                                     val firstDown = awaitFirstDown(requireUnconsumed = false)
+                                    firstDown.consume()
                                     var event = currentEvent
+                                    // Outside-tap dismiss of a toolbar menu can land on the canvas and
+                                    // get cancelled when the popup closes; ignore that gesture.
+                                    if (latestToolbarMenuOpen) {
+                                        do {
+                                            event = awaitPointerEvent(PointerEventPass.Main)
+                                            event.changes.forEach { it.consume() }
+                                        } while (event.changes.any { it.pressed })
+                                        return@awaitEachGesture
+                                    }
                                     val panOnly =
                                         !latestDrawingEnabled ||
                                             event.changes.count { it.pressed } >= 2
@@ -772,6 +785,7 @@ fun NotesCanvasPane(
 
                                     var strokeFinished = false
                                     var cancelled = false
+                                    var moved = false
                                     while (!strokeFinished) {
                                         event = awaitPointerEvent(PointerEventPass.Main)
                                         val multiTouch = event.changes.count { it.pressed } >= 2
@@ -793,11 +807,16 @@ fun NotesCanvasPane(
                                             }
 
                                             change == null || !change.pressed -> {
+                                                // Pointer cancel without movement (e.g. popup dismiss).
+                                                if (!moved && change == null) {
+                                                    cancelled = true
+                                                }
                                                 change?.consume()
                                                 strokeFinished = true
                                             }
 
                                             change.positionChanged() -> {
+                                                moved = true
                                                 strokePoints += toBitmap(change)
                                                 active =
                                                     CanvasStroke(
@@ -812,17 +831,19 @@ fun NotesCanvasPane(
                                         }
                                     }
 
-                                    currentStroke = null
                                     if (!cancelled && active.points.isNotEmpty()) {
                                         session.strokes += active
                                         session.redoStack.clear()
                                         rebuildDisplay()
+                                        currentStroke = null
                                         syncUndoFlags()
                                         if (!active.isEraser) {
                                             preferences.saveCanvasPenColorArgb(active.color)
                                             preferences.saveCanvasPenWidth(active.baseWidth)
                                         }
                                         scheduleAutosave()
+                                    } else {
+                                        currentStroke = null
                                     }
                                 }
                             },
@@ -1094,6 +1115,7 @@ private fun CanvasToolbar(
     onUndo: () -> Unit,
     onRedo: () -> Unit,
     onClear: () -> Unit,
+    onMenuOpenChange: (Boolean) -> Unit = {},
     vertical: Boolean = false,
 ) {
     var showCustomColorDialog by remember { mutableStateOf(false) }
@@ -1102,6 +1124,15 @@ private fun CanvasToolbar(
     var paperMenuExpanded by remember { mutableStateOf(false) }
     val isCustomColor = penColor !in PenColors
     val widthIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val menuOpen =
+        colorMenuExpanded || widthMenuExpanded || paperMenuExpanded || showCustomColorDialog
+    val latestOnMenuOpenChange by rememberUpdatedState(onMenuOpenChange)
+    LaunchedEffect(menuOpen) {
+        latestOnMenuOpenChange(menuOpen)
+    }
+    DisposableEffect(Unit) {
+        onDispose { latestOnMenuOpenChange(false) }
+    }
     if (showCustomColorDialog) {
         CanvasCustomColorDialog(
             initialColor = penColor,
@@ -1481,7 +1512,10 @@ private fun CanvasToolbarButtons(
                                     },
                                     shape = RoundedCornerShape(8.dp),
                                 )
-                                .clickable { onWidthChange(preset) },
+                                .clickable {
+                                    onWidthChange(preset)
+                                    onWidthMenuExpandedChange(false)
+                                },
                             contentAlignment = Alignment.Center,
                         ) {
                             Canvas(modifier = Modifier.size(24.dp)) {
@@ -1499,6 +1533,7 @@ private fun CanvasToolbarButtons(
                 Slider(
                     value = baseWidth,
                     onValueChange = onWidthChange,
+                    onValueChangeFinished = { onWidthMenuExpandedChange(false) },
                     valueRange =
                     NotesViewerPreferences.MIN_CANVAS_PEN_WIDTH..NotesViewerPreferences.MAX_CANVAS_PEN_WIDTH,
                     modifier = Modifier.fillMaxWidth(),
