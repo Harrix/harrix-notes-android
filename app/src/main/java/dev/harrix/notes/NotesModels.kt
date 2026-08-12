@@ -39,6 +39,11 @@ sealed class NotesEntry {
         val containingFolder: NotesPathSegment? = null,
         /** Last modified time from the document provider, if known. */
         val lastModifiedEpochMs: Long? = null,
+        /**
+         * Resolved note date for list captions (`@hsk-sync:note-meta`):
+         * filename → YAML `date` → file ctime/mtime.
+         */
+        val resolvedDate: NoteMetaResolver.ResolvedNoteDate? = null,
         /** Document size in bytes from the provider, if known. */
         val sizeBytes: Long? = null,
     ) : NotesEntry() {
@@ -65,8 +70,9 @@ fun noteAssetFolderPath(
 data class NoteMetaUpdates(
     val titles: Map<String, String> = emptyMap(),
     val icons: Map<String, String> = emptyMap(),
+    val dates: Map<String, NoteMetaResolver.ResolvedNoteDate> = emptyMap(),
 ) {
-    val isEmpty: Boolean get() = titles.isEmpty() && icons.isEmpty()
+    val isEmpty: Boolean get() = titles.isEmpty() && icons.isEmpty() && dates.isEmpty()
 }
 
 /** Metadata for the note info dialog (SAF / content URI query). */

@@ -1,0 +1,36 @@
+---
+description: Keep @hsk-sync:note-meta title/date resolvers aligned with pyssg and VS Code
+globs: app/src/main/java/dev/harrix/notes/NoteMetaResolver.kt,app/src/main/java/dev/harrix/notes/NoteTitleExtractor.kt,app/src/main/java/dev/harrix/notes/NotesDateFormats.kt,app/src/main/java/dev/harrix/notes/NotesTreeRepository.kt,app/src/main/java/dev/harrix/notes/NotesModels.kt,app/src/main/java/dev/harrix/notes/ui/notes/NotesViewerScreen.kt
+alwaysApply: false
+---
+
+# @hsk-sync:note-meta
+
+Token `@hsk-sync:note-meta` marks shared **note title / note date** resolution.
+
+If priority, parsing rules, or date formats change here, update the sibling implementations and consider how Android list captions, VS Code tree labels, and pyssg HTML `<title>` will look.
+
+## Sibling implementations
+
+| Block | Path |
+|-------|------|
+| Python (pyssg) | `D:\GitHub\harrix-pyssg\src\harrix_pyssg\note_meta.py` |
+| VS Code (JS) | `D:\GitHub\harrix-swiss-knife\vscode\harrix-notes-explorer-hsk\note-meta.js` |
+| Android (this repo) | `NoteMetaResolver.kt`, `NoteTitleExtractor.kt`, list date captions |
+
+## Shared contract
+
+### Title
+
+1. YAML `title:`
+2. Else first `#` heading
+3. Else file stem (`.md` / `.g.md` stripped)
+
+### Date
+
+1. Date fragment in file name (`YYYY-MM-DD`, `YYYY.MM.DD`, `YYYYMMDD`, `DD.MM.YYYY`)
+2. Else YAML `date:`
+3. Else file ctime / birthtime when available
+4. Else file mtime
+
+Filename/YAML dates display as date-only; file timestamps keep time-of-day in the list.

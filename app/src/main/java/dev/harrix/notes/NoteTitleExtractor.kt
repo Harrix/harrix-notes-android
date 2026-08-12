@@ -1,8 +1,11 @@
 ﻿package dev.harrix.notes
 
 /**
- * Extracts note display metadata from Markdown the same way as
- * `vscode/harrix-notes-explorer-hsk` (YAML `title:` / `icon:`, or first `#` heading).
+ * Extracts note display metadata from Markdown.
+ *
+ * `@hsk-sync:note-meta` — title/icon parsing stays aligned with
+ * `note-meta.js` (VS Code) and `note_meta.py` (pyssg). Prefer
+ * [NoteMetaResolver.resolveTitle] when a file-stem fallback is needed.
  */
 object NoteTitleExtractor {
     private val FRONTMATTER_REGEX = Regex("^---\\r?\\n([\\s\\S]*?)\\r?\\n---\\r?\\n?")

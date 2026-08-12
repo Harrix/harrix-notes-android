@@ -44,6 +44,7 @@ class NotesTreeRepository(
             listingCache.clear()
             titleByDocumentId.clear()
             iconByDocumentId.clear()
+            dateByDocumentId.clear()
             metaLookupDone.clear()
             cachedTreeUriString = treeUriString
         }
@@ -268,6 +269,7 @@ class NotesTreeRepository(
         }
         val titleUpdates = LinkedHashMap<String, String>()
         val iconUpdates = LinkedHashMap<String, String>()
+        val dateUpdates = LinkedHashMap<String, NoteMetaResolver.ResolvedNoteDate>()
         coroutineScope {
             notes.chunked(TitleResolveParallelism).forEach { chunk ->
                 chunk
@@ -279,6 +281,8 @@ class NotesTreeRepository(
                             val text =
                                 runCatching { readTextPrefix(note.uri, NoteTitleReadBytes) }
                                     .getOrDefault("")
+                            val stem = noteDisplayLabel(note.name)
+                            val resolvedTitle = NoteMetaResolver.resolveTitle(text, stem)
                             val meta = NoteTitleExtractor.extractMeta(text)
                             if (meta.title.isNotEmpty()) {
                                 titleByDocumentId[note.documentId] = meta.title
@@ -288,9 +292,21 @@ class NotesTreeRepository(
                             } else {
                                 iconByDocumentId.remove(note.documentId)
                             }
+                            val resolvedDate =
+                                NoteMetaResolver.resolveDate(
+                                    text,
+                                    note.name,
+                                    ctimeEpochMs = note.lastModifiedEpochMs,
+                                    mtimeEpochMs = note.lastModifiedEpochMs,
+                                )
+                            if (resolvedDate != null) {
+                                dateByDocumentId[note.documentId] = resolvedDate
+                            } else {
+                                dateByDocumentId.remove(note.documentId)
+                            }
                             val titleUpdate =
-                                if (applyTitles && meta.title.isNotEmpty() && meta.title != note.displayLabel) {
-                                    meta.title
+                                if (applyTitles && resolvedTitle.isNotEmpty() && resolvedTitle != note.displayLabel) {
+                                    resolvedTitle
                                 } else {
                                     null
                                 }
@@ -300,28 +316,43 @@ class NotesTreeRepository(
                                 } else {
                                     null
                                 }
-                            if (titleUpdate == null && iconUpdate == null) {
+                            val dateUpdate =
+                                if (resolvedDate != null && resolvedDate != note.resolvedDate) {
+                                    resolvedDate
+                                } else {
+                                    null
+                                }
+                            if (titleUpdate == null && iconUpdate == null && dateUpdate == null) {
                                 null
                             } else {
-                                Triple(note.documentId, titleUpdate, iconUpdate)
+                                MetaResolveDelta(note.documentId, titleUpdate, iconUpdate, dateUpdate)
                             }
                         }
                     }.awaitAll()
-                    .forEach { triple ->
-                        if (triple != null) {
-                            val (documentId, title, icon) = triple
-                            if (title != null) {
-                                titleUpdates[documentId] = title
+                    .forEach { delta ->
+                        if (delta != null) {
+                            if (delta.title != null) {
+                                titleUpdates[delta.documentId] = delta.title
                             }
-                            if (icon != null) {
-                                iconUpdates[documentId] = icon
+                            if (delta.icon != null) {
+                                iconUpdates[delta.documentId] = delta.icon
+                            }
+                            if (delta.date != null) {
+                                dateUpdates[delta.documentId] = delta.date
                             }
                         }
                     }
             }
         }
-        return NoteMetaUpdates(titles = titleUpdates, icons = iconUpdates)
+        return NoteMetaUpdates(titles = titleUpdates, icons = iconUpdates, dates = dateUpdates)
     }
+
+    private data class MetaResolveDelta(
+        val documentId: String,
+        val title: String?,
+        val icon: String?,
+        val date: NoteMetaResolver.ResolvedNoteDate?,
+    )
 
     fun withUpdatedNoteLabels(
         entries: List<NotesEntry>,
@@ -332,8 +363,9 @@ class NotesTreeRepository(
         entries: List<NotesEntry>,
         titles: Map<String, String> = emptyMap(),
         icons: Map<String, String> = emptyMap(),
+        dates: Map<String, NoteMetaResolver.ResolvedNoteDate> = emptyMap(),
     ): List<NotesEntry> {
-        if (titles.isEmpty() && icons.isEmpty()) {
+        if (titles.isEmpty() && icons.isEmpty() && dates.isEmpty()) {
             return entries
         }
         return entries
@@ -341,10 +373,12 @@ class NotesTreeRepository(
                 if (entry is NotesEntry.Note) {
                     val label = titles[entry.documentId]
                     val icon = icons[entry.documentId]
-                    if (label != null || icon != null) {
+                    val date = dates[entry.documentId]
+                    if (label != null || icon != null || date != null) {
                         entry.copy(
                             displayLabel = label ?: entry.displayLabel,
                             displayIcon = icon ?: entry.displayIcon,
+                            resolvedDate = date ?: entry.resolvedDate,
                         )
                     } else {
                         entry
@@ -429,7 +463,26 @@ class NotesTreeRepository(
                 NotesTitleSource.FileName -> withFileNameLabels(entries)
                 NotesTitleSource.Content -> withCachedContentTitles(withFileNameLabels(entries))
             }
-        return withCachedNoteIcons(withLabels)
+        return withCachedResolvedDates(withCachedNoteIcons(withLabels))
+    }
+
+    fun withCachedResolvedDates(entries: List<NotesEntry>): List<NotesEntry> {
+        var changed = false
+        val mapped =
+            entries.map { entry ->
+                if (entry is NotesEntry.Note) {
+                    val cached = dateByDocumentId[entry.documentId]
+                    if (cached != null && cached != entry.resolvedDate) {
+                        changed = true
+                        entry.copy(resolvedDate = cached)
+                    } else {
+                        entry
+                    }
+                } else {
+                    entry
+                }
+            }
+        return if (changed) mapped else entries
     }
 
     fun displayTitleFor(
@@ -459,13 +512,14 @@ class NotesTreeRepository(
         dirDocumentId: String,
         titles: Map<String, String> = emptyMap(),
         icons: Map<String, String> = emptyMap(),
+        dates: Map<String, NoteMetaResolver.ResolvedNoteDate> = emptyMap(),
     ) {
-        if (titles.isEmpty() && icons.isEmpty()) {
+        if (titles.isEmpty() && icons.isEmpty() && dates.isEmpty()) {
             return
         }
         val key = cacheKey(treeUri, dirDocumentId)
         val current = listingCache[key] ?: return
-        listingCache[key] = withUpdatedNoteMeta(current, titles = titles, icons = icons)
+        listingCache[key] = withUpdatedNoteMeta(current, titles = titles, icons = icons, dates = dates)
     }
 
     /**
@@ -477,6 +531,8 @@ class NotesTreeRepository(
     fun rememberMetaFromContent(
         documentId: String,
         text: String,
+        fileName: String = "",
+        lastModifiedEpochMs: Long? = null,
     ): Pair<String?, String> {
         metaLookupDone.add(documentId)
         val meta = NoteTitleExtractor.extractMeta(text)
@@ -492,6 +548,20 @@ class NotesTreeRepository(
             iconByDocumentId[documentId] = meta.icon
         } else {
             iconByDocumentId.remove(documentId)
+        }
+        if (fileName.isNotBlank()) {
+            val resolvedDate =
+                NoteMetaResolver.resolveDate(
+                    text,
+                    fileName,
+                    ctimeEpochMs = lastModifiedEpochMs,
+                    mtimeEpochMs = lastModifiedEpochMs,
+                )
+            if (resolvedDate != null) {
+                dateByDocumentId[documentId] = resolvedDate
+            } else {
+                dateByDocumentId.remove(documentId)
+            }
         }
         return title to meta.icon
     }
@@ -1309,6 +1379,7 @@ class NotesTreeRepository(
             listingCache.clear()
             titleByDocumentId.clear()
             iconByDocumentId.clear()
+            dateByDocumentId.clear()
             metaLookupDone.clear()
             cachedTreeUriString = null
         }
@@ -1320,6 +1391,7 @@ class NotesTreeRepository(
 
         private val titleByDocumentId = ConcurrentHashMap<String, String>()
         private val iconByDocumentId = ConcurrentHashMap<String, String>()
+        private val dateByDocumentId = ConcurrentHashMap<String, NoteMetaResolver.ResolvedNoteDate>()
         private val metaLookupDone = ConcurrentHashMap.newKeySet<String>()
 
         private const val NoteTitleReadBytes = 16 * 1024

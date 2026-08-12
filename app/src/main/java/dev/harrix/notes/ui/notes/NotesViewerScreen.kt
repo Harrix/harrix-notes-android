@@ -130,6 +130,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.harrix.notes.NoteMetaResolver
 import dev.harrix.notes.NoteMetaUpdates
 import dev.harrix.notes.NoteTitleExtractor
 import dev.harrix.notes.NotesBrowseLayout
@@ -454,6 +455,7 @@ fun NotesViewerScreen(
                 treeChildrenByFolderId[dirDocumentId].orEmpty(),
                 titles = updates.titles,
                 icons = updates.icons,
+                dates = updates.dates,
             ),
         )
     }
@@ -770,6 +772,7 @@ fun NotesViewerScreen(
                     dirDocumentId,
                     titles = updates.titles,
                     icons = updates.icons,
+                    dates = updates.dates,
                 )
                 applyNoteMetaUpdates(dirDocumentId, updates)
                 return@launch
@@ -779,6 +782,7 @@ fun NotesViewerScreen(
                     entries,
                     titles = updates.titles,
                     icons = updates.icons,
+                    dates = updates.dates,
                 )
             putTreeChildren(
                 dirDocumentId,
@@ -786,6 +790,7 @@ fun NotesViewerScreen(
                     treeChildrenByFolderId[dirDocumentId] ?: entries,
                     titles = updates.titles,
                     icons = updates.icons,
+                    dates = updates.dates,
                 ),
             )
             repository.patchListingNoteMeta(
@@ -793,6 +798,7 @@ fun NotesViewerScreen(
                 dirDocumentId,
                 titles = updates.titles,
                 icons = updates.icons,
+                dates = updates.dates,
             )
             if (updates.titles.isNotEmpty()) {
                 openTabs =
@@ -4448,6 +4454,7 @@ private fun NotesFolderRow(
         NotesListTitleBlock(
             title = folder.name,
             lastModifiedEpochMs = folder.lastModifiedEpochMs,
+            resolvedDate = null,
             showDate = showDate,
             modifier = Modifier.weight(1f),
         )
@@ -4536,6 +4543,7 @@ private fun NotesNoteRow(
         NotesListTitleBlock(
             title = note.displayLabel,
             lastModifiedEpochMs = note.lastModifiedEpochMs,
+            resolvedDate = note.resolvedDate,
             showDate = showDate,
             caption = gmdCaption,
             modifier = Modifier.weight(1f),
@@ -4586,6 +4594,7 @@ private fun NotesListTitleBlock(
     showDate: Boolean,
     modifier: Modifier = Modifier,
     caption: String? = null,
+    resolvedDate: NoteMetaResolver.ResolvedNoteDate? = null,
 ) {
     Column(modifier = modifier) {
         Text(
@@ -4596,7 +4605,11 @@ private fun NotesListTitleBlock(
         )
         val dateText =
             if (showDate) {
-                lastModifiedEpochMs?.let { NotesDateFormats.formatListDateTime(it) }.orEmpty()
+                when {
+                    resolvedDate != null -> NotesDateFormats.formatResolvedNoteDate(resolvedDate)
+                    lastModifiedEpochMs != null -> NotesDateFormats.formatListDateTime(lastModifiedEpochMs)
+                    else -> ""
+                }
             } else {
                 ""
             }
