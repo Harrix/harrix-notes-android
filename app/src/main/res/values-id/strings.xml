@@ -98,6 +98,8 @@
     <string name="settings_markdown_notes_pinned_bar_enabled">Tampilkan bilah yang disematkan</string>
     <string name="settings_markdown_notes_max_pinned">Item yang disematkan maksimal</string>
     <string name="settings_markdown_notes_max_pinned_hint">Dari 1 hingga 20; standarnya adalah 5</string>
+    <string name="settings_markdown_notes_max_recent">Maks. catatan terbaru</string>
+    <string name="settings_markdown_notes_max_recent_hint">Dari 1 hingga 50; default 10</string>
     <string name="settings_markdown_notes_pinned_items">Item yang disematkan</string>
     <string name="settings_markdown_notes_pinned_items_empty">Tidak ada item yang disematkan</string>
     <string name="settings_markdown_notes_pinned_items_need_folder">Pilih folder catatan untuk mengedit item yang disematkan</string>
@@ -105,6 +107,9 @@
     <string name="settings_markdown_notes_pinned_reorder">Susun ulang pin</string>
     <string name="markdown_notes_title">Harrix Notes</string>
     <string name="markdown_notes_menu">Opsi lainnya</string>
+    <string name="markdown_notes_recent">Catatan terbaru</string>
+    <string name="markdown_notes_recent_empty">Tidak ada catatan terbaru</string>
+    <string name="markdown_notes_recent_missing">Catatan "%1$s" tidak lagi tersedia</string>
     <string name="markdown_notes_settings">Pengaturan</string>
     <string name="markdown_notes_about">Tentang</string>
     <string name="about_title">Tentang</string>

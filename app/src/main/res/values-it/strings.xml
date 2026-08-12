@@ -98,6 +98,8 @@
     <string name="settings_markdown_notes_pinned_bar_enabled">Mostra la barra degli elementi fissati</string>
     <string name="settings_markdown_notes_max_pinned">Max elementi fissati</string>
     <string name="settings_markdown_notes_max_pinned_hint">Da 1 a 20; il valore predefinito è 5</string>
+    <string name="settings_markdown_notes_max_recent">Max note recenti</string>
+    <string name="settings_markdown_notes_max_recent_hint">Da 1 a 50; predefinito 10</string>
     <string name="settings_markdown_notes_pinned_items">Elementi fissati</string>
     <string name="settings_markdown_notes_pinned_items_empty">Nessun elemento fissato</string>
     <string name="settings_markdown_notes_pinned_items_need_folder">Scegli una cartella di note per modificare gli elementi fissati</string>
@@ -105,6 +107,9 @@
     <string name="settings_markdown_notes_pinned_reorder">Riordina</string>
     <string name="markdown_notes_title">Harrix Notes</string>
     <string name="markdown_notes_menu">Altro</string>
+    <string name="markdown_notes_recent">Note recenti</string>
+    <string name="markdown_notes_recent_empty">Nessuna nota recente</string>
+    <string name="markdown_notes_recent_missing">La nota "%1$s" non è più disponibile</string>
     <string name="markdown_notes_settings">Impostazioni</string>
     <string name="markdown_notes_about">Informazioni</string>
     <string name="about_title">Informazioni</string>

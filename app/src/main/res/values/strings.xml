@@ -103,6 +103,8 @@
     <string name="settings_markdown_notes_pinned_bar_enabled">Show pinned bar</string>
     <string name="settings_markdown_notes_max_pinned">Max pinned items</string>
     <string name="settings_markdown_notes_max_pinned_hint">From 1 to 20; default is 5</string>
+    <string name="settings_markdown_notes_max_recent">Max recent notes</string>
+    <string name="settings_markdown_notes_max_recent_hint">From 1 to 50; default is 10</string>
     <string name="settings_markdown_notes_pinned_items">Pinned items</string>
     <string name="settings_markdown_notes_pinned_items_empty">No pinned items</string>
     <string name="settings_markdown_notes_pinned_items_need_folder">Choose a notes folder to edit pinned items</string>
@@ -110,6 +112,9 @@
     <string name="settings_markdown_notes_pinned_reorder">Reorder pin</string>
     <string name="markdown_notes_title">Harrix Notes</string>
     <string name="markdown_notes_menu">More options</string>
+    <string name="markdown_notes_recent">Recent notes</string>
+    <string name="markdown_notes_recent_empty">No recent notes</string>
+    <string name="markdown_notes_recent_missing">Note “%1$s” is no longer available</string>
     <string name="markdown_notes_sort_view_menu">Sort and view</string>
     <string name="markdown_notes_settings">Settings</string>
     <string name="markdown_notes_about">About</string>

@@ -98,6 +98,8 @@
     <string name="settings_markdown_notes_pinned_bar_enabled">Sabitlenmiş çubuğu göster</string>
     <string name="settings_markdown_notes_max_pinned">Maksimum sabitlenen öğe</string>
     <string name="settings_markdown_notes_max_pinned_hint">1\'den 20\'ye; varsayılan 5\'tir</string>
+    <string name="settings_markdown_notes_max_recent">Maks. son notlar</string>
+    <string name="settings_markdown_notes_max_recent_hint">1\'den 50\'ye; varsayılan 10\'dur</string>
     <string name="settings_markdown_notes_pinned_items">Sabitlenmiş öğeler</string>
     <string name="settings_markdown_notes_pinned_items_empty">Sabitlenmiş öğe yok</string>
     <string name="settings_markdown_notes_pinned_items_need_folder">Sabitlenmiş öğeleri düzenlemek için bir not klasörü seçin</string>
@@ -105,6 +107,9 @@
     <string name="settings_markdown_notes_pinned_reorder">PIN\'i yeniden sırala</string>
     <string name="markdown_notes_title">Harrix Notes</string>
     <string name="markdown_notes_menu">Daha fazla seçenek</string>
+    <string name="markdown_notes_recent">Son notlar</string>
+    <string name="markdown_notes_recent_empty">Son not yok</string>
+    <string name="markdown_notes_recent_missing">"%1$s" notu artık kullanılabilir değil</string>
     <string name="markdown_notes_settings">Ayarlar</string>
     <string name="markdown_notes_about">Hakkında</string>
     <string name="about_title">Hakkında</string>

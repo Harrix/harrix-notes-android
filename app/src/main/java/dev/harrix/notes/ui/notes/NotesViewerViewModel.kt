@@ -12,6 +12,7 @@ import dev.harrix.notes.NotesLoadedDocumentBaseline
 import dev.harrix.notes.NotesOpenMode
 import dev.harrix.notes.NotesPathSegment
 import dev.harrix.notes.NotesPinnedItem
+import dev.harrix.notes.NotesRecentItem
 import dev.harrix.notes.NotesTreeRepository
 import dev.harrix.notes.NotesViewerPreferences
 import dev.harrix.notes.OpenNoteTab
@@ -71,6 +72,9 @@ class NotesViewerViewModel(
     val maxPinnedItems = mutableIntStateOf(preferences.loadMaxPinnedItems())
     val pinnedItems = mutableStateOf<List<NotesPinnedItem>>(emptyList())
     val pinnedRestoredForTree = mutableStateOf<String?>(null)
+    val maxRecentNotes = mutableIntStateOf(preferences.loadMaxRecentNotes())
+    val recentNotes = mutableStateOf<List<NotesRecentItem>>(emptyList())
+    val recentRestoredForTree = mutableStateOf<String?>(null)
     val notesClipboard = mutableStateOf<NotesClipboardEntry?>(null)
     val treeRoot = mutableStateOf<NotesPathSegment?>(null)
     val treeChildrenByFolderId = mutableStateOf<Map<String, List<NotesEntry>>>(emptyMap())

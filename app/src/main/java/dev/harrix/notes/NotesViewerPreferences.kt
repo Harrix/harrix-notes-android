@@ -269,6 +269,39 @@ class NotesViewerPreferences(
         savePinnedItemsStore(store)
     }
 
+    fun loadMaxRecentNotes(): Int = prefs
+        .getInt(KEY_MAX_RECENT_NOTES, DEFAULT_MAX_RECENT_NOTES)
+        .coerceIn(MIN_RECENT_NOTES, MAX_RECENT_NOTES)
+
+    fun saveMaxRecentNotes(value: Int) {
+        prefs.edit().putInt(KEY_MAX_RECENT_NOTES, value.coerceIn(MIN_RECENT_NOTES, MAX_RECENT_NOTES)).apply()
+    }
+
+    fun loadRecentItemsStore(): NotesRecentItemsStore {
+        val raw = prefs.getString(KEY_RECENT_ITEMS, null) ?: return NotesRecentItemsStore.empty()
+        return NotesRecentItemsStore.fromJson(raw) ?: NotesRecentItemsStore.empty()
+    }
+
+    fun saveRecentItemsStore(store: NotesRecentItemsStore) {
+        prefs.edit().putString(KEY_RECENT_ITEMS, store.toJson()).apply()
+    }
+
+    fun loadRecentItems(treeUri: String?): List<NotesRecentItem> {
+        if (treeUri.isNullOrBlank()) {
+            return emptyList()
+        }
+        return loadRecentItemsStore().itemsFor(treeUri).orEmpty().take(loadMaxRecentNotes())
+    }
+
+    fun saveRecentItems(
+        treeUri: String,
+        items: List<NotesRecentItem>,
+    ) {
+        val limited = items.take(loadMaxRecentNotes())
+        val store = loadRecentItemsStore().withItems(treeUri, limited)
+        saveRecentItemsStore(store)
+    }
+
     fun loadOpenTabsSession(treeUri: String?): NotesOpenTabsSession {
         if (treeUri.isNullOrBlank()) {
             return NotesOpenTabsSession(treeUri = "", selectedDocumentId = null, tabs = emptyList())
@@ -391,6 +424,8 @@ class NotesViewerPreferences(
             .remove(KEY_PINNED_BAR_ENABLED)
             .remove(KEY_MAX_PINNED_ITEMS)
             .remove(KEY_PINNED_ITEMS)
+            .remove(KEY_MAX_RECENT_NOTES)
+            .remove(KEY_RECENT_ITEMS)
             .remove(KEY_PERSONAL_DATA_ENABLED)
             .remove(KEY_PERSONAL_DATA_AUTHOR)
             .remove(KEY_PERSONAL_DATA_AUTHOR_EMAIL)
@@ -425,6 +460,8 @@ class NotesViewerPreferences(
         private const val KEY_PINNED_BAR_ENABLED = "pinned_bar_enabled"
         private const val KEY_MAX_PINNED_ITEMS = "max_pinned_items"
         private const val KEY_PINNED_ITEMS = "pinned_items"
+        private const val KEY_MAX_RECENT_NOTES = "max_recent_notes"
+        private const val KEY_RECENT_ITEMS = "recent_items"
         private const val KEY_PERSONAL_DATA_ENABLED = "personal_data_enabled"
         private const val KEY_PERSONAL_DATA_AUTHOR = "personal_data_author"
         private const val KEY_PERSONAL_DATA_AUTHOR_EMAIL = "personal_data_author_email"
@@ -495,6 +532,10 @@ class NotesViewerPreferences(
         const val DEFAULT_MAX_PINNED_ITEMS = 5
         const val MIN_PINNED_ITEMS = 1
         const val MAX_PINNED_ITEMS = 20
+
+        const val DEFAULT_MAX_RECENT_NOTES = 10
+        const val MIN_RECENT_NOTES = 1
+        const val MAX_RECENT_NOTES = 50
 
         const val DEFAULT_PREVIEW_FONT_SIZE_SP = 14
         const val DEFAULT_EDITOR_FONT_SIZE_SP = 14

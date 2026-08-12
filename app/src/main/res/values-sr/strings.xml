@@ -98,6 +98,8 @@
     <string name="settings_markdown_notes_pinned_bar_enabled">Прикажи траку са закаченим ставкама</string>
     <string name="settings_markdown_notes_max_pinned">Максималан број закачених ставки</string>
     <string name="settings_markdown_notes_max_pinned_hint">Од 1 до 20; подразумевано је 5</string>
+    <string name="settings_markdown_notes_max_recent">Макс. недавних белешки</string>
+    <string name="settings_markdown_notes_max_recent_hint">Од 1 до 50; подразумевано је 10</string>
     <string name="settings_markdown_notes_pinned_items">Закачене ставке</string>
     <string name="settings_markdown_notes_pinned_items_empty">Нема закачених ставки</string>
     <string name="settings_markdown_notes_pinned_items_need_folder">Изабери фасциклу са белешкама да бисте уређивали закачене ставке</string>
@@ -105,6 +107,9 @@
     <string name="settings_markdown_notes_pinned_reorder">Промени редослед закачене ставке</string>
     <string name="markdown_notes_title">Harrix Notes</string>
     <string name="markdown_notes_menu">Више опција</string>
+    <string name="markdown_notes_recent">Недавне белешке</string>
+    <string name="markdown_notes_recent_empty">Нема недавних белешки</string>
+    <string name="markdown_notes_recent_missing">Белешка „%1$s“ више није доступна</string>
     <string name="markdown_notes_settings">Подешавања</string>
     <string name="markdown_notes_about">О апликацији</string>
     <string name="about_title">О апликацији</string>

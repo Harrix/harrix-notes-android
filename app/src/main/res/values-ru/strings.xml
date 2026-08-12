@@ -103,6 +103,8 @@
     <string name="settings_markdown_notes_pinned_bar_enabled">Показывать панель закреплений</string>
     <string name="settings_markdown_notes_max_pinned">Макс. закреплений</string>
     <string name="settings_markdown_notes_max_pinned_hint">От 1 до 20; по умолчанию 5</string>
+    <string name="settings_markdown_notes_max_recent">Макс. недавних заметок</string>
+    <string name="settings_markdown_notes_max_recent_hint">От 1 до 50; по умолчанию 10</string>
     <string name="settings_markdown_notes_pinned_items">Закреплённые элементы</string>
     <string name="settings_markdown_notes_pinned_items_empty">Нет закреплений</string>
     <string name="settings_markdown_notes_pinned_items_need_folder">Выберите папку заметок, чтобы править закрепления</string>
@@ -110,6 +112,9 @@
     <string name="settings_markdown_notes_pinned_reorder">Изменить порядок</string>
     <string name="markdown_notes_title">Harrix Notes</string>
     <string name="markdown_notes_menu">Ещё</string>
+    <string name="markdown_notes_recent">Недавние заметки</string>
+    <string name="markdown_notes_recent_empty">Нет недавних заметок</string>
+    <string name="markdown_notes_recent_missing">Заметка «%1$s» больше недоступна</string>
     <string name="markdown_notes_sort_view_menu">Сортировка и вид</string>
     <string name="markdown_notes_settings">Настройки</string>
     <string name="markdown_notes_about">О программе</string>

@@ -98,6 +98,8 @@
     <string name="settings_markdown_notes_pinned_bar_enabled">Zobrazit připnutý pruh</string>
     <string name="settings_markdown_notes_max_pinned">Maximální počet připnutých položek</string>
     <string name="settings_markdown_notes_max_pinned_hint">od 1 do 20; výchozí je 5</string>
+    <string name="settings_markdown_notes_max_recent">Max. nedávných poznámek</string>
+    <string name="settings_markdown_notes_max_recent_hint">Od 1 do 50; výchozí je 10</string>
     <string name="settings_markdown_notes_pinned_items">Připnuté položky</string>
     <string name="settings_markdown_notes_pinned_items_empty">Žádné připnuté položky</string>
     <string name="settings_markdown_notes_pinned_items_need_folder">Chcete-li upravit připnuté položky, vyberte složku poznámek</string>
@@ -105,6 +107,9 @@
     <string name="settings_markdown_notes_pinned_reorder">Změnit pořadí pinu</string>
     <string name="markdown_notes_title">Harrix Notes</string>
     <string name="markdown_notes_menu">Více možností</string>
+    <string name="markdown_notes_recent">Nedávné poznámky</string>
+    <string name="markdown_notes_recent_empty">Žádné nedávné poznámky</string>
+    <string name="markdown_notes_recent_missing">Poznámka „%1$s“ již není dostupná</string>
     <string name="markdown_notes_settings">Nastavení</string>
     <string name="markdown_notes_about">O</string>
     <string name="about_title">O</string>

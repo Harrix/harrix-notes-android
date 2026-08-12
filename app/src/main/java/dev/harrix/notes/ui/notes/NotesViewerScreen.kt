@@ -50,6 +50,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.Add
@@ -65,6 +66,7 @@ import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileCopy
 import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
@@ -147,6 +149,7 @@ import dev.harrix.notes.NotesOpenMode
 import dev.harrix.notes.NotesPathSegment
 import dev.harrix.notes.NotesPinnedItem
 import dev.harrix.notes.NotesPinnedKind
+import dev.harrix.notes.NotesRecentItem
 import dev.harrix.notes.NotesSortBy
 import dev.harrix.notes.NotesTitleSource
 import dev.harrix.notes.NotesTreeRepository
@@ -254,6 +257,9 @@ fun NotesViewerScreen(
     var pinnedItems by viewModel.pinnedItems
     var notesClipboard by viewModel.notesClipboard
     var pinnedRestoredForTree by viewModel.pinnedRestoredForTree
+    var maxRecentNotes by viewModel.maxRecentNotes
+    var recentNotes by viewModel.recentNotes
+    var recentRestoredForTree by viewModel.recentRestoredForTree
     var treeRoot by viewModel.treeRoot
     var treeChildrenByFolderId by viewModel.treeChildrenByFolderId
     var treeExpandedFolderIds by viewModel.treeExpandedFolderIds
@@ -287,6 +293,7 @@ fun NotesViewerScreen(
         showGmdFiles = preferences.loadShowGmdFiles()
         pinnedBarEnabled = preferences.loadPinnedBarEnabled()
         maxPinnedItems = preferences.loadMaxPinnedItems()
+        maxRecentNotes = preferences.loadMaxRecentNotes()
     }
 
     fun clearTreeState() {
@@ -309,6 +316,56 @@ fun NotesViewerScreen(
             return
         }
         persistPinnedItems(pinnedItems.take(maxPinnedItems))
+    }
+
+    fun persistRecentNotes(items: List<NotesRecentItem>) {
+        val tree = notesTreeUri ?: return
+        val limited =
+            items.take(maxRecentNotes.coerceAtLeast(NotesViewerPreferences.MIN_RECENT_NOTES))
+        recentNotes = limited
+        preferences.saveRecentItems(tree, limited)
+    }
+
+    fun ensureMaxRecentNotes() {
+        if (recentNotes.size <= maxRecentNotes) {
+            return
+        }
+        persistRecentNotes(recentNotes.take(maxRecentNotes))
+    }
+
+    fun rememberRecentNote(tab: OpenNoteTab) {
+        if (tab.isExternal || notesTreeUri.isNullOrBlank()) {
+            return
+        }
+        val item =
+            NotesRecentItem(
+                documentId = tab.documentId,
+                uri = tab.uri,
+                title = tab.title,
+                fileName = tab.fileName,
+                folderPath = tab.folderPath,
+            )
+        val without = recentNotes.filterNot { it.documentId == item.documentId }
+        persistRecentNotes(listOf(item) + without)
+    }
+
+    fun rememberRecentNote(
+        note: NotesEntry.Note,
+        pathForNote: List<NotesPathSegment>,
+    ) {
+        if (notesTreeUri.isNullOrBlank()) {
+            return
+        }
+        val item =
+            NotesRecentItem(
+                documentId = note.documentId,
+                uri = note.uri,
+                title = note.displayLabel,
+                fileName = note.name,
+                folderPath = pathForNote,
+            )
+        val without = recentNotes.filterNot { it.documentId == item.documentId }
+        persistRecentNotes(listOf(item) + without)
     }
 
     fun isPinned(documentId: String): Boolean = pinnedItems.any {
@@ -974,6 +1031,7 @@ fun NotesViewerScreen(
                 resetEditorState()
             }
             selectedTabDocumentId = note.documentId
+            rememberRecentNote(note, pathForNote)
         }
 
         val closesOthers =
@@ -982,6 +1040,37 @@ fun NotesViewerScreen(
             persistCurrentDraft { applyOpen() }
         } else {
             applyOpen()
+        }
+    }
+
+    fun openRecentNote(item: NotesRecentItem) {
+        scope.launch {
+            val exists =
+                withContext(Dispatchers.IO) {
+                    repository.documentExists(item.uri)
+                }
+            if (!exists) {
+                Toast
+                    .makeText(
+                        context,
+                        context.getString(
+                            R.string.markdown_notes_recent_missing,
+                            item.displayTitle.ifBlank { item.title }.ifBlank { item.fileName },
+                        ),
+                        Toast.LENGTH_LONG,
+                    ).show()
+                persistRecentNotes(recentNotes.filterNot { it.documentId == item.documentId })
+                return@launch
+            }
+            openNote(
+                NotesEntry.Note(
+                    documentId = item.documentId,
+                    name = item.fileName.ifBlank { item.title },
+                    uri = item.uri,
+                    displayLabel = item.title,
+                ),
+                item.folderPath,
+            )
         }
     }
 
@@ -1043,6 +1132,11 @@ fun NotesViewerScreen(
                 }
                 if (!tab.isExternal && tab.folderPath.isNotEmpty()) {
                     openFolderList(tab.folderPath, clearSelection = false)
+                }
+                if (!tab.isExternal) {
+                    rememberRecentNote(
+                        openTabs.firstOrNull { it.documentId == tab.documentId } ?: tab,
+                    )
                 }
             }
 
@@ -1225,6 +1319,15 @@ fun NotesViewerScreen(
                 resetEditorState()
             }
             selectedTabDocumentId = documentId
+            rememberRecentNote(
+                OpenNoteTab(
+                    documentId = documentId,
+                    uri = uri,
+                    title = title,
+                    fileName = fileName,
+                    folderPath = noteParentPath,
+                ),
+            )
         }
 
         val closesOthers =
@@ -1917,6 +2020,7 @@ fun NotesViewerScreen(
             noteLoading = true
             noteContent = null
             resetEditorState()
+            openTabs.firstOrNull { it.documentId == documentId }?.let { rememberRecentNote(it) }
         }
     }
 
@@ -1941,6 +2045,7 @@ fun NotesViewerScreen(
         val previousMaxOpenTabs = maxOpenTabs
         val previousSingleNoteMode = singleNoteMode
         val previousMaxPinned = maxPinnedItems
+        val previousMaxRecent = maxRecentNotes
         val hadSession = viewModel.appliedSettingsRevision >= 0
         reloadPath()
         viewModel.appliedSettingsRevision = settingsRevision
@@ -1962,9 +2067,18 @@ fun NotesViewerScreen(
             if (previousMaxPinned != maxPinnedItems) {
                 ensureMaxPinnedItems()
             }
+            if (hadSession || recentRestoredForTree != tree) {
+                recentNotes = preferences.loadRecentItems(tree)
+                recentRestoredForTree = tree
+            }
+            if (previousMaxRecent != maxRecentNotes) {
+                ensureMaxRecentNotes()
+            }
         } else if (hadSession) {
             pinnedItems = emptyList()
             pinnedRestoredForTree = null
+            recentNotes = emptyList()
+            recentRestoredForTree = null
         }
     }
 
@@ -2030,17 +2144,23 @@ fun NotesViewerScreen(
                     }
                 }
             }
+            if (recentRestoredForTree != treeUriValue) {
+                recentNotes = preferences.loadRecentItems(treeUriValue)
+                recentRestoredForTree = treeUriValue
+            }
             ensureTreeRootLoaded()
         } else {
             clearTreeState()
             sessionRestoredForTree = null
             pinnedRestoredForTree = null
+            recentRestoredForTree = null
             viewModel.treeExpandedForTabId = null
             viewModel.clearLoadedNote()
             viewModel.resetFolderScroll()
             folderPath = emptyList()
             entries = emptyList()
             pinnedItems = emptyList()
+            recentNotes = emptyList()
             val keptExternal = openTabs.filter { it.isExternal }
             openTabs = keptExternal
             selectedTabDocumentId =
@@ -2452,6 +2572,8 @@ fun NotesViewerScreen(
                                 !notesTreeUri.isNullOrBlank() &&
                                 folderPath.isNotEmpty(),
                             onPaste = { pasteClipboard() },
+                            recentNotes = recentNotes,
+                            onOpenRecentNote = { openRecentNote(it) },
                             onOpenNoteInfo = {
                                 val tab = selectedTab
                                 if (tab != null) {
@@ -3089,11 +3211,14 @@ private fun NotesTopChrome(
     onUnpinNote: () -> Unit,
     canPaste: Boolean,
     onPaste: () -> Unit,
+    recentNotes: List<NotesRecentItem>,
+    onOpenRecentNote: (NotesRecentItem) -> Unit,
     onOpenNoteInfo: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenAbout: () -> Unit,
 ) {
     var sortViewMenuExpanded by remember { mutableStateOf(false) }
+    var recentMenuExpanded by remember { mutableStateOf(false) }
     Column(
         modifier =
         Modifier
@@ -3177,7 +3302,10 @@ private fun NotesTopChrome(
                     }
                     DropdownMenu(
                         expanded = menuExpanded,
-                        onDismissRequest = { onMenuExpandedChange(false) },
+                        onDismissRequest = {
+                            recentMenuExpanded = false
+                            onMenuExpandedChange(false)
+                        },
                     ) {
                         if (noteOpen) {
                             NotesDropdownMenuItem(
@@ -3256,6 +3384,65 @@ private fun NotesTopChrome(
                             )
                             HorizontalDivider()
                         }
+                        Box {
+                            NotesDropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = stringResource(R.string.markdown_notes_recent),
+                                        maxLines = 1,
+                                    )
+                                },
+                                onClick = { recentMenuExpanded = true },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Filled.History,
+                                        contentDescription = null,
+                                    )
+                                },
+                                trailingIcon = {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                        contentDescription = null,
+                                    )
+                                },
+                            )
+                            DropdownMenu(
+                                expanded = recentMenuExpanded,
+                                onDismissRequest = { recentMenuExpanded = false },
+                            ) {
+                                if (recentNotes.isEmpty()) {
+                                    NotesDropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                text =
+                                                stringResource(R.string.markdown_notes_recent_empty),
+                                                maxLines = 1,
+                                            )
+                                        },
+                                        onClick = { recentMenuExpanded = false },
+                                        enabled = false,
+                                    )
+                                } else {
+                                    recentNotes.forEach { item ->
+                                        NotesDropdownMenuItem(
+                                            text = {
+                                                Text(
+                                                    text = item.displayTitle,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                )
+                                            },
+                                            onClick = {
+                                                recentMenuExpanded = false
+                                                onMenuExpandedChange(false)
+                                                onOpenRecentNote(item)
+                                            },
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        HorizontalDivider()
                         NotesDropdownMenuItem(
                             text = {
                                 Text(

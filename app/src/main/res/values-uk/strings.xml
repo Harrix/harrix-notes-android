@@ -98,6 +98,8 @@
     <string name="settings_markdown_notes_pinned_bar_enabled">Показати закріплену панель</string>
     <string name="settings_markdown_notes_max_pinned">Максимальна кількість закріплених елементів</string>
     <string name="settings_markdown_notes_max_pinned_hint">Від 1 до 20; за замовчуванням 5</string>
+    <string name="settings_markdown_notes_max_recent">Макс. недавніх нотаток</string>
+    <string name="settings_markdown_notes_max_recent_hint">Від 1 до 50; за замовчуванням 10</string>
     <string name="settings_markdown_notes_pinned_items">Закріплені елементи</string>
     <string name="settings_markdown_notes_pinned_items_empty">Немає закріплених елементів</string>
     <string name="settings_markdown_notes_pinned_items_need_folder">Вибрати папку нотаток, щоб редагувати закріплені елементи</string>
@@ -105,6 +107,9 @@
     <string name="settings_markdown_notes_pinned_reorder">Змінити порядок закріплення</string>
     <string name="markdown_notes_title">Harrix Notes</string>
     <string name="markdown_notes_menu">Більше варіантів</string>
+    <string name="markdown_notes_recent">Недавні нотатки</string>
+    <string name="markdown_notes_recent_empty">Немає недавніх нотаток</string>
+    <string name="markdown_notes_recent_missing">Нотатка «%1$s» більше недоступна</string>
     <string name="markdown_notes_settings">Налаштування</string>
     <string name="markdown_notes_about">Про програму</string>
     <string name="about_title">Про програму</string>

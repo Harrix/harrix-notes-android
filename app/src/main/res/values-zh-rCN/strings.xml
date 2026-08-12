@@ -98,6 +98,8 @@
     <string name="settings_markdown_notes_pinned_bar_enabled">显示固定栏</string>
     <string name="settings_markdown_notes_max_pinned">最大固定项目</string>
     <string name="settings_markdown_notes_max_pinned_hint">1 到 20；默认为 5</string>
+    <string name="settings_markdown_notes_max_recent">最近笔记上限</string>
+    <string name="settings_markdown_notes_max_recent_hint">1 到 50；默认为 10</string>
     <string name="settings_markdown_notes_pinned_items">固定项目</string>
     <string name="settings_markdown_notes_pinned_items_empty">没有固定项目</string>
     <string name="settings_markdown_notes_pinned_items_need_folder">选择一个笔记文件夹以编辑固定项目</string>
@@ -105,6 +107,9 @@
     <string name="settings_markdown_notes_pinned_reorder">重新排序</string>
     <string name="markdown_notes_title">Harrix Notes</string>
     <string name="markdown_notes_menu">更多</string>
+    <string name="markdown_notes_recent">最近笔记</string>
+    <string name="markdown_notes_recent_empty">没有最近笔记</string>
+    <string name="markdown_notes_recent_missing">笔记“%1$s”已不可用</string>
     <string name="markdown_notes_settings">设置</string>
     <string name="markdown_notes_about">关于</string>
     <string name="about_title">关于</string>

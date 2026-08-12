@@ -98,6 +98,8 @@
     <string name="settings_markdown_notes_pinned_bar_enabled">Vastgezette balk weergeven</string>
     <string name="settings_markdown_notes_max_pinned">Max. aantal vastgezette items</string>
     <string name="settings_markdown_notes_max_pinned_hint">Van 1 tot 20; standaard is 5</string>
+    <string name="settings_markdown_notes_max_recent">Max. recente notities</string>
+    <string name="settings_markdown_notes_max_recent_hint">Van 1 tot 50; standaard is 10</string>
     <string name="settings_markdown_notes_pinned_items">Vastgezette items</string>
     <string name="settings_markdown_notes_pinned_items_empty">Geen vastgezette items</string>
     <string name="settings_markdown_notes_pinned_items_need_folder">Kies een notitiemap om vastgezette items te bewerken</string>
@@ -105,6 +107,9 @@
     <string name="settings_markdown_notes_pinned_reorder">Pin opnieuw ordenen</string>
     <string name="markdown_notes_title">Harrix Notes</string>
     <string name="markdown_notes_menu">Meer opties</string>
+    <string name="markdown_notes_recent">Recente notities</string>
+    <string name="markdown_notes_recent_empty">Geen recente notities</string>
+    <string name="markdown_notes_recent_missing">Notitie "%1$s" is niet meer beschikbaar</string>
     <string name="markdown_notes_settings">Instellingen</string>
     <string name="markdown_notes_about">Over</string>
     <string name="about_title">Over</string>

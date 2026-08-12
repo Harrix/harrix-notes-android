@@ -437,6 +437,7 @@ private fun GeneralSettingsSection(modifier: Modifier = Modifier) {
     var sortReverseOrder by remember { mutableStateOf(preferences.loadSortReverseOrder()) }
     var showGmdFiles by remember { mutableStateOf(preferences.loadShowGmdFiles()) }
     var maxOpenTabs by remember { mutableIntStateOf(preferences.loadMaxOpenTabs()) }
+    var maxRecentNotes by remember { mutableIntStateOf(preferences.loadMaxRecentNotes()) }
     var pinnedBarEnabled by remember { mutableStateOf(preferences.loadPinnedBarEnabled()) }
     var maxPinnedItems by remember { mutableIntStateOf(preferences.loadMaxPinnedItems()) }
     var pinnedItems by remember(treeUri) {
@@ -710,6 +711,21 @@ private fun GeneralSettingsSection(modifier: Modifier = Modifier) {
                     },
                 )
             }
+            IntSliderSetting(
+                label = stringResource(R.string.settings_markdown_notes_max_recent),
+                value = maxRecentNotes,
+                valueRange =
+                NotesViewerPreferences.MIN_RECENT_NOTES..NotesViewerPreferences.MAX_RECENT_NOTES,
+                hint = stringResource(R.string.settings_markdown_notes_max_recent_hint),
+                onValueChange = { value ->
+                    maxRecentNotes = value
+                    preferences.saveMaxRecentNotes(value)
+                    val tree = treeUri
+                    if (!tree.isNullOrBlank()) {
+                        preferences.saveRecentItems(tree, preferences.loadRecentItems(tree))
+                    }
+                },
+            )
             NotesDensitySettingRow(
                 labelRes = R.string.settings_markdown_notes_list_density,
                 selected = listDensity,
