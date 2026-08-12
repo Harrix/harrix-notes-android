@@ -10,6 +10,18 @@
     <string name="settings_general_summary">Фајлови и фасцикле</string>
     <string name="settings_edit_mode_title">Режим уређивања</string>
     <string name="settings_edit_mode_summary">Подешавања уређивача</string>
+    <string name="settings_new_note_title">Нова белешка</string>
+    <string name="settings_new_note_summary">Шаблони и лични подаци</string>
+    <string name="settings_new_note_personal_data">Лични подаци</string>
+    <string name="settings_new_note_personal_data_enabled">Укључи аутора у нове белешке</string>
+    <string name="settings_new_note_personal_data_author">Аутор</string>
+    <string name="settings_new_note_personal_data_author_email">Имејл аутора</string>
+    <string name="settings_new_note_templates">Почетни шаблони</string>
+    <string name="settings_new_note_default_template">Подразумевани почетни шаблон</string>
+    <string name="settings_new_note_template_label">Ознака</string>
+    <string name="settings_new_note_template_content">Садржај шаблона</string>
+    <string name="settings_new_note_template_save">Сачувај шаблон</string>
+    <string name="settings_new_note_templates_reset">Врати шаблоне на подразумеване</string>
     <string name="settings_view_mode_title">Режим прегледа</string>
     <string name="settings_view_mode_summary">Подешавања прегледа</string>
     <string name="settings_appearance_title">Изглед</string>
@@ -123,6 +135,7 @@
     <string name="markdown_notes_preview">Преглед</string>
     <string name="markdown_notes_saved">Сачувано</string>
     <string name="markdown_notes_new_note">+ Нова белешка</string>
+    <string name="markdown_notes_create_note_template_label">Почетни шаблон</string>
     <string name="markdown_notes_create_failed">Није могуће креирати белешку</string>
     <string name="loading_elapsed_seconds">%1$d s</string>
     <string name="settings_markdown_notes_preview_font">Фонт прегледа</string>

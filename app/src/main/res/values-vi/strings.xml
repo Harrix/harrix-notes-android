@@ -10,6 +10,18 @@
     <string name="settings_general_summary">Tập tin và thư mục</string>
     <string name="settings_edit_mode_title">Chế độ chỉnh sửa</string>
     <string name="settings_edit_mode_summary">Cài đặt trình chỉnh sửa</string>
+    <string name="settings_new_note_title">Ghi chú mới</string>
+    <string name="settings_new_note_summary">Mẫu và dữ liệu cá nhân</string>
+    <string name="settings_new_note_personal_data">Dữ liệu cá nhân</string>
+    <string name="settings_new_note_personal_data_enabled">Thêm tác giả vào ghi chú mới</string>
+    <string name="settings_new_note_personal_data_author">Tác giả</string>
+    <string name="settings_new_note_personal_data_author_email">Email tác giả</string>
+    <string name="settings_new_note_templates">Mẫu phần đầu</string>
+    <string name="settings_new_note_default_template">Mẫu phần đầu mặc định</string>
+    <string name="settings_new_note_template_label">Nhãn</string>
+    <string name="settings_new_note_template_content">Nội dung mẫu</string>
+    <string name="settings_new_note_template_save">Lưu mẫu</string>
+    <string name="settings_new_note_templates_reset">Đặt lại mẫu về mặc định</string>
     <string name="settings_view_mode_title">Chế độ xem</string>
     <string name="settings_view_mode_summary">Xem trước cài đặt</string>
     <string name="settings_appearance_title">Ngoại hình</string>
@@ -123,6 +135,7 @@
     <string name="markdown_notes_preview">Xem trước</string>
     <string name="markdown_notes_saved">Đã lưu</string>
     <string name="markdown_notes_new_note">+ Ghi chú mới</string>
+    <string name="markdown_notes_create_note_template_label">Mẫu phần đầu</string>
     <string name="markdown_notes_create_failed">Không thể tạo ghi chú</string>
     <string name="loading_elapsed_seconds">%1$d giây</string>
     <string name="settings_markdown_notes_preview_font">Phông chữ xem trước</string>

@@ -10,6 +10,18 @@
     <string name="settings_general_summary">File dan folder</string>
     <string name="settings_edit_mode_title">Modus penyuntingan</string>
     <string name="settings_edit_mode_summary">Pengaturan editor</string>
+    <string name="settings_new_note_title">Catatan baru</string>
+    <string name="settings_new_note_summary">Templat dan data pribadi</string>
+    <string name="settings_new_note_personal_data">Data pribadi</string>
+    <string name="settings_new_note_personal_data_enabled">Sertakan penulis di catatan baru</string>
+    <string name="settings_new_note_personal_data_author">Penulis</string>
+    <string name="settings_new_note_personal_data_author_email">Email penulis</string>
+    <string name="settings_new_note_templates">Templat awal</string>
+    <string name="settings_new_note_default_template">Templat awal default</string>
+    <string name="settings_new_note_template_label">Label</string>
+    <string name="settings_new_note_template_content">Konten templat</string>
+    <string name="settings_new_note_template_save">Simpan templat</string>
+    <string name="settings_new_note_templates_reset">Atur ulang templat ke default</string>
     <string name="settings_view_mode_title">Modus tampilan</string>
     <string name="settings_view_mode_summary">Pengaturan pratinjau</string>
     <string name="settings_appearance_title">Penampilan</string>
@@ -123,6 +135,7 @@
     <string name="markdown_notes_preview">Pratinjau</string>
     <string name="markdown_notes_saved">Disimpan</string>
     <string name="markdown_notes_new_note">+ Catatan Baru</string>
+    <string name="markdown_notes_create_note_template_label">Templat awal</string>
     <string name="markdown_notes_create_failed">Tidak dapat membuat catatan</string>
     <string name="loading_elapsed_seconds">%1$d dtk</string>
     <string name="settings_markdown_notes_preview_font">Font pratinjau</string>

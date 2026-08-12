@@ -10,6 +10,18 @@
     <string name="settings_general_summary">الملفات والمجلدات</string>
     <string name="settings_edit_mode_title">وضع التحرير</string>
     <string name="settings_edit_mode_summary">إعدادات المحرر</string>
+    <string name="settings_new_note_title">ملاحظة جديدة</string>
+    <string name="settings_new_note_summary">القوالب والبيانات الشخصية</string>
+    <string name="settings_new_note_personal_data">البيانات الشخصية</string>
+    <string name="settings_new_note_personal_data_enabled">تضمين المؤلف في الملاحظات الجديدة</string>
+    <string name="settings_new_note_personal_data_author">المؤلف</string>
+    <string name="settings_new_note_personal_data_author_email">بريد المؤلف</string>
+    <string name="settings_new_note_templates">قوالب البداية</string>
+    <string name="settings_new_note_default_template">قالب البداية الافتراضي</string>
+    <string name="settings_new_note_template_label">التسمية</string>
+    <string name="settings_new_note_template_content">محتوى القالب</string>
+    <string name="settings_new_note_template_save">حفظ القالب</string>
+    <string name="settings_new_note_templates_reset">إعادة القوالب إلى الافتراضي</string>
     <string name="settings_view_mode_title">وضع العرض</string>
     <string name="settings_view_mode_summary">إعدادات المعاينة</string>
     <string name="settings_appearance_title">المظهر</string>
@@ -123,6 +135,7 @@
     <string name="markdown_notes_preview">معاينة</string>
     <string name="markdown_notes_saved">تم الحفظ</string>
     <string name="markdown_notes_new_note">+ ملاحظة جديدة</string>
+    <string name="markdown_notes_create_note_template_label">قالب البداية</string>
     <string name="markdown_notes_create_failed">لا يمكن إنشاء ملاحظة</string>
     <string name="loading_elapsed_seconds">%1$d ث</string>
     <string name="settings_markdown_notes_preview_font">خط المعاينة</string>

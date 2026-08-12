@@ -10,6 +10,18 @@
     <string name="settings_general_summary">Dosyalar ve klasörler</string>
     <string name="settings_edit_mode_title">Düzenleme modu</string>
     <string name="settings_edit_mode_summary">Düzenleyici ayarları</string>
+    <string name="settings_new_note_title">Yeni not</string>
+    <string name="settings_new_note_summary">Şablonlar ve kişisel veriler</string>
+    <string name="settings_new_note_personal_data">Kişisel veriler</string>
+    <string name="settings_new_note_personal_data_enabled">Yeni notlara yazarı ekle</string>
+    <string name="settings_new_note_personal_data_author">Yazar</string>
+    <string name="settings_new_note_personal_data_author_email">Yazar e-postası</string>
+    <string name="settings_new_note_templates">Başlangıç şablonları</string>
+    <string name="settings_new_note_default_template">Varsayılan başlangıç şablonu</string>
+    <string name="settings_new_note_template_label">Etiket</string>
+    <string name="settings_new_note_template_content">Şablon içeriği</string>
+    <string name="settings_new_note_template_save">Şablonu kaydet</string>
+    <string name="settings_new_note_templates_reset">Şablonları varsayılana sıfırla</string>
     <string name="settings_view_mode_title">Görünüm modu</string>
     <string name="settings_view_mode_summary">Önizleme ayarları</string>
     <string name="settings_appearance_title">Görünüm</string>
@@ -123,6 +135,7 @@
     <string name="markdown_notes_preview">Önizleme</string>
     <string name="markdown_notes_saved">Kaydedildi</string>
     <string name="markdown_notes_new_note">+ Yeni Not</string>
+    <string name="markdown_notes_create_note_template_label">Başlangıç şablonu</string>
     <string name="markdown_notes_create_failed">Not oluşturulamadı</string>
     <string name="loading_elapsed_seconds">%1$d sn</string>
     <string name="settings_markdown_notes_preview_font">Önizleme yazı tipi</string>

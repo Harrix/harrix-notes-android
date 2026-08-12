@@ -10,6 +10,18 @@
     <string name="settings_general_summary">Fișiere și foldere</string>
     <string name="settings_edit_mode_title">Modul de editare</string>
     <string name="settings_edit_mode_summary">Setări editor</string>
+    <string name="settings_new_note_title">Notă nouă</string>
+    <string name="settings_new_note_summary">Șabloane și date personale</string>
+    <string name="settings_new_note_personal_data">Date personale</string>
+    <string name="settings_new_note_personal_data_enabled">Include autorul în notele noi</string>
+    <string name="settings_new_note_personal_data_author">Autor</string>
+    <string name="settings_new_note_personal_data_author_email">Email autor</string>
+    <string name="settings_new_note_templates">Șabloane de început</string>
+    <string name="settings_new_note_default_template">Șablon de început implicit</string>
+    <string name="settings_new_note_template_label">Etichetă</string>
+    <string name="settings_new_note_template_content">Conținutul șablonului</string>
+    <string name="settings_new_note_template_save">Salvează șablonul</string>
+    <string name="settings_new_note_templates_reset">Resetează șabloanele la valorile implicite</string>
     <string name="settings_view_mode_title">Modul vizualizare</string>
     <string name="settings_view_mode_summary">Previzualizare setări</string>
     <string name="settings_appearance_title">Aspectul</string>
@@ -123,6 +135,7 @@
     <string name="markdown_notes_preview">Previzualizare</string>
     <string name="markdown_notes_saved">Salvat</string>
     <string name="markdown_notes_new_note">+ Notă nouă</string>
+    <string name="markdown_notes_create_note_template_label">Șablon de început</string>
     <string name="markdown_notes_create_failed">Nu s-a putut crea nota</string>
     <string name="loading_elapsed_seconds">%1$d s</string>
     <string name="settings_markdown_notes_preview_font">Font previzualizare</string>

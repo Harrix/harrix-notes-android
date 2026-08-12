@@ -10,6 +10,18 @@
     <string name="settings_general_summary">Soubory a složky</string>
     <string name="settings_edit_mode_title">Režim úprav</string>
     <string name="settings_edit_mode_summary">Nastavení editoru</string>
+    <string name="settings_new_note_title">Nová poznámka</string>
+    <string name="settings_new_note_summary">Šablony a osobní údaje</string>
+    <string name="settings_new_note_personal_data">Osobní údaje</string>
+    <string name="settings_new_note_personal_data_enabled">Vkládat autora do nových poznámek</string>
+    <string name="settings_new_note_personal_data_author">Autor</string>
+    <string name="settings_new_note_personal_data_author_email">E-mail autora</string>
+    <string name="settings_new_note_templates">Úvodní šablony</string>
+    <string name="settings_new_note_default_template">Výchozí úvodní šablona</string>
+    <string name="settings_new_note_template_label">Popisek</string>
+    <string name="settings_new_note_template_content">Obsah šablony</string>
+    <string name="settings_new_note_template_save">Uložit šablonu</string>
+    <string name="settings_new_note_templates_reset">Obnovit výchozí šablony</string>
     <string name="settings_view_mode_title">Režim zobrazení</string>
     <string name="settings_view_mode_summary">Nastavení náhledu</string>
     <string name="settings_appearance_title">Vzhled</string>
@@ -123,6 +135,7 @@
     <string name="markdown_notes_preview">Náhled</string>
     <string name="markdown_notes_saved">Uloženo</string>
     <string name="markdown_notes_new_note">+ Nová poznámka</string>
+    <string name="markdown_notes_create_note_template_label">Úvodní šablona</string>
     <string name="markdown_notes_create_failed">Poznámku nelze vytvořit</string>
     <string name="loading_elapsed_seconds">%1$d s</string>
     <string name="settings_markdown_notes_preview_font">Písmo náhledu</string>

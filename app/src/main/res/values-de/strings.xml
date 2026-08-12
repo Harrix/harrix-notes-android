@@ -10,6 +10,18 @@
     <string name="settings_general_summary">Dateien und Ordner</string>
     <string name="settings_edit_mode_title">Bearbeitungsmodus</string>
     <string name="settings_edit_mode_summary">Editor-Einstellungen</string>
+    <string name="settings_new_note_title">Neue Notiz</string>
+    <string name="settings_new_note_summary">Vorlagen und persönliche Daten</string>
+    <string name="settings_new_note_personal_data">Persönliche Daten</string>
+    <string name="settings_new_note_personal_data_enabled">Autor in neue Notizen einfügen</string>
+    <string name="settings_new_note_personal_data_author">Autor</string>
+    <string name="settings_new_note_personal_data_author_email">Autor-E-Mail</string>
+    <string name="settings_new_note_templates">Anfangsvorlagen</string>
+    <string name="settings_new_note_default_template">Standard-Anfangsvorlage</string>
+    <string name="settings_new_note_template_label">Bezeichnung</string>
+    <string name="settings_new_note_template_content">Vorlageninhalt</string>
+    <string name="settings_new_note_template_save">Vorlage speichern</string>
+    <string name="settings_new_note_templates_reset">Vorlagen auf Standard zurücksetzen</string>
     <string name="settings_view_mode_title">Ansichtsmodus</string>
     <string name="settings_view_mode_summary">Vorschau-Einstellungen</string>
     <string name="settings_appearance_title">Aussehen</string>
@@ -123,6 +135,7 @@
     <string name="markdown_notes_preview">Vorschau</string>
     <string name="markdown_notes_saved">Gespeichert</string>
     <string name="markdown_notes_new_note">+ Neue Notiz</string>
+    <string name="markdown_notes_create_note_template_label">Anfangsvorlage</string>
     <string name="markdown_notes_create_failed">Notiz konnte nicht erstellt werden</string>
     <string name="loading_elapsed_seconds">%1$d s</string>
     <string name="settings_markdown_notes_preview_font">Schriftart (Vorschau)</string>

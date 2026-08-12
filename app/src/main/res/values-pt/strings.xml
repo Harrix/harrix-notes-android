@@ -10,6 +10,18 @@
     <string name="settings_general_summary">Arquivos e pastas</string>
     <string name="settings_edit_mode_title">Modo de edição</string>
     <string name="settings_edit_mode_summary">Configurações do editor</string>
+    <string name="settings_new_note_title">Nova nota</string>
+    <string name="settings_new_note_summary">Modelos e dados pessoais</string>
+    <string name="settings_new_note_personal_data">Dados pessoais</string>
+    <string name="settings_new_note_personal_data_enabled">Incluir autor em novas notas</string>
+    <string name="settings_new_note_personal_data_author">Autor</string>
+    <string name="settings_new_note_personal_data_author_email">E-mail do autor</string>
+    <string name="settings_new_note_templates">Modelos iniciais</string>
+    <string name="settings_new_note_default_template">Modelo inicial predefinido</string>
+    <string name="settings_new_note_template_label">Etiqueta</string>
+    <string name="settings_new_note_template_content">Conteúdo do modelo</string>
+    <string name="settings_new_note_template_save">Guardar modelo</string>
+    <string name="settings_new_note_templates_reset">Repor modelos predefinidos</string>
     <string name="settings_view_mode_title">Modo de visualização</string>
     <string name="settings_view_mode_summary">Configurações da pré-visualização</string>
     <string name="settings_appearance_title">Aparência</string>
@@ -123,6 +135,7 @@
     <string name="markdown_notes_preview">Pré-visualização</string>
     <string name="markdown_notes_saved">Guardado</string>
     <string name="markdown_notes_new_note">+ Nova nota</string>
+    <string name="markdown_notes_create_note_template_label">Modelo inicial</string>
     <string name="markdown_notes_create_failed">Falha ao criar nota</string>
     <string name="loading_elapsed_seconds">%1$d s</string>
     <string name="settings_markdown_notes_preview_font">Fonte da pré-visualização</string>

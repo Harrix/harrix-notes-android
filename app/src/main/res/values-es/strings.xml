@@ -10,6 +10,18 @@
     <string name="settings_general_summary">Archivos y carpetas</string>
     <string name="settings_edit_mode_title">Modo edición</string>
     <string name="settings_edit_mode_summary">Ajustes del editor</string>
+    <string name="settings_new_note_title">Nota nueva</string>
+    <string name="settings_new_note_summary">Plantillas y datos personales</string>
+    <string name="settings_new_note_personal_data">Datos personales</string>
+    <string name="settings_new_note_personal_data_enabled">Incluir autor en notas nuevas</string>
+    <string name="settings_new_note_personal_data_author">Autor</string>
+    <string name="settings_new_note_personal_data_author_email">Correo del autor</string>
+    <string name="settings_new_note_templates">Plantillas iniciales</string>
+    <string name="settings_new_note_default_template">Plantilla inicial predeterminada</string>
+    <string name="settings_new_note_template_label">Etiqueta</string>
+    <string name="settings_new_note_template_content">Contenido de la plantilla</string>
+    <string name="settings_new_note_template_save">Guardar plantilla</string>
+    <string name="settings_new_note_templates_reset">Restablecer plantillas predeterminadas</string>
     <string name="settings_view_mode_title">Modo vista</string>
     <string name="settings_view_mode_summary">Ajustes de vista previa</string>
     <string name="settings_appearance_title">Apariencia</string>
@@ -123,6 +135,7 @@
     <string name="markdown_notes_preview">Vista previa</string>
     <string name="markdown_notes_saved">Guardado</string>
     <string name="markdown_notes_new_note">+ Nota nueva</string>
+    <string name="markdown_notes_create_note_template_label">Plantilla inicial</string>
     <string name="markdown_notes_create_failed">No se pudo crear la nota</string>
     <string name="loading_elapsed_seconds">%1$d s</string>
     <string name="settings_markdown_notes_preview_font">Fuente de vista previa</string>

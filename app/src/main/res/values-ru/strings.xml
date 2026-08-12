@@ -10,6 +10,18 @@
     <string name="settings_general_summary">Файлы и папки</string>
     <string name="settings_edit_mode_title">Режим редактирования</string>
     <string name="settings_edit_mode_summary">Настройки редактора</string>
+    <string name="settings_new_note_title">Новая заметка</string>
+    <string name="settings_new_note_summary">Шаблоны и личные данные</string>
+    <string name="settings_new_note_personal_data">Личные данные</string>
+    <string name="settings_new_note_personal_data_enabled">Добавлять автора в новые заметки</string>
+    <string name="settings_new_note_personal_data_author">Автор</string>
+    <string name="settings_new_note_personal_data_author_email">Email автора</string>
+    <string name="settings_new_note_templates">Начальные шаблоны</string>
+    <string name="settings_new_note_default_template">Начальный шаблон по умолчанию</string>
+    <string name="settings_new_note_template_label">Название</string>
+    <string name="settings_new_note_template_content">Содержимое шаблона</string>
+    <string name="settings_new_note_template_save">Сохранить шаблон</string>
+    <string name="settings_new_note_templates_reset">Сбросить шаблоны к значениям по умолчанию</string>
     <string name="settings_view_mode_title">Режим просмотра</string>
     <string name="settings_view_mode_summary">Настройки превью</string>
     <string name="settings_appearance_title">Оформление</string>
@@ -156,6 +168,7 @@
     <string name="markdown_notes_saved">Сохранено</string>
     <string name="markdown_notes_new_note">+ Новая заметка</string>
     <string name="markdown_notes_create_note_title">Новая заметка</string>
+    <string name="markdown_notes_create_note_template_label">Начальный шаблон</string>
     <string name="markdown_notes_create_note_name_label">Название заметки</string>
     <string name="markdown_notes_create_note_file_label">Имя файла</string>
     <string name="markdown_notes_create_note_extension">.md</string>

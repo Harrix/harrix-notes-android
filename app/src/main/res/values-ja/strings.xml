@@ -10,6 +10,18 @@
     <string name="settings_general_summary">ファイルとフォルダ</string>
     <string name="settings_edit_mode_title">編集モード</string>
     <string name="settings_edit_mode_summary">エディタの設定</string>
+    <string name="settings_new_note_title">新しいノート</string>
+    <string name="settings_new_note_summary">テンプレートと個人データ</string>
+    <string name="settings_new_note_personal_data">個人データ</string>
+    <string name="settings_new_note_personal_data_enabled">新しいノートに著者を含める</string>
+    <string name="settings_new_note_personal_data_author">著者</string>
+    <string name="settings_new_note_personal_data_author_email">著者のメール</string>
+    <string name="settings_new_note_templates">冒頭テンプレート</string>
+    <string name="settings_new_note_default_template">デフォルトの冒頭テンプレート</string>
+    <string name="settings_new_note_template_label">ラベル</string>
+    <string name="settings_new_note_template_content">テンプレート内容</string>
+    <string name="settings_new_note_template_save">テンプレートを保存</string>
+    <string name="settings_new_note_templates_reset">テンプレートをデフォルトに戻す</string>
     <string name="settings_view_mode_title">表示モード</string>
     <string name="settings_view_mode_summary">プレビューの設定</string>
     <string name="settings_appearance_title">外観</string>
@@ -123,6 +135,7 @@
     <string name="markdown_notes_preview">プレビュー</string>
     <string name="markdown_notes_saved">保存しました</string>
     <string name="markdown_notes_new_note">+ 新しいノート</string>
+    <string name="markdown_notes_create_note_template_label">冒頭テンプレート</string>
     <string name="markdown_notes_create_failed">ノートの作成に失敗しました</string>
     <string name="loading_elapsed_seconds">%1$d 秒</string>
     <string name="settings_markdown_notes_preview_font">プレビューのフォント</string>

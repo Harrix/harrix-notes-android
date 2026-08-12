@@ -10,6 +10,18 @@
     <string name="settings_general_summary">文件和文件夹</string>
     <string name="settings_edit_mode_title">编辑模式</string>
     <string name="settings_edit_mode_summary">编辑器设置</string>
+    <string name="settings_new_note_title">新建笔记</string>
+    <string name="settings_new_note_summary">模板与个人数据</string>
+    <string name="settings_new_note_personal_data">个人数据</string>
+    <string name="settings_new_note_personal_data_enabled">在新笔记中包含作者</string>
+    <string name="settings_new_note_personal_data_author">作者</string>
+    <string name="settings_new_note_personal_data_author_email">作者邮箱</string>
+    <string name="settings_new_note_templates">开头模板</string>
+    <string name="settings_new_note_default_template">默认开头模板</string>
+    <string name="settings_new_note_template_label">标签</string>
+    <string name="settings_new_note_template_content">模板内容</string>
+    <string name="settings_new_note_template_save">保存模板</string>
+    <string name="settings_new_note_templates_reset">将模板重置为默认值</string>
     <string name="settings_view_mode_title">查看模式</string>
     <string name="settings_view_mode_summary">预览设置</string>
     <string name="settings_appearance_title">外观</string>
@@ -123,6 +135,7 @@
     <string name="markdown_notes_preview">预览</string>
     <string name="markdown_notes_saved">已保存</string>
     <string name="markdown_notes_new_note">+ 新建笔记</string>
+    <string name="markdown_notes_create_note_template_label">开头模板</string>
     <string name="markdown_notes_create_failed">创建笔记失败</string>
     <string name="loading_elapsed_seconds">%1$d 秒</string>
     <string name="settings_markdown_notes_preview_font">预览字体</string>

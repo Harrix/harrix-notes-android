@@ -10,6 +10,18 @@
     <string name="settings_general_summary">파일 및 폴더</string>
     <string name="settings_edit_mode_title">편집 모드</string>
     <string name="settings_edit_mode_summary">에디터 설정</string>
+    <string name="settings_new_note_title">새 메모</string>
+    <string name="settings_new_note_summary">템플릿 및 개인 데이터</string>
+    <string name="settings_new_note_personal_data">개인 데이터</string>
+    <string name="settings_new_note_personal_data_enabled">새 메모에 작성자 포함</string>
+    <string name="settings_new_note_personal_data_author">작성자</string>
+    <string name="settings_new_note_personal_data_author_email">작성자 이메일</string>
+    <string name="settings_new_note_templates">시작 템플릿</string>
+    <string name="settings_new_note_default_template">기본 시작 템플릿</string>
+    <string name="settings_new_note_template_label">레이블</string>
+    <string name="settings_new_note_template_content">템플릿 내용</string>
+    <string name="settings_new_note_template_save">템플릿 저장</string>
+    <string name="settings_new_note_templates_reset">템플릿을 기본값으로 재설정</string>
     <string name="settings_view_mode_title">보기 모드</string>
     <string name="settings_view_mode_summary">미리보기 설정</string>
     <string name="settings_appearance_title">외관</string>
@@ -123,6 +135,7 @@
     <string name="markdown_notes_preview">미리보기</string>
     <string name="markdown_notes_saved">저장됨</string>
     <string name="markdown_notes_new_note">+ 새 메모</string>
+    <string name="markdown_notes_create_note_template_label">시작 템플릿</string>
     <string name="markdown_notes_create_failed">메모를 만들 수 없습니다.</string>
     <string name="loading_elapsed_seconds">%1$d초</string>
     <string name="settings_markdown_notes_preview_font">미리보기 글꼴</string>

@@ -10,6 +10,18 @@
     <string name="settings_general_summary">Pliki i foldery</string>
     <string name="settings_edit_mode_title">Tryb edycji</string>
     <string name="settings_edit_mode_summary">Ustawienia edytora</string>
+    <string name="settings_new_note_title">Nowa notatka</string>
+    <string name="settings_new_note_summary">Szablony i dane osobowe</string>
+    <string name="settings_new_note_personal_data">Dane osobowe</string>
+    <string name="settings_new_note_personal_data_enabled">Dodawaj autora do nowych notatek</string>
+    <string name="settings_new_note_personal_data_author">Autor</string>
+    <string name="settings_new_note_personal_data_author_email">E-mail autora</string>
+    <string name="settings_new_note_templates">Szablony początkowe</string>
+    <string name="settings_new_note_default_template">Domyślny szablon początkowy</string>
+    <string name="settings_new_note_template_label">Etykieta</string>
+    <string name="settings_new_note_template_content">Treść szablonu</string>
+    <string name="settings_new_note_template_save">Zapisz szablon</string>
+    <string name="settings_new_note_templates_reset">Przywróć domyślne szablony</string>
     <string name="settings_view_mode_title">Tryb przeglądania</string>
     <string name="settings_view_mode_summary">Podgląd ustawień</string>
     <string name="settings_appearance_title">Wygląd</string>
@@ -123,6 +135,7 @@
     <string name="markdown_notes_preview">Podgląd</string>
     <string name="markdown_notes_saved">Zapisano</string>
     <string name="markdown_notes_new_note">+ Nowa notatka</string>
+    <string name="markdown_notes_create_note_template_label">Szablon początkowy</string>
     <string name="markdown_notes_create_failed">Nie można utworzyć notatki</string>
     <string name="loading_elapsed_seconds">%1$d s</string>
     <string name="settings_markdown_notes_preview_font">Czcionka podglądu</string>
