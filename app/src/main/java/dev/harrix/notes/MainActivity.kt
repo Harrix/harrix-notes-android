@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import dev.harrix.notes.ui.MainScreen
+import dev.harrix.notes.ui.theme.AppLanguage
 import dev.harrix.notes.ui.theme.HarrixNotesTheme
 
 class MainActivity : AppCompatActivity() {
@@ -24,7 +25,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val preferences = AppPreferences(this)
-        preferences.loadAppLanguage().apply()
+        val storedLanguage = preferences.loadAppLanguage()
+        AppLanguage.reconcileStoredPreference(storedLanguage)
         super.onCreate(savedInstanceState)
         consumeOpenIntent(intent)
         enableEdgeToEdge(
@@ -42,7 +44,7 @@ class MainActivity : AppCompatActivity() {
         setContent {
             var themeMode by remember { mutableStateOf(preferences.loadThemeMode()) }
             var uiFontSizeSp by remember { mutableIntStateOf(preferences.loadUiFontSizeSp()) }
-            var appLanguage by remember { mutableStateOf(preferences.loadAppLanguage()) }
+            var appLanguage by remember { mutableStateOf(storedLanguage) }
             val darkTheme = themeMode.resolveDarkTheme(isSystemInDarkTheme())
             HarrixNotesTheme(
                 darkTheme = darkTheme,
