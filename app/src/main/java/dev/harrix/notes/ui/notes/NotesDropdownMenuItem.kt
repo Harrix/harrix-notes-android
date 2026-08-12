@@ -14,12 +14,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 private val NotesMenuItemHorizontalPadding = 12.dp
-private val NotesMenuItemVerticalPadding = 6.dp
-private val NotesMenuItemMinHeight = 40.dp
-private val NotesMenuItemMaxHeight = 48.dp
+private val NotesMenuItemVerticalPadding = 4.dp
+private val NotesMenuItemMinHeight = 36.dp
+private val NotesMenuItemMaxHeight = 40.dp
 private val NotesMenuCheckboxSize = 24.dp
 
-/** Comfortable tap targets; a bit denser than full Material 48dp rows. */
+/** Dense dropdown rows; Material defaults leave too much vertical gap. */
 val NotesMenuItemContentPadding =
     PaddingValues(
         horizontal = NotesMenuItemHorizontalPadding,

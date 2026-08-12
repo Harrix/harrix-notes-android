@@ -357,7 +357,7 @@ private fun NotesPinnedBarItem(
                 text = {
                     Text(
                         text = stringResource(R.string.markdown_notes_unpin),
-                        maxLines = 2,
+                        maxLines = 1,
                     )
                 },
                 onClick = {

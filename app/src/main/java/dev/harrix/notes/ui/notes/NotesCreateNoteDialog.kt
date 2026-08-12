@@ -10,7 +10,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -141,7 +140,7 @@ fun NotesCreateNoteDialog(
                         onDismissRequest = { templateMenuExpanded = false },
                     ) {
                         templates.forEach { template ->
-                            DropdownMenuItem(
+                            NotesDropdownMenuItem(
                                 text = { Text(template.label) },
                                 onClick = {
                                     selectedTemplateId = template.id

@@ -3182,7 +3182,7 @@ private fun NotesTopChrome(
                                 text = {
                                     Text(
                                         text = stringResource(R.string.markdown_notes_note_info),
-                                        maxLines = 2,
+                                        maxLines = 1,
                                     )
                                 },
                                 onClick = {
@@ -3208,7 +3208,7 @@ private fun NotesTopChrome(
                                                     R.string.markdown_notes_pin
                                                 },
                                             ),
-                                            maxLines = 2,
+                                            maxLines = 1,
                                         )
                                     },
                                     onClick = {
@@ -3238,7 +3238,7 @@ private fun NotesTopChrome(
                                 text = {
                                     Text(
                                         text = stringResource(R.string.markdown_notes_paste),
-                                        maxLines = 2,
+                                        maxLines = 1,
                                     )
                                 },
                                 onClick = {
@@ -3258,7 +3258,7 @@ private fun NotesTopChrome(
                             text = {
                                 Text(
                                     text = stringResource(R.string.markdown_notes_settings),
-                                    maxLines = 2,
+                                    maxLines = 1,
                                 )
                             },
                             onClick = {
@@ -3276,7 +3276,7 @@ private fun NotesTopChrome(
                             text = {
                                 Text(
                                     text = stringResource(R.string.markdown_notes_about),
-                                    maxLines = 2,
+                                    maxLines = 1,
                                 )
                             },
                             onClick = {
@@ -3319,7 +3319,7 @@ private fun NotesFolderSortViewMenuContent(
             text = {
                 Text(
                     text = stringResource(browseLayoutLabelRes(option)),
-                    maxLines = 2,
+                    maxLines = 1,
                 )
             },
             onClick = { onBrowseLayoutChange(option) },
@@ -3349,7 +3349,7 @@ private fun NotesFolderSortViewMenuContent(
             text = {
                 Text(
                     text = stringResource(sortByLabelRes(option)),
-                    maxLines = 2,
+                    maxLines = 1,
                 )
             },
             onClick = { onSortByChange(option) },
@@ -3368,7 +3368,7 @@ private fun NotesFolderSortViewMenuContent(
         text = {
             Text(
                 text = stringResource(R.string.markdown_notes_sort_folders_first),
-                maxLines = 2,
+                maxLines = 1,
             )
         },
         onClick = { onFoldersFirstChange(!foldersFirst) },
@@ -3380,7 +3380,7 @@ private fun NotesFolderSortViewMenuContent(
         text = {
             Text(
                 text = stringResource(R.string.markdown_notes_sort_reverse),
-                maxLines = 2,
+                maxLines = 1,
             )
         },
         onClick = { onSortReverseOrderChange(!sortReverseOrder) },
@@ -3392,7 +3392,7 @@ private fun NotesFolderSortViewMenuContent(
         text = {
             Text(
                 text = stringResource(R.string.markdown_notes_sort_show_gmd),
-                maxLines = 2,
+                maxLines = 1,
             )
         },
         onClick = { onShowGmdFilesChange(!showGmdFiles) },
@@ -3404,7 +3404,7 @@ private fun NotesFolderSortViewMenuContent(
         text = {
             Text(
                 text = stringResource(R.string.settings_markdown_notes_show_note_dates),
-                maxLines = 2,
+                maxLines = 1,
             )
         },
         onClick = { onShowNoteDatesChange(!showNoteDates) },
@@ -4575,7 +4575,7 @@ private fun NotesEntryContextMenu(
                 text = {
                     Text(
                         text = stringResource(R.string.markdown_notes_show_merged),
-                        maxLines = 2,
+                        maxLines = 1,
                     )
                 },
                 onClick = {
@@ -4601,7 +4601,7 @@ private fun NotesEntryContextMenu(
                             R.string.markdown_notes_pin
                         },
                     ),
-                    maxLines = 2,
+                    maxLines = 1,
                 )
             },
             onClick = {
@@ -4630,7 +4630,7 @@ private fun NotesEntryContextMenu(
                 text = {
                     Text(
                         text = stringResource(R.string.markdown_notes_cut),
-                        maxLines = 2,
+                        maxLines = 1,
                     )
                 },
                 onClick = {
@@ -4648,7 +4648,7 @@ private fun NotesEntryContextMenu(
                 text = {
                     Text(
                         text = stringResource(R.string.markdown_notes_copy),
-                        maxLines = 2,
+                        maxLines = 1,
                     )
                 },
                 onClick = {
@@ -4666,7 +4666,7 @@ private fun NotesEntryContextMenu(
                 text = {
                     Text(
                         text = stringResource(R.string.markdown_notes_duplicate),
-                        maxLines = 2,
+                        maxLines = 1,
                     )
                 },
                 onClick = {
@@ -4687,7 +4687,7 @@ private fun NotesEntryContextMenu(
             text = {
                 Text(
                     text = stringResource(R.string.markdown_notes_delete),
-                    maxLines = 2,
+                    maxLines = 1,
                 )
             },
             onClick = {

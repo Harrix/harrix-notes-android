@@ -28,7 +28,6 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -1051,7 +1050,7 @@ private fun NewNoteSettingsSection(modifier: Modifier = Modifier) {
                 onDismissRequest = { defaultMenuExpanded = false },
             ) {
                 templates.forEach { template ->
-                    DropdownMenuItem(
+                    NotesDropdownMenuItem(
                         text = { Text(template.label) },
                         onClick = {
                             defaultTemplateId = template.id
@@ -1085,7 +1084,7 @@ private fun NewNoteSettingsSection(modifier: Modifier = Modifier) {
                 onDismissRequest = { templateMenuExpanded = false },
             ) {
                 templates.forEach { template ->
-                    DropdownMenuItem(
+                    NotesDropdownMenuItem(
                         text = { Text(template.label) },
                         onClick = {
                             selectTemplate(template.id)
@@ -1208,7 +1207,7 @@ private fun EssentialSettingsSection(
                         text = {
                             Text(
                                 text = optionLabel,
-                                maxLines = 2,
+                                maxLines = 1,
                             )
                         },
                         onClick = {
