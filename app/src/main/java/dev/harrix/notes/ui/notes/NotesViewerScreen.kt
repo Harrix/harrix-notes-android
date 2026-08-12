@@ -130,6 +130,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import dev.harrix.notes.NewNoteContent
 import dev.harrix.notes.NoteMetaResolver
 import dev.harrix.notes.NoteMetaUpdates
 import dev.harrix.notes.NoteTitleExtractor
@@ -137,6 +138,7 @@ import dev.harrix.notes.NotesBrowseLayout
 import dev.harrix.notes.NotesClipboardEntry
 import dev.harrix.notes.NotesClipboardKind
 import dev.harrix.notes.NotesClipboardMode
+import dev.harrix.notes.NotesCreateKind
 import dev.harrix.notes.NotesDateFormats
 import dev.harrix.notes.NotesDocumentInfo
 import dev.harrix.notes.NotesEntry
@@ -154,6 +156,7 @@ import dev.harrix.notes.NotesRecentItem
 import dev.harrix.notes.NotesSortBy
 import dev.harrix.notes.NotesTitleSource
 import dev.harrix.notes.NotesTreeRepository
+import dev.harrix.notes.NotesUserTemplatesRepository
 import dev.harrix.notes.NotesViewerPreferences
 import dev.harrix.notes.OpenNoteTab
 import dev.harrix.notes.R
@@ -210,10 +213,16 @@ fun NotesViewerScreen(
     var browseContextMenuExpanded by remember { mutableStateOf(false) }
     var browseContextMenuOffset by remember { mutableStateOf(DpOffset.Zero) }
     var showCreateNoteDialog by remember { mutableStateOf(false) }
+    var createDialogKind by remember { mutableStateOf(NotesCreateKind.RegularNote) }
+    var createDialogTemplates by remember {
+        mutableStateOf<List<NewNoteContent.BeginningTemplate>>(emptyList())
+    }
+    var fabCreateMenuExpanded by remember { mutableStateOf(false) }
+    var tabCreateMenuExpanded by remember { mutableStateOf(false) }
     var showNoteInfoDialog by remember { mutableStateOf(false) }
     var noteInfoDocument by remember { mutableStateOf<NotesDocumentInfo?>(null) }
     var pendingDeleteEntry by remember { mutableStateOf<NotesEntry?>(null) }
-    var createNoteUntitledStem by remember { mutableStateOf("Untitled_01") }
+    val userTemplatesRepository = remember { NotesUserTemplatesRepository(context) }
     var folderPath by viewModel.folderPath
     var entries by viewModel.entries
     var isLoading by viewModel.isLoading
@@ -1162,6 +1171,18 @@ fun NotesViewerScreen(
         }
     }
 
+    fun createTargetFolderPath(): List<NotesPathSegment>? {
+        val currentTab = openTabs.firstOrNull { it.documentId == selectedTabDocumentId }
+        return when {
+            currentTab != null ->
+                currentTab.folderPath.ifEmpty { ensureRootPath() }
+
+            folderPath.isNotEmpty() -> folderPath
+
+            else -> ensureRootPath()
+        }
+    }
+
     fun createNewNote(
         fileStem: String,
         noteTitle: String,
@@ -1170,24 +1191,21 @@ fun NotesViewerScreen(
     ) {
         val tree = notesTreeUri ?: return
         val treeUri = Uri.parse(tree)
-        val currentTab = openTabs.firstOrNull { it.documentId == selectedTabDocumentId }
-        val path =
-            when {
-                currentTab != null ->
-                    currentTab.folderPath.ifEmpty { ensureRootPath() ?: return }
-
-                folderPath.isNotEmpty() -> folderPath
-
-                else -> ensureRootPath() ?: return
-            }
+        val path = createTargetFolderPath() ?: return
         val dir = path.lastOrNull() ?: return
         // @hsk-sync:new-note
-        val beginningTemplate = preferences.resolveBeginningTemplate(beginningTemplateId)
         val personalData = preferences.loadPersonalData()
         scope.launch {
             val note =
                 withContext(Dispatchers.IO) {
                     runCatching {
+                        val templates =
+                            NotesUserTemplatesRepository.loadAllTemplates(
+                                preferences,
+                                userTemplatesRepository,
+                            )
+                        val beginningTemplate =
+                            preferences.resolveBeginningTemplate(beginningTemplateId, templates)
                         repository.createMarkdownNote(
                             treeUri = treeUri,
                             parentDocumentId = dir.documentId,
@@ -1232,22 +1250,13 @@ fun NotesViewerScreen(
         }
     }
 
-    fun requestCreateNewNote() {
+    fun createQuickNote(isCanvas: Boolean) {
         if (notesTreeUri == null) {
             return
         }
         val tree = notesTreeUri ?: return
         val treeUri = Uri.parse(tree)
-        val currentTab = openTabs.firstOrNull { it.documentId == selectedTabDocumentId }
-        val path =
-            when {
-                currentTab != null ->
-                    currentTab.folderPath.ifEmpty { ensureRootPath() ?: return }
-
-                folderPath.isNotEmpty() -> folderPath
-
-                else -> ensureRootPath() ?: return
-            }
+        val path = createTargetFolderPath() ?: return
         val dir = path.lastOrNull() ?: return
         scope.launch {
             val stem =
@@ -1255,8 +1264,42 @@ fun NotesViewerScreen(
                     val existing = repository.childNamesLowercase(treeUri, dir.documentId)
                     NotesTreeRepository.nextUntitledNumberedStem(existing)
                 }
-            createNoteUntitledStem = stem
+            createNewNote(
+                fileStem = stem,
+                noteTitle = stem,
+                beginningTemplateId = preferences.loadDefaultBeginningTemplateId(),
+                isCanvas = isCanvas,
+            )
+        }
+    }
+
+    fun openCreateNoteDialog(kind: NotesCreateKind) {
+        if (notesTreeUri == null) {
+            return
+        }
+        scope.launch {
+            createDialogTemplates =
+                withContext(Dispatchers.IO) {
+                    NotesUserTemplatesRepository.loadAllTemplates(
+                        preferences,
+                        userTemplatesRepository,
+                    )
+                }
+            createDialogKind = kind
             showCreateNoteDialog = true
+        }
+    }
+
+    fun onCreateKindSelected(kind: NotesCreateKind) {
+        when (kind) {
+            NotesCreateKind.QuickNote -> createQuickNote(isCanvas = false)
+
+            NotesCreateKind.QuickCanvas -> createQuickNote(isCanvas = true)
+
+            NotesCreateKind.RegularNote,
+            NotesCreateKind.CanvasNote,
+            NotesCreateKind.FromTemplate,
+            -> openCreateNoteDialog(kind)
         }
     }
 
@@ -2617,7 +2660,9 @@ fun NotesViewerScreen(
                                     onSelectTab = { selectTab(it) },
                                     onCloseTab = { closeTab(it) },
                                     onReorderTabs = { from, to -> reorderTabs(from, to) },
-                                    onCreateNote = { requestCreateNewNote() },
+                                    createMenuExpanded = tabCreateMenuExpanded,
+                                    onCreateMenuExpandedChange = { tabCreateMenuExpanded = it },
+                                    onCreateKind = { onCreateKindSelected(it) },
                                     showEditActions = selectedTab != null && !noteLoading && noteContent != null,
                                     showEditPreviewToggle = !useDualPane && canvasSurfaceTab == null,
                                     isEditing = isEditing,
@@ -2914,16 +2959,25 @@ fun NotesViewerScreen(
                                     }
                                     // Hide FAB over note preview/editor so it does not cover content.
                                     if (selectedTab == null) {
-                                        FloatingActionButton(
-                                            onClick = { requestCreateNewNote() },
+                                        Box(
                                             modifier =
                                             Modifier
                                                 .align(Alignment.BottomEnd)
                                                 .padding(16.dp),
                                         ) {
-                                            Icon(
-                                                imageVector = Icons.Filled.Add,
-                                                contentDescription = stringResource(R.string.markdown_notes_new_note),
+                                            FloatingActionButton(
+                                                onClick = { fabCreateMenuExpanded = true },
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Add,
+                                                    contentDescription =
+                                                    stringResource(R.string.markdown_notes_new_note),
+                                                )
+                                            }
+                                            NotesCreateKindMenu(
+                                                expanded = fabCreateMenuExpanded,
+                                                onDismissRequest = { fabCreateMenuExpanded = false },
+                                                onSelect = { onCreateKindSelected(it) },
                                             )
                                         }
                                     }
@@ -2955,9 +3009,13 @@ fun NotesViewerScreen(
 
     if (showCreateNoteDialog) {
         NotesCreateNoteDialog(
-            untitledFileStem = createNoteUntitledStem,
-            beginningTemplates = preferences.loadBeginningTemplates(),
+            kind = createDialogKind,
+            beginningTemplates = createDialogTemplates,
             defaultBeginningTemplateId = preferences.loadDefaultBeginningTemplateId(),
+            editorFontSizeSp = editorFontSizeSp,
+            editorFont = editorFont,
+            highlightMaxChars =
+            NotesViewerPreferences.highlightMaxChars(preferences.loadHighlightMaxMb()),
             onDismiss = { showCreateNoteDialog = false },
             onConfirm = { fileStem, noteTitle, beginningTemplateId, isCanvas ->
                 showCreateNoteDialog = false
@@ -3930,7 +3988,9 @@ private fun NotesNavigationRow(
     onSelectTab: (String) -> Unit,
     onCloseTab: (String) -> Unit,
     onReorderTabs: (Int, Int) -> Unit,
-    onCreateNote: () -> Unit,
+    createMenuExpanded: Boolean,
+    onCreateMenuExpandedChange: (Boolean) -> Unit,
+    onCreateKind: (NotesCreateKind) -> Unit,
     showEditActions: Boolean,
     showEditPreviewToggle: Boolean = true,
     isEditing: Boolean,
@@ -3991,7 +4051,16 @@ private fun NotesNavigationRow(
                         )
                     }
                     if (openTabs.isEmpty()) {
-                        NotesNewNoteTabChip(onClick = onCreateNote)
+                        Box {
+                            NotesNewNoteTabChip(
+                                onClick = { onCreateMenuExpandedChange(true) },
+                            )
+                            NotesCreateKindMenu(
+                                expanded = createMenuExpanded,
+                                onDismissRequest = { onCreateMenuExpandedChange(false) },
+                                onSelect = onCreateKind,
+                            )
+                        }
                     }
                 }
                 NotesHorizontalScrollbar(

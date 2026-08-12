@@ -1,5 +1,13 @@
 package dev.harrix.notes
 
+import android.net.Uri
+
+/** Origin of a beginning template shown in create/settings UI. */
+enum class NotesTemplateSource {
+    System,
+    User,
+}
+
 /**
  * Shared New note body builder.
  *
@@ -12,6 +20,9 @@ object NewNoteContent {
         val id: String,
         val label: String,
         val content: String,
+        val source: NotesTemplateSource = NotesTemplateSource.System,
+        /** Document URI for [NotesTemplateSource.User] templates; null for system. */
+        val uri: Uri? = null,
     )
 
     data class PersonalData(

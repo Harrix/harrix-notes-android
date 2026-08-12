@@ -360,16 +360,31 @@ class NotesViewerPreferences(
 
     fun loadBeginningTemplates(): List<NewNoteContent.BeginningTemplate> {
         val raw = prefs.getString(KEY_BEGINNING_TEMPLATES, null)
-        if (raw.isNullOrBlank()) {
-            return NewNoteContent.defaultBeginningTemplates
-        }
-        return runCatching { parseBeginningTemplatesJson(raw) }.getOrElse {
-            NewNoteContent.defaultBeginningTemplates
-        }
+        val loaded =
+            if (raw.isNullOrBlank()) {
+                NewNoteContent.defaultBeginningTemplates
+            } else {
+                runCatching { parseBeginningTemplatesJson(raw) }.getOrElse {
+                    NewNoteContent.defaultBeginningTemplates
+                }
+            }
+        return loaded.map { it.copy(source = NotesTemplateSource.System, uri = null) }
     }
 
     fun saveBeginningTemplates(templates: List<NewNoteContent.BeginningTemplate>) {
-        prefs.edit().putString(KEY_BEGINNING_TEMPLATES, beginningTemplatesToJson(templates)).apply()
+        val systemOnly =
+            templates
+                .filter { it.source == NotesTemplateSource.System }
+                .ifEmpty { templates.filter { !it.id.startsWith("user:") } }
+        prefs
+            .edit()
+            .putString(KEY_BEGINNING_TEMPLATES, beginningTemplatesToJson(systemOnly))
+            .apply()
+    }
+
+    fun resetSystemBeginningTemplates() {
+        saveBeginningTemplates(NewNoteContent.defaultBeginningTemplates)
+        saveDefaultBeginningTemplateId(NewNoteContent.defaultBeginningTemplates.first().id)
     }
 
     fun loadDefaultBeginningTemplateId(): String {
@@ -384,8 +399,26 @@ class NotesViewerPreferences(
         prefs.edit().putString(KEY_DEFAULT_BEGINNING_TEMPLATE_ID, id).apply()
     }
 
-    fun resolveBeginningTemplate(templateId: String? = null): NewNoteContent.BeginningTemplate {
-        val templates = loadBeginningTemplates()
+    fun loadUserTemplatesTreeUri(): String? = prefs.getString(KEY_USER_TEMPLATES_TREE_URI, null)?.takeIf {
+        it.isNotBlank()
+    }
+
+    fun saveUserTemplatesTreeUri(uri: String?) {
+        prefs
+            .edit()
+            .apply {
+                if (uri.isNullOrBlank()) {
+                    remove(KEY_USER_TEMPLATES_TREE_URI)
+                } else {
+                    putString(KEY_USER_TEMPLATES_TREE_URI, uri)
+                }
+            }.apply()
+    }
+
+    fun resolveBeginningTemplate(
+        templateId: String? = null,
+        templates: List<NewNoteContent.BeginningTemplate> = loadBeginningTemplates(),
+    ): NewNoteContent.BeginningTemplate {
         val wanted = templateId?.takeIf { it.isNotBlank() } ?: loadDefaultBeginningTemplateId()
         return templates.firstOrNull { it.id == wanted || it.label == wanted }
             ?: templates.firstOrNull()
@@ -431,6 +464,7 @@ class NotesViewerPreferences(
             .remove(KEY_PERSONAL_DATA_AUTHOR_EMAIL)
             .remove(KEY_BEGINNING_TEMPLATES)
             .remove(KEY_DEFAULT_BEGINNING_TEMPLATE_ID)
+            .remove(KEY_USER_TEMPLATES_TREE_URI)
             .apply()
     }
 
@@ -467,6 +501,7 @@ class NotesViewerPreferences(
         private const val KEY_PERSONAL_DATA_AUTHOR_EMAIL = "personal_data_author_email"
         private const val KEY_BEGINNING_TEMPLATES = "beginning_templates_json"
         private const val KEY_DEFAULT_BEGINNING_TEMPLATE_ID = "default_beginning_template_id"
+        private const val KEY_USER_TEMPLATES_TREE_URI = "user_templates_tree_uri"
         private const val KEY_CANVAS_PEN_COLOR_ARGB = "canvas_pen_color_argb"
         private const val KEY_CANVAS_PEN_WIDTH = "canvas_pen_width"
         private const val KEY_CANVAS_PAPER_MODE = "canvas_paper_mode"
@@ -507,6 +542,7 @@ class NotesViewerPreferences(
                         id = id.ifEmpty { label },
                         label = label.ifEmpty { id },
                         content = content,
+                        source = NotesTemplateSource.System,
                     )
             }
             return result.ifEmpty { NewNoteContent.defaultBeginningTemplates }

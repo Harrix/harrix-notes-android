@@ -2,9 +2,12 @@ package dev.harrix.notes.ui.settings
 
 import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -50,12 +53,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -67,6 +72,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -80,18 +86,25 @@ import dev.harrix.notes.NotesOpenMode
 import dev.harrix.notes.NotesPinnedItem
 import dev.harrix.notes.NotesPinnedKind
 import dev.harrix.notes.NotesSortBy
+import dev.harrix.notes.NotesTemplateSource
 import dev.harrix.notes.NotesTitleSource
 import dev.harrix.notes.NotesTreeRepository
+import dev.harrix.notes.NotesUserTemplatesRepository
 import dev.harrix.notes.NotesViewerPreferences
 import dev.harrix.notes.R
+import dev.harrix.notes.notesFolderDisplayName
 import dev.harrix.notes.pinnedDisplayLabels
+import dev.harrix.notes.takeNotesFolderPermission
 import dev.harrix.notes.ui.AutoFitText
 import dev.harrix.notes.ui.adaptiveContentWidth
 import dev.harrix.notes.ui.notes.LocalNotesIconStyle
 import dev.harrix.notes.ui.notes.NotesDropdownMenuItem
 import dev.harrix.notes.ui.notes.NotesFolderGlyph
 import dev.harrix.notes.ui.notes.NotesFolderPathControls
+import dev.harrix.notes.ui.notes.NotesMarkdownEditorController
+import dev.harrix.notes.ui.notes.NotesMarkdownEditorPane
 import dev.harrix.notes.ui.notes.NotesNoteGlyph
+import dev.harrix.notes.ui.notes.templateDisplayLabel
 import dev.harrix.notes.ui.theme.AppLanguage
 import dev.harrix.notes.ui.theme.NotesTopAppBarHeight
 import dev.harrix.notes.ui.theme.ThemeMode
@@ -99,6 +112,9 @@ import dev.harrix.notes.ui.theme.notesScaffoldContainerColor
 import dev.harrix.notes.ui.theme.notesScaffoldContentWindowInsets
 import dev.harrix.notes.ui.theme.notesTopAppBarColors
 import dev.harrix.notes.ui.theme.notesTopAppBarWindowInsets
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -112,6 +128,7 @@ private enum class NotesSettingsPage {
     EditMode,
     ViewMode,
     NewNote,
+    EditTemplates,
     Other,
 }
 
@@ -141,14 +158,15 @@ fun SettingsScreen(
             NotesSettingsPage.EditMode -> stringResource(R.string.settings_edit_mode_title)
             NotesSettingsPage.ViewMode -> stringResource(R.string.settings_view_mode_title)
             NotesSettingsPage.NewNote -> stringResource(R.string.settings_new_note_title)
+            NotesSettingsPage.EditTemplates -> stringResource(R.string.settings_new_note_edit_templates_title)
             NotesSettingsPage.Other -> stringResource(R.string.settings_other_title)
         }
 
     BackHandler {
-        if (page == NotesSettingsPage.Hub) {
-            onClose()
-        } else {
-            page = NotesSettingsPage.Hub
+        when (page) {
+            NotesSettingsPage.Hub -> onClose()
+            NotesSettingsPage.EditTemplates -> page = NotesSettingsPage.NewNote
+            else -> page = NotesSettingsPage.Hub
         }
     }
 
@@ -171,10 +189,10 @@ fun SettingsScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            if (page == NotesSettingsPage.Hub) {
-                                onClose()
-                            } else {
-                                page = NotesSettingsPage.Hub
+                            when (page) {
+                                NotesSettingsPage.Hub -> onClose()
+                                NotesSettingsPage.EditTemplates -> page = NotesSettingsPage.NewNote
+                                else -> page = NotesSettingsPage.Hub
                             }
                         },
                     ) {
@@ -273,7 +291,17 @@ fun SettingsScreen(
             NotesSettingsPage.NewNote -> {
                 SettingsDetailPane(innerPadding = innerPadding) {
                     key(settingsEpoch) {
-                        NewNoteSettingsSection()
+                        NewNoteSettingsSection(
+                            onOpenEditTemplates = { page = NotesSettingsPage.EditTemplates },
+                        )
+                    }
+                }
+            }
+
+            NotesSettingsPage.EditTemplates -> {
+                SettingsDetailPane(innerPadding = innerPadding) {
+                    key(settingsEpoch) {
+                        EditTemplatesSettingsSection()
                     }
                 }
             }
@@ -969,31 +997,25 @@ private fun contentFontLabel(font: NotesContentFont): String = stringResource(
 /** @hsk-sync:new-note */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun NewNoteSettingsSection(modifier: Modifier = Modifier) {
+private fun NewNoteSettingsSection(
+    onOpenEditTemplates: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
     val preferences = remember { NotesViewerPreferences(context.applicationContext) }
+    val userTemplatesRepository = remember { NotesUserTemplatesRepository(context) }
     var personalEnabled by remember { mutableStateOf(preferences.loadPersonalDataEnabled()) }
     var author by remember { mutableStateOf(preferences.loadPersonalDataAuthor()) }
     var authorEmail by remember { mutableStateOf(preferences.loadPersonalDataAuthorEmail()) }
-    var templates by remember { mutableStateOf(preferences.loadBeginningTemplates()) }
+    var templates by remember { mutableStateOf<List<NewNoteContent.BeginningTemplate>>(emptyList()) }
     var defaultTemplateId by remember { mutableStateOf(preferences.loadDefaultBeginningTemplateId()) }
-    var selectedTemplateId by remember {
-        mutableStateOf(defaultTemplateId.ifBlank { templates.firstOrNull()?.id.orEmpty() })
-    }
-    var templateLabel by remember {
-        mutableStateOf(templates.firstOrNull { it.id == selectedTemplateId }?.label.orEmpty())
-    }
-    var templateContent by remember {
-        mutableStateOf(templates.firstOrNull { it.id == selectedTemplateId }?.content.orEmpty())
-    }
     var defaultMenuExpanded by remember { mutableStateOf(false) }
-    var templateMenuExpanded by remember { mutableStateOf(false) }
 
-    fun selectTemplate(id: String) {
-        selectedTemplateId = id
-        val template = templates.firstOrNull { it.id == id }
-        templateLabel = template?.label.orEmpty()
-        templateContent = template?.content.orEmpty()
+    LaunchedEffect(Unit) {
+        templates =
+            withContext(Dispatchers.IO) {
+                NotesUserTemplatesRepository.loadAllTemplates(preferences, userTemplatesRepository)
+            }
     }
 
     Column(
@@ -1069,7 +1091,13 @@ private fun NewNoteSettingsSection(modifier: Modifier = Modifier) {
             ) {
                 templates.forEach { template ->
                     NotesDropdownMenuItem(
-                        text = { Text(template.label) },
+                        text = {
+                            Text(
+                                text = templateDisplayLabel(template),
+                                color = templateSourceColor(template.source),
+                                maxLines = 1,
+                            )
+                        },
                         onClick = {
                             defaultTemplateId = template.id
                             preferences.saveDefaultBeginningTemplateId(template.id)
@@ -1080,12 +1108,122 @@ private fun NewNoteSettingsSection(modifier: Modifier = Modifier) {
             }
         }
 
+        Text(
+            text = stringResource(R.string.settings_new_note_edit_templates_link),
+            style =
+            MaterialTheme.typography.bodyLarge.copy(
+                textDecoration = TextDecoration.Underline,
+            ),
+            color = MaterialTheme.colorScheme.primary,
+            modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(role = Role.Button, onClick = onOpenEditTemplates)
+                .padding(vertical = 8.dp),
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditTemplatesSettingsSection(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val preferences = remember { NotesViewerPreferences(context.applicationContext) }
+    val userTemplatesRepository = remember { NotesUserTemplatesRepository(context) }
+    val editorController = remember { NotesMarkdownEditorController() }
+    var userFolderUri by remember { mutableStateOf(preferences.loadUserTemplatesTreeUri()) }
+    var templates by remember { mutableStateOf<List<NewNoteContent.BeginningTemplate>>(emptyList()) }
+    var selectedTemplateId by remember { mutableStateOf("") }
+    var templateLabel by remember { mutableStateOf("") }
+    var templateContent by remember { mutableStateOf("") }
+    var templateMenuExpanded by remember { mutableStateOf(false) }
+    var statusMessage by remember { mutableStateOf<String?>(null) }
+    val editorFontSizeSp = preferences.loadEditorFontSizeSp()
+    val editorFont = preferences.loadEditorFont()
+    val highlightMaxChars =
+        NotesViewerPreferences.highlightMaxChars(preferences.loadHighlightMaxMb())
+
+    fun applySelected(template: NewNoteContent.BeginningTemplate?) {
+        selectedTemplateId = template?.id.orEmpty()
+        templateLabel =
+            when (template?.source) {
+                NotesTemplateSource.User ->
+                    template.label.removeSuffix(".md").removeSuffix(".MD")
+
+                else -> template?.label.orEmpty()
+            }
+        templateContent = template?.content.orEmpty()
+    }
+
+    suspend fun reloadTemplates(preferId: String? = selectedTemplateId) {
+        val loaded =
+            withContext(Dispatchers.IO) {
+                NotesUserTemplatesRepository.loadAllTemplates(preferences, userTemplatesRepository)
+            }
+        templates = loaded
+        val selected =
+            loaded.firstOrNull { it.id == preferId }
+                ?: loaded.firstOrNull { it.id == preferences.loadDefaultBeginningTemplateId() }
+                ?: loaded.firstOrNull()
+        applySelected(selected)
+    }
+
+    LaunchedEffect(userFolderUri) {
+        reloadTemplates()
+    }
+
+    val folderPicker =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.OpenDocumentTree(),
+        ) { uri: Uri? ->
+            if (uri == null) {
+                return@rememberLauncherForActivityResult
+            }
+            takeNotesFolderPermission(context, uri)
+            val value = uri.toString()
+            preferences.saveUserTemplatesTreeUri(value)
+            userFolderUri = value
+        }
+
+    val selected = templates.firstOrNull { it.id == selectedTemplateId }
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        SettingsSectionHeader(text = stringResource(R.string.settings_new_note_user_templates_folder))
+        Text(
+            text =
+            if (userFolderUri.isNullOrBlank()) {
+                stringResource(R.string.settings_new_note_user_templates_folder_none)
+            } else {
+                notesFolderDisplayName(context, userFolderUri!!)
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+        SettingsFullWidthOutlinedButton(
+            onClick = { folderPicker.launch(null) },
+            label = stringResource(R.string.settings_new_note_user_templates_folder_choose),
+        )
+        SettingsFullWidthOutlinedButton(
+            onClick = {
+                preferences.saveUserTemplatesTreeUri(null)
+                userFolderUri = null
+            },
+            label = stringResource(R.string.settings_new_note_user_templates_folder_clear),
+            enabled = !userFolderUri.isNullOrBlank(),
+        )
+
+        SettingsSectionHeader(text = stringResource(R.string.settings_new_note_templates))
         ExposedDropdownMenuBox(
             expanded = templateMenuExpanded,
             onExpandedChange = { templateMenuExpanded = it },
         ) {
             OutlinedTextField(
-                value = templates.firstOrNull { it.id == selectedTemplateId }?.label.orEmpty(),
+                value = selected?.label.orEmpty(),
                 onValueChange = {},
                 readOnly = true,
                 modifier =
@@ -1103,9 +1241,15 @@ private fun NewNoteSettingsSection(modifier: Modifier = Modifier) {
             ) {
                 templates.forEach { template ->
                     NotesDropdownMenuItem(
-                        text = { Text(template.label) },
+                        text = {
+                            Text(
+                                text = templateDisplayLabel(template),
+                                color = templateSourceColor(template.source),
+                                maxLines = 1,
+                            )
+                        },
                         onClick = {
-                            selectTemplate(template.id)
+                            applySelected(template)
                             templateMenuExpanded = false
                         },
                     )
@@ -1113,51 +1257,206 @@ private fun NewNoteSettingsSection(modifier: Modifier = Modifier) {
             }
         }
 
-        OutlinedTextField(
-            value = templateLabel,
-            onValueChange = { templateLabel = it },
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(stringResource(R.string.settings_new_note_template_label)) },
-            singleLine = true,
-        )
-        OutlinedTextField(
-            value = templateContent,
-            onValueChange = { templateContent = it },
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text(stringResource(R.string.settings_new_note_template_content)) },
-            minLines = 6,
-        )
-        SettingsFullWidthOutlinedButton(
-            onClick = {
-                val id = selectedTemplateId.ifBlank { templateLabel.ifBlank { "template" } }
-                val updated =
-                    NewNoteContent.BeginningTemplate(
-                        id = id,
-                        label = templateLabel.ifBlank { id },
-                        content = templateContent,
+        if (selected != null) {
+            Text(
+                text =
+                stringResource(
+                    when (selected.source) {
+                        NotesTemplateSource.System ->
+                            R.string.settings_new_note_template_badge_system
+
+                        NotesTemplateSource.User ->
+                            R.string.settings_new_note_template_badge_user
+                    },
+                ),
+                style = MaterialTheme.typography.labelLarge,
+                color = templateSourceColor(selected.source),
+            )
+            OutlinedTextField(
+                value = templateLabel,
+                onValueChange = { templateLabel = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = {
+                    Text(
+                        stringResource(
+                            if (selected.source == NotesTemplateSource.User) {
+                                R.string.settings_new_note_template_file_stem
+                            } else {
+                                R.string.settings_new_note_template_label
+                            },
+                        ),
                     )
-                templates =
-                    templates.map { existing ->
-                        if (existing.id == id) updated else existing
-                    }.let { list ->
-                        if (list.any { it.id == id }) list else list + updated
+                },
+                singleLine = true,
+            )
+            Text(
+                text = stringResource(R.string.settings_new_note_template_content),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Box(
+                modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(260.dp),
+            ) {
+                key(selectedTemplateId) {
+                    NotesMarkdownEditorPane(
+                        isLoading = false,
+                        docKey = "settings-template-$selectedTemplateId",
+                        text = templateContent,
+                        errorMessage = null,
+                        hasContent = true,
+                        fontSizeSp = editorFontSizeSp,
+                        highlightMaxChars = highlightMaxChars,
+                        controller = editorController,
+                        onTextChange = { templateContent = it },
+                        modifier = Modifier.fillMaxSize(),
+                        font = editorFont,
+                    )
+                }
+            }
+            SettingsFullWidthOutlinedButton(
+                onClick = {
+                    scope.launch {
+                        runCatching {
+                            when (selected.source) {
+                                NotesTemplateSource.System -> {
+                                    val updated =
+                                        selected.copy(
+                                            label = templateLabel.ifBlank { selected.id },
+                                            content = templateContent,
+                                        )
+                                    val system =
+                                        templates
+                                            .filter { it.source == NotesTemplateSource.System }
+                                            .map {
+                                                if (it.id == updated.id) updated else it
+                                            }
+                                    preferences.saveBeginningTemplates(system)
+                                }
+
+                                NotesTemplateSource.User -> {
+                                    withContext(Dispatchers.IO) {
+                                        userTemplatesRepository.writeTemplate(
+                                            template = selected,
+                                            content = templateContent,
+                                            newFileStem = templateLabel,
+                                        )
+                                    }
+                                }
+                            }
+                            statusMessage =
+                                context.getString(R.string.settings_new_note_template_saved)
+                            reloadTemplates(selected.id)
+                        }.onFailure { error ->
+                            statusMessage =
+                                error.message
+                                    ?: context.getString(R.string.settings_new_note_template_save_failed)
+                        }
                     }
-                preferences.saveBeginningTemplates(templates)
-                selectTemplate(id)
+                },
+                label = stringResource(R.string.settings_new_note_template_save),
+            )
+        }
+
+        SettingsFullWidthOutlinedButton(
+            onClick = {
+                val folder = userFolderUri
+                if (folder.isNullOrBlank()) {
+                    statusMessage =
+                        context.getString(R.string.settings_new_note_user_templates_folder_needed)
+                    return@SettingsFullWidthOutlinedButton
+                }
+                scope.launch {
+                    runCatching {
+                        val defaultTemplate =
+                            preferences.resolveBeginningTemplate(
+                                preferences.loadDefaultBeginningTemplateId(),
+                                templates.filter { it.source == NotesTemplateSource.System }
+                                    .ifEmpty { preferences.loadBeginningTemplates() },
+                            )
+                        val created =
+                            withContext(Dispatchers.IO) {
+                                userTemplatesRepository.createTemplate(
+                                    treeUriString = folder,
+                                    fileStem =
+                                    defaultTemplate.label
+                                        .removeSuffix(".md")
+                                        .removeSuffix(".MD")
+                                        .ifBlank { defaultTemplate.id },
+                                    content = defaultTemplate.content,
+                                )
+                            }
+                        statusMessage =
+                            context.getString(R.string.settings_new_note_template_created)
+                        reloadTemplates(created.id)
+                    }.onFailure { error ->
+                        statusMessage =
+                            error.message
+                                ?: context.getString(R.string.settings_new_note_template_save_failed)
+                    }
+                }
             },
-            label = stringResource(R.string.settings_new_note_template_save),
+            label = stringResource(R.string.settings_new_note_create_from_beginning),
+            enabled = !userFolderUri.isNullOrBlank(),
         )
         SettingsFullWidthOutlinedButton(
             onClick = {
-                templates = NewNoteContent.defaultBeginningTemplates
-                preferences.saveBeginningTemplates(templates)
-                defaultTemplateId = templates.first().id
-                preferences.saveDefaultBeginningTemplateId(defaultTemplateId)
-                selectTemplate(defaultTemplateId)
+                val folder = userFolderUri
+                if (folder.isNullOrBlank()) {
+                    statusMessage =
+                        context.getString(R.string.settings_new_note_user_templates_folder_needed)
+                    return@SettingsFullWidthOutlinedButton
+                }
+                scope.launch {
+                    runCatching {
+                        val created =
+                            withContext(Dispatchers.IO) {
+                                userTemplatesRepository.createTemplate(
+                                    treeUriString = folder,
+                                    fileStem = "template",
+                                    content = "---\nlang: ru\n---\n",
+                                )
+                            }
+                        statusMessage =
+                            context.getString(R.string.settings_new_note_template_created)
+                        reloadTemplates(created.id)
+                    }.onFailure { error ->
+                        statusMessage =
+                            error.message
+                                ?: context.getString(R.string.settings_new_note_template_save_failed)
+                    }
+                }
+            },
+            label = stringResource(R.string.settings_new_note_create_empty_user_template),
+            enabled = !userFolderUri.isNullOrBlank(),
+        )
+        SettingsFullWidthOutlinedButton(
+            onClick = {
+                preferences.resetSystemBeginningTemplates()
+                scope.launch {
+                    reloadTemplates(preferences.loadDefaultBeginningTemplateId())
+                    statusMessage =
+                        context.getString(R.string.settings_new_note_templates_reset_done)
+                }
             },
             label = stringResource(R.string.settings_new_note_templates_reset),
         )
+        statusMessage?.let { message ->
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
+}
+
+@Composable
+private fun templateSourceColor(source: NotesTemplateSource) = when (source) {
+    NotesTemplateSource.System -> MaterialTheme.colorScheme.primary
+    NotesTemplateSource.User -> MaterialTheme.colorScheme.tertiary
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
