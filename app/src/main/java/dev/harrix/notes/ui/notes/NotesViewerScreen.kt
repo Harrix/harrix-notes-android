@@ -159,6 +159,7 @@ import dev.harrix.notes.noteAssetFolderPath
 import dev.harrix.notes.notesFolderDisplayName
 import dev.harrix.notes.probeOpenNote
 import dev.harrix.notes.takeNotesFolderPermission
+import dev.harrix.notes.ui.AutoFitText
 import dev.harrix.notes.ui.adaptiveContentWidth
 import dev.harrix.notes.ui.isCompactHeight
 import dev.harrix.notes.ui.isDualPaneLayoutEligible
@@ -4835,10 +4836,10 @@ private fun NotesPathWelcomeContent(
             modifier = Modifier.fillMaxWidth(),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
         ) {
-            Text(
+            AutoFitText(
                 text = stringResource(R.string.markdown_notes_choose_folder),
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
             )
         }
     }
@@ -4892,10 +4893,10 @@ fun NotesFolderPathControls(
             modifier = Modifier.fillMaxWidth(),
             contentPadding = buttonPadding,
         ) {
-            Text(
+            AutoFitText(
                 text = stringResource(R.string.markdown_notes_choose_folder),
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
             )
         }
         OutlinedButton(
@@ -4907,10 +4908,10 @@ fun NotesFolderPathControls(
             modifier = Modifier.fillMaxWidth(),
             contentPadding = buttonPadding,
         ) {
-            Text(
+            AutoFitText(
                 text = stringResource(R.string.settings_markdown_notes_path_clear),
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
             )
         }
     }

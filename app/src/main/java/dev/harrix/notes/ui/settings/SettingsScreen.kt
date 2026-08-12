@@ -86,6 +86,7 @@ import dev.harrix.notes.NotesTreeRepository
 import dev.harrix.notes.NotesViewerPreferences
 import dev.harrix.notes.R
 import dev.harrix.notes.pinnedDisplayLabels
+import dev.harrix.notes.ui.AutoFitText
 import dev.harrix.notes.ui.adaptiveContentWidth
 import dev.harrix.notes.ui.notes.LocalNotesIconStyle
 import dev.harrix.notes.ui.notes.NotesDropdownMenuItem
@@ -404,11 +405,11 @@ private fun SettingsFullWidthOutlinedButton(
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
     ) {
-        Text(
+        AutoFitText(
             text = label,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
+            maxLines = 1,
             textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }
@@ -1236,10 +1237,10 @@ private fun EssentialSettingsSection(
                         count = options.size,
                     ),
                 ) {
-                    Text(
+                    AutoFitText(
                         text = stringResource(labelRes),
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center,
                     )
                 }
             }
@@ -1280,10 +1281,10 @@ private fun <T> SettingsChoiceRow(
                         count = options.size,
                     ),
                 ) {
-                    Text(
+                    AutoFitText(
                         text = stringResource(labelRes),
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center,
                     )
                 }
             }
