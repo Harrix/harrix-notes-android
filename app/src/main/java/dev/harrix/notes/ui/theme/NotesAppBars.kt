@@ -11,6 +11,11 @@ import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+
+/** Slightly denser than Material's default 64.dp top app bar. */
+val NotesTopAppBarHeight: Dp = 56.dp
 
 /**
  * Scaffold content insets that leave the status bar to the top chrome / [androidx.compose.material3.TopAppBar].

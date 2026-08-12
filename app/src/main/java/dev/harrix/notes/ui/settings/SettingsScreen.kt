@@ -93,6 +93,7 @@ import dev.harrix.notes.ui.notes.NotesFolderGlyph
 import dev.harrix.notes.ui.notes.NotesFolderPathControls
 import dev.harrix.notes.ui.notes.NotesNoteGlyph
 import dev.harrix.notes.ui.theme.AppLanguage
+import dev.harrix.notes.ui.theme.NotesTopAppBarHeight
 import dev.harrix.notes.ui.theme.ThemeMode
 import dev.harrix.notes.ui.theme.notesScaffoldContainerColor
 import dev.harrix.notes.ui.theme.notesScaffoldContentWindowInsets
@@ -166,6 +167,7 @@ fun SettingsScreen(
                 },
                 colors = notesTopAppBarColors(),
                 windowInsets = notesTopAppBarWindowInsets(),
+                expandedHeight = NotesTopAppBarHeight,
                 navigationIcon = {
                     IconButton(
                         onClick = {

@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.harrix.notes.R
 import dev.harrix.notes.ui.adaptiveContentWidth
+import dev.harrix.notes.ui.theme.NotesTopAppBarHeight
 import dev.harrix.notes.ui.theme.notesScaffoldContainerColor
 import dev.harrix.notes.ui.theme.notesScaffoldContentWindowInsets
 import dev.harrix.notes.ui.theme.notesTopAppBarColors
@@ -91,6 +92,7 @@ fun AboutScreen(
                 },
                 colors = notesTopAppBarColors(),
                 windowInsets = notesTopAppBarWindowInsets(),
+                expandedHeight = NotesTopAppBarHeight,
                 navigationIcon = {
                     IconButton(onClick = onClose) {
                         Icon(

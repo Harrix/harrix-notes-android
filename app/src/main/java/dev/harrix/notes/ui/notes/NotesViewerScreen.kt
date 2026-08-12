@@ -164,6 +164,7 @@ import dev.harrix.notes.ui.adaptiveContentWidth
 import dev.harrix.notes.ui.isCompactHeight
 import dev.harrix.notes.ui.isDualPaneLayoutEligible
 import dev.harrix.notes.ui.notesIconsGridColumnCount
+import dev.harrix.notes.ui.theme.NotesTopAppBarHeight
 import dev.harrix.notes.ui.theme.notesScaffoldContainerColor
 import dev.harrix.notes.ui.theme.notesScaffoldContentWindowInsets
 import kotlinx.coroutines.Dispatchers
@@ -3104,6 +3105,7 @@ private fun NotesTopChrome(
             modifier =
             Modifier
                 .fillMaxWidth()
+                .heightIn(min = NotesTopAppBarHeight)
                 .padding(start = 4.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
