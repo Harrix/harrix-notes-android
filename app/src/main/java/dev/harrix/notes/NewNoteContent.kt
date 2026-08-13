@@ -152,11 +152,12 @@ object NewNoteContent {
             withPersonal = injectFrontmatterKey(withPersonal, "paper", canvasPaper.yamlKey)
         }
         val title = heading.trim()
+        // Blank line between YAML closing --- and the H1 (same as desktop new-note).
         return if (isCanvas) {
             val imageBlock = CanvasPages.markdownImageBlock(pageCount = 1)
-            "$withPersonal\n# $title\n\n$imageBlock\n"
+            "$withPersonal\n\n# $title\n\n$imageBlock\n"
         } else {
-            "$withPersonal\n# $title\n\n\n"
+            "$withPersonal\n\n# $title\n\n\n"
         }
     }
 
