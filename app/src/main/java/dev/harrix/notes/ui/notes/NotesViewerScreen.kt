@@ -73,6 +73,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.outlined.PushPin
@@ -716,6 +717,25 @@ fun NotesViewerScreen(
                 saveNoteText(tab.uri, draftText)
             }
             after?.invoke()
+        }
+    }
+
+    fun saveCurrentDraft() {
+        val tab = openTabs.firstOrNull { it.documentId == selectedTabDocumentId } ?: return
+        if (!isEditing || isSaving || externalNoteConflict != null) {
+            return
+        }
+        autosaveJob?.cancel()
+        autosaveJob = null
+        scope.launch {
+            editorController.flush()
+            if (saveNoteText(tab.uri, draftText)) {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.markdown_notes_saved),
+                    Toast.LENGTH_SHORT,
+                ).show()
+            }
         }
     }
 
@@ -2591,6 +2611,9 @@ fun NotesViewerScreen(
                                 preferences.saveShowNoteDates(value)
                             },
                             noteOpen = selectedTab != null,
+                            showSave = selectedTab != null && isEditing,
+                            saveEnabled = !isSaving && externalNoteConflict == null,
+                            onSave = { saveCurrentDraft() },
                             notePinned = selectedTab?.let { isPinned(it.documentId) } == true,
                             canPinNote =
                             selectedTab != null &&
@@ -3269,6 +3292,9 @@ private fun NotesTopChrome(
     onShowGmdFilesChange: (Boolean) -> Unit,
     onShowNoteDatesChange: (Boolean) -> Unit,
     noteOpen: Boolean,
+    showSave: Boolean,
+    saveEnabled: Boolean,
+    onSave: () -> Unit,
     notePinned: Boolean,
     canPinNote: Boolean,
     onPinNote: () -> Unit,
@@ -3372,6 +3398,27 @@ private fun NotesTopChrome(
                         },
                     ) {
                         if (noteOpen) {
+                            if (showSave) {
+                                NotesDropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text = stringResource(R.string.markdown_notes_save),
+                                            maxLines = 1,
+                                        )
+                                    },
+                                    onClick = {
+                                        onMenuExpandedChange(false)
+                                        onSave()
+                                    },
+                                    enabled = saveEnabled,
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Filled.Save,
+                                            contentDescription = null,
+                                        )
+                                    },
+                                )
+                            }
                             NotesDropdownMenuItem(
                                 text = {
                                     Text(
