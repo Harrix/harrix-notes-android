@@ -211,6 +211,8 @@
     <string name="markdown_notes_create_note_cancel">İptal</string>
     <string name="markdown_notes_canvas">Tuval</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
+    <string name="markdown_notes_canvas_fullscreen">Full screen</string>
+    <string name="markdown_notes_canvas_exit_fullscreen">Exit full screen</string>
     <string name="markdown_notes_canvas_pen">Kalem</string>
     <string name="markdown_notes_canvas_pen_color">Kalem rengi</string>
     <string name="markdown_notes_canvas_stroke_width">Çizgi kalınlığı</string>

@@ -41,6 +41,9 @@ class NotesViewerViewModel(
 
     /** When true, a canvas note shows Markdown editor/preview instead of the drawing surface. */
     val canvasMarkdownMode = mutableStateOf(false)
+
+    /** Canvas drawing surface only: toolbar + viewport, no app chrome. Back exits. */
+    val canvasFullscreen = mutableStateOf(false)
     val autoEditDocumentId = mutableStateOf<String?>(null)
     val draftText = mutableStateOf("")
     val lastSavedText = mutableStateOf<String?>(null)

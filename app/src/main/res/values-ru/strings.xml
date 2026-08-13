@@ -218,6 +218,8 @@
     <string name="markdown_notes_create_note_cancel">Отмена</string>
     <string name="markdown_notes_canvas">Полотно</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
+    <string name="markdown_notes_canvas_fullscreen">На весь экран</string>
+    <string name="markdown_notes_canvas_exit_fullscreen">Выйти из полноэкранного режима</string>
     <string name="markdown_notes_canvas_pen">Перо</string>
     <string name="markdown_notes_canvas_pen_color">Цвет пера</string>
     <string name="markdown_notes_canvas_stroke_width">Толщина линии</string>

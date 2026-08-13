@@ -211,6 +211,8 @@
     <string name="markdown_notes_create_note_cancel">Anuluj</string>
     <string name="markdown_notes_canvas">Canvas</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
+    <string name="markdown_notes_canvas_fullscreen">Full screen</string>
+    <string name="markdown_notes_canvas_exit_fullscreen">Exit full screen</string>
     <string name="markdown_notes_canvas_pen">Pióro</string>
     <string name="markdown_notes_canvas_pen_color">Kolor pióra</string>
     <string name="markdown_notes_canvas_stroke_width">Grubość linii</string>

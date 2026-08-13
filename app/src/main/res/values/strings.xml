@@ -218,6 +218,8 @@
     <string name="markdown_notes_create_note_cancel">Cancel</string>
     <string name="markdown_notes_canvas">Canvas</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
+    <string name="markdown_notes_canvas_fullscreen">Full screen</string>
+    <string name="markdown_notes_canvas_exit_fullscreen">Exit full screen</string>
     <string name="markdown_notes_canvas_pen">Pen</string>
     <string name="markdown_notes_canvas_pen_color">Pen color</string>
     <string name="markdown_notes_canvas_stroke_width">Stroke width</string>

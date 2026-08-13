@@ -211,6 +211,8 @@
     <string name="markdown_notes_create_note_cancel">取消</string>
     <string name="markdown_notes_canvas">画布</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
+    <string name="markdown_notes_canvas_fullscreen">Full screen</string>
+    <string name="markdown_notes_canvas_exit_fullscreen">Exit full screen</string>
     <string name="markdown_notes_canvas_pen">画笔</string>
     <string name="markdown_notes_canvas_pen_color">笔颜色</string>
     <string name="markdown_notes_canvas_stroke_width">线宽</string>

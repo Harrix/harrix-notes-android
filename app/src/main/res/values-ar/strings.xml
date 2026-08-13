@@ -211,6 +211,8 @@
     <string name="markdown_notes_create_note_cancel">إلغاء</string>
     <string name="markdown_notes_canvas">لوحة</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
+    <string name="markdown_notes_canvas_fullscreen">Full screen</string>
+    <string name="markdown_notes_canvas_exit_fullscreen">Exit full screen</string>
     <string name="markdown_notes_canvas_pen">قلم</string>
     <string name="markdown_notes_canvas_pen_color">لون القلم</string>
     <string name="markdown_notes_canvas_stroke_width">سُمك الخط</string>

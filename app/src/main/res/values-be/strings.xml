@@ -211,6 +211,8 @@
     <string name="markdown_notes_create_note_cancel">Скасаваць</string>
     <string name="markdown_notes_canvas">Палатно</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
+    <string name="markdown_notes_canvas_fullscreen">Full screen</string>
+    <string name="markdown_notes_canvas_exit_fullscreen">Exit full screen</string>
     <string name="markdown_notes_canvas_pen">Пяро</string>
     <string name="markdown_notes_canvas_pen_color">Колер пяра</string>
     <string name="markdown_notes_canvas_stroke_width">Таўшчыня лініі</string>

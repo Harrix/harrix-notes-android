@@ -211,6 +211,8 @@
     <string name="markdown_notes_create_note_cancel">Annuler</string>
     <string name="markdown_notes_canvas">Canvas</string>
     <string name="markdown_notes_canvas_markdown">Markdown</string>
+    <string name="markdown_notes_canvas_fullscreen">Full screen</string>
+    <string name="markdown_notes_canvas_exit_fullscreen">Exit full screen</string>
     <string name="markdown_notes_canvas_pen">Stylo</string>
     <string name="markdown_notes_canvas_pen_color">Couleur du stylo</string>
     <string name="markdown_notes_canvas_stroke_width">Épaisseur du trait</string>

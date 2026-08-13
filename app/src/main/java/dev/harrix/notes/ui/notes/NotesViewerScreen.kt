@@ -65,6 +65,7 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileCopy
+import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
@@ -237,6 +238,7 @@ fun NotesViewerScreen(
     var noteLoading by viewModel.noteLoading
     var isEditing by viewModel.isEditing
     var canvasMarkdownMode by viewModel.canvasMarkdownMode
+    var canvasFullscreen by viewModel.canvasFullscreen
     var autoEditDocumentId by viewModel.autoEditDocumentId
     var draftText by viewModel.draftText
     var lastSavedText by viewModel.lastSavedText
@@ -631,6 +633,7 @@ fun NotesViewerScreen(
     fun resetEditorState() {
         isEditing = false
         canvasMarkdownMode = false
+        canvasFullscreen = false
         draftText = ""
         lastSavedText = null
         autosaveJob?.cancel()
@@ -2074,6 +2077,10 @@ fun NotesViewerScreen(
         val canvasNote =
             NoteTitleExtractor.isCanvas(draftText.ifBlank { noteContent.orEmpty() })
         when {
+            canvasFullscreen -> {
+                canvasFullscreen = false
+            }
+
             canvasNote && canvasMarkdownMode && isEditing && !useDualPane -> {
                 persistCurrentDraft {
                     isEditing = false
@@ -2471,10 +2478,16 @@ fun NotesViewerScreen(
         selectedTab?.takeIf {
             isCanvasNote && !canvasMarkdownMode && noteContent != null
         }
+    val canvasFullscreenActive = canvasFullscreen && canvasSurfaceTab != null
 
     val hasOpenNoteContent = selectedTabDocumentId != null && noteContent != null
     val canvasAllowsMarkdown = !isCanvasNote || canvasMarkdownMode
     val dualPaneShowsMarkdown = useDualPane && hasOpenNoteContent && canvasAllowsMarkdown
+    LaunchedEffect(canvasSurfaceTab) {
+        if (canvasSurfaceTab == null && canvasFullscreen) {
+            canvasFullscreen = false
+        }
+    }
     LaunchedEffect(dualPaneShowsMarkdown, draftText) {
         if (dualPaneShowsMarkdown) {
             isEditing = true
@@ -2588,7 +2601,7 @@ fun NotesViewerScreen(
                         .padding(innerPadding)
                         .fillMaxSize(),
                 ) {
-                    if (isLandscape && pinnedBarEnabled) {
+                    if (isLandscape && pinnedBarEnabled && !canvasFullscreenActive) {
                         NotesPinnedBar(
                             items = pinnedItems,
                             maxSlots = maxPinnedItems,
@@ -2603,157 +2616,171 @@ fun NotesViewerScreen(
                         modifier =
                         Modifier
                             .weight(1f)
-                            .fillMaxHeight(),
+                            .fillMaxHeight()
+                            .then(
+                                if (canvasFullscreenActive) {
+                                    Modifier.windowInsetsPadding(WindowInsets.statusBars)
+                                } else {
+                                    Modifier
+                                },
+                            ),
                     ) {
-                        NotesTopChrome(
-                            onOpenDrawer = {
-                                scope.launch { drawerState.open() }
-                            },
-                            breadcrumbSegments =
-                            if (notesTreeUri.isNullOrBlank()) {
-                                null
-                            } else if (selectedTab != null) {
-                                selectedTab.folderPath +
-                                    NotesPathSegment(
-                                        documentId = selectedTab.documentId,
-                                        name = selectedTab.title,
-                                        uri = selectedTab.uri,
+                        if (!canvasFullscreenActive) {
+                            NotesTopChrome(
+                                onOpenDrawer = {
+                                    scope.launch { drawerState.open() }
+                                },
+                                breadcrumbSegments =
+                                if (notesTreeUri.isNullOrBlank()) {
+                                    null
+                                } else if (selectedTab != null) {
+                                    selectedTab.folderPath +
+                                        NotesPathSegment(
+                                            documentId = selectedTab.documentId,
+                                            name = selectedTab.title,
+                                            uri = selectedTab.uri,
+                                        )
+                                } else {
+                                    folderPath
+                                },
+                                lastIsNote = selectedTab != null,
+                                onSegmentClick = { index ->
+                                    val path =
+                                        if (selectedTab != null) {
+                                            selectedTab.folderPath
+                                        } else {
+                                            folderPath
+                                        }
+                                    val targetIndex = index.coerceAtMost(path.lastIndex)
+                                    if (targetIndex >= 0) {
+                                        openFolderList(path.take(targetIndex + 1))
+                                    }
+                                },
+                                menuExpanded = menuExpanded,
+                                onMenuExpandedChange = { menuExpanded = it },
+                                showSortViewMenu =
+                                selectedTab == null && !notesTreeUri.isNullOrBlank(),
+                                browseLayout = browseLayout,
+                                sortBy = sortBy,
+                                foldersFirst = foldersFirst,
+                                sortReverseOrder = sortReverseOrder,
+                                showGmdFiles = showGmdFiles,
+                                showNoteDates = showNoteDates,
+                                onBrowseLayoutChange = { value ->
+                                    browseLayout = value
+                                    preferences.saveBrowseLayout(value)
+                                },
+                                onSortByChange = { value ->
+                                    sortBy = value
+                                    preferences.saveSortBy(value)
+                                },
+                                onFoldersFirstChange = { value ->
+                                    foldersFirst = value
+                                    preferences.saveFoldersFirst(value)
+                                },
+                                onSortReverseOrderChange = { value ->
+                                    sortReverseOrder = value
+                                    preferences.saveSortReverseOrder(value)
+                                },
+                                onShowGmdFilesChange = { value ->
+                                    showGmdFiles = value
+                                    preferences.saveShowGmdFiles(value)
+                                },
+                                onShowNoteDatesChange = { value ->
+                                    showNoteDates = value
+                                    preferences.saveShowNoteDates(value)
+                                },
+                                noteOpen = selectedTab != null,
+                                showSave = selectedTab != null && isEditing,
+                                saveEnabled = !isSaving && externalNoteConflict == null,
+                                onSave = { saveCurrentDraft() },
+                                notePinned = selectedTab?.let { isPinned(it.documentId) } == true,
+                                canPinNote =
+                                selectedTab != null &&
+                                    !selectedTab.isExternal &&
+                                    !notesTreeUri.isNullOrBlank(),
+                                onPinNote = {
+                                    val tab = selectedTab ?: return@NotesTopChrome
+                                    if (tab.isExternal) {
+                                        return@NotesTopChrome
+                                    }
+                                    pinNote(
+                                        NotesEntry.Note(
+                                            documentId = tab.documentId,
+                                            name = tab.fileName.ifBlank { "${tab.title}.md" },
+                                            uri = tab.uri,
+                                            displayLabel = tab.title,
+                                        ),
+                                        tab.folderPath,
                                     )
-                            } else {
-                                folderPath
-                            },
-                            lastIsNote = selectedTab != null,
-                            onSegmentClick = { index ->
-                                val path =
-                                    if (selectedTab != null) {
-                                        selectedTab.folderPath
-                                    } else {
-                                        folderPath
+                                },
+                                onUnpinNote = {
+                                    val tab = selectedTab ?: return@NotesTopChrome
+                                    unpinByDocumentId(tab.documentId)
+                                },
+                                canPaste =
+                                selectedTab == null &&
+                                    notesClipboard != null &&
+                                    !notesTreeUri.isNullOrBlank() &&
+                                    folderPath.isNotEmpty(),
+                                onPaste = { pasteClipboard() },
+                                recentNotes = recentNotes,
+                                onOpenRecentNote = { openRecentNote(it) },
+                                onFindInNote = {
+                                    if (canvasSurfaceTab != null && !canvasMarkdownMode) {
+                                        canvasMarkdownMode = true
+                                        isEditing = false
                                     }
-                                val targetIndex = index.coerceAtMost(path.lastIndex)
-                                if (targetIndex >= 0) {
-                                    openFolderList(path.take(targetIndex + 1))
-                                }
-                            },
-                            menuExpanded = menuExpanded,
-                            onMenuExpandedChange = { menuExpanded = it },
-                            showSortViewMenu =
-                            selectedTab == null && !notesTreeUri.isNullOrBlank(),
-                            browseLayout = browseLayout,
-                            sortBy = sortBy,
-                            foldersFirst = foldersFirst,
-                            sortReverseOrder = sortReverseOrder,
-                            showGmdFiles = showGmdFiles,
-                            showNoteDates = showNoteDates,
-                            onBrowseLayoutChange = { value ->
-                                browseLayout = value
-                                preferences.saveBrowseLayout(value)
-                            },
-                            onSortByChange = { value ->
-                                sortBy = value
-                                preferences.saveSortBy(value)
-                            },
-                            onFoldersFirstChange = { value ->
-                                foldersFirst = value
-                                preferences.saveFoldersFirst(value)
-                            },
-                            onSortReverseOrderChange = { value ->
-                                sortReverseOrder = value
-                                preferences.saveSortReverseOrder(value)
-                            },
-                            onShowGmdFilesChange = { value ->
-                                showGmdFiles = value
-                                preferences.saveShowGmdFiles(value)
-                            },
-                            onShowNoteDatesChange = { value ->
-                                showNoteDates = value
-                                preferences.saveShowNoteDates(value)
-                            },
-                            noteOpen = selectedTab != null,
-                            showSave = selectedTab != null && isEditing,
-                            saveEnabled = !isSaving && externalNoteConflict == null,
-                            onSave = { saveCurrentDraft() },
-                            notePinned = selectedTab?.let { isPinned(it.documentId) } == true,
-                            canPinNote =
-                            selectedTab != null &&
-                                !selectedTab.isExternal &&
-                                !notesTreeUri.isNullOrBlank(),
-                            onPinNote = {
-                                val tab = selectedTab ?: return@NotesTopChrome
-                                if (tab.isExternal) {
-                                    return@NotesTopChrome
-                                }
-                                pinNote(
-                                    NotesEntry.Note(
-                                        documentId = tab.documentId,
-                                        name = tab.fileName.ifBlank { "${tab.title}.md" },
-                                        uri = tab.uri,
-                                        displayLabel = tab.title,
-                                    ),
-                                    tab.folderPath,
-                                )
-                            },
-                            onUnpinNote = {
-                                val tab = selectedTab ?: return@NotesTopChrome
-                                unpinByDocumentId(tab.documentId)
-                            },
-                            canPaste =
-                            selectedTab == null &&
-                                notesClipboard != null &&
-                                !notesTreeUri.isNullOrBlank() &&
-                                folderPath.isNotEmpty(),
-                            onPaste = { pasteClipboard() },
-                            recentNotes = recentNotes,
-                            onOpenRecentNote = { openRecentNote(it) },
-                            onFindInNote = {
-                                if (canvasSurfaceTab != null && !canvasMarkdownMode) {
-                                    canvasMarkdownMode = true
-                                    isEditing = false
-                                }
-                                showFindBar = true
-                            },
-                            pinnedBarEnabled = pinnedBarEnabled,
-                            onPinnedBarEnabledChange = { enabled ->
-                                pinnedBarEnabled = enabled
-                                preferences.savePinnedBarEnabled(enabled)
-                            },
-                            onOpenNoteInfo = {
-                                val tab = selectedTab
-                                if (tab != null) {
-                                    scope.launch {
-                                        noteInfoDocument =
-                                            withContext(Dispatchers.IO) {
-                                                repository.queryDocumentInfo(tab.uri)
-                                            }
-                                        showNoteInfoDialog = true
-                                    }
-                                }
-                            },
-                            onOpenSettings = onOpenSettings,
-                            onOpenAbout = onOpenAbout,
-                        )
-                        if (showFindBar && selectedTab != null) {
-                            NotesFindBar(
-                                query = findQuery,
-                                onQueryChange = { findQuery = it },
-                                activeMatch = findActiveMatch,
-                                totalMatches = findTotalMatches,
-                                onNext = {
-                                    if (isEditing) {
-                                        editorController.findNext()
-                                    } else {
-                                        previewFindController.findNext()
+                                    showFindBar = true
+                                },
+                                pinnedBarEnabled = pinnedBarEnabled,
+                                onPinnedBarEnabledChange = { enabled ->
+                                    pinnedBarEnabled = enabled
+                                    preferences.savePinnedBarEnabled(enabled)
+                                },
+                                onOpenNoteInfo = {
+                                    val tab = selectedTab
+                                    if (tab != null) {
+                                        scope.launch {
+                                            noteInfoDocument =
+                                                withContext(Dispatchers.IO) {
+                                                    repository.queryDocumentInfo(tab.uri)
+                                                }
+                                            showNoteInfoDialog = true
+                                        }
                                     }
                                 },
-                                onPrev = {
-                                    if (isEditing) {
-                                        editorController.findPrev()
-                                    } else {
-                                        previewFindController.findPrev()
-                                    }
+                                onOpenSettings = onOpenSettings,
+                                onOpenAbout = onOpenAbout,
+                                showCanvasFullscreen = canvasSurfaceTab != null,
+                                onCanvasFullscreen = {
+                                    closeFindBar()
+                                    canvasFullscreen = true
                                 },
-                                onClose = { closeFindBar() },
                             )
+                            if (showFindBar && selectedTab != null) {
+                                NotesFindBar(
+                                    query = findQuery,
+                                    onQueryChange = { findQuery = it },
+                                    activeMatch = findActiveMatch,
+                                    totalMatches = findTotalMatches,
+                                    onNext = {
+                                        if (isEditing) {
+                                            editorController.findNext()
+                                        } else {
+                                            previewFindController.findNext()
+                                        }
+                                    },
+                                    onPrev = {
+                                        if (isEditing) {
+                                            editorController.findPrev()
+                                        } else {
+                                            previewFindController.findPrev()
+                                        }
+                                    },
+                                    onClose = { closeFindBar() },
+                                )
+                            }
                         }
                         if (notesTreeUri.isNullOrBlank()) {
                             Box(
@@ -2770,56 +2797,59 @@ fun NotesViewerScreen(
                             }
                         } else {
                             Column(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                                NotesNavigationRow(
-                                    onBack = { navigateBack(useDualPane = useDualPane) },
-                                    openTabs = openTabs,
-                                    selectedTabDocumentId = selectedTabDocumentId,
-                                    onSelectTab = { selectTab(it) },
-                                    onCloseTab = { closeTab(it) },
-                                    onReorderTabs = { from, to -> reorderTabs(from, to) },
-                                    createMenuExpanded = tabCreateMenuExpanded,
-                                    onCreateMenuExpandedChange = { tabCreateMenuExpanded = it },
-                                    onCreateKind = { onCreateKindSelected(it) },
-                                    showEditActions = selectedTab != null && !noteLoading && noteContent != null,
-                                    showEditPreviewToggle = !useDualPane && canvasSurfaceTab == null,
-                                    isEditing = isEditing,
-                                    isSaving = isSaving,
-                                    isCanvasNote = isCanvasNote,
-                                    canvasMarkdownMode = canvasMarkdownMode,
-                                    onToggleCanvasMarkdown = {
-                                        if (canvasMarkdownMode) {
+                                if (!canvasFullscreenActive) {
+                                    NotesNavigationRow(
+                                        onBack = { navigateBack(useDualPane = useDualPane) },
+                                        openTabs = openTabs,
+                                        selectedTabDocumentId = selectedTabDocumentId,
+                                        onSelectTab = { selectTab(it) },
+                                        onCloseTab = { closeTab(it) },
+                                        onReorderTabs = { from, to -> reorderTabs(from, to) },
+                                        createMenuExpanded = tabCreateMenuExpanded,
+                                        onCreateMenuExpandedChange = { tabCreateMenuExpanded = it },
+                                        onCreateKind = { onCreateKindSelected(it) },
+                                        showEditActions = selectedTab != null && !noteLoading && noteContent != null,
+                                        showEditPreviewToggle = !useDualPane && canvasSurfaceTab == null,
+                                        isEditing = isEditing,
+                                        isSaving = isSaving,
+                                        isCanvasNote = isCanvasNote,
+                                        canvasMarkdownMode = canvasMarkdownMode,
+                                        onToggleCanvasMarkdown = {
+                                            if (canvasMarkdownMode) {
+                                                persistCurrentDraft {
+                                                    canvasMarkdownMode = false
+                                                    isEditing = false
+                                                    draftText = noteContent.orEmpty()
+                                                    lastSavedText = noteContent
+                                                }
+                                            } else {
+                                                canvasFullscreen = false
+                                                canvasMarkdownMode = true
+                                                isEditing = useDualPane || noteOpenMode == NotesOpenMode.Edit
+                                                draftText = noteContent.orEmpty()
+                                                lastSavedText = noteContent
+                                                previewDraftText = noteContent.orEmpty()
+                                            }
+                                        },
+                                        onPreview = {
                                             persistCurrentDraft {
-                                                canvasMarkdownMode = false
                                                 isEditing = false
                                                 draftText = noteContent.orEmpty()
                                                 lastSavedText = noteContent
                                             }
-                                        } else {
-                                            canvasMarkdownMode = true
-                                            isEditing = useDualPane || noteOpenMode == NotesOpenMode.Edit
+                                        },
+                                        onEdit = {
+                                            isEditing = true
                                             draftText = noteContent.orEmpty()
                                             lastSavedText = noteContent
-                                            previewDraftText = noteContent.orEmpty()
-                                        }
-                                    },
-                                    onPreview = {
-                                        persistCurrentDraft {
-                                            isEditing = false
-                                            draftText = noteContent.orEmpty()
-                                            lastSavedText = noteContent
-                                        }
-                                    },
-                                    onEdit = {
-                                        isEditing = true
-                                        draftText = noteContent.orEmpty()
-                                        lastSavedText = noteContent
-                                    },
-                                    showCloseNote = selectedTab != null,
-                                    onCloseNote = {
-                                        selectedTab?.let { closeTab(it.documentId) }
-                                    },
-                                )
-                                HorizontalDivider()
+                                        },
+                                        showCloseNote = selectedTab != null,
+                                        onCloseNote = {
+                                            selectedTab?.let { closeTab(it.documentId) }
+                                        },
+                                    )
+                                    HorizontalDivider()
+                                }
                                 Box(
                                     modifier =
                                     Modifier
@@ -2844,6 +2874,10 @@ fun NotesViewerScreen(
                                                     noteMarkdown = draftText.ifBlank { noteContent.orEmpty() },
                                                     contentResolver = context.contentResolver,
                                                     preferences = preferences,
+                                                    fullscreen = canvasFullscreenActive,
+                                                    onToggleFullscreen = {
+                                                        canvasFullscreen = !canvasFullscreen
+                                                    },
                                                     onStatusMessage = { message ->
                                                         statusMessage = message
                                                     },
@@ -3101,7 +3135,7 @@ fun NotesViewerScreen(
                                         }
                                     }
                                 }
-                                if (showNotePath) {
+                                if (showNotePath && !canvasFullscreenActive) {
                                     val pathTab = selectedTab
                                     if (pathTab != null) {
                                         NotesNotePathBar(
@@ -3109,7 +3143,7 @@ fun NotesViewerScreen(
                                         )
                                     }
                                 }
-                                if (!isLandscape && pinnedBarEnabled) {
+                                if (!isLandscape && pinnedBarEnabled && !canvasFullscreenActive) {
                                     NotesPinnedBar(
                                         items = pinnedItems,
                                         maxSlots = maxPinnedItems,
@@ -3405,6 +3439,8 @@ private fun NotesTopChrome(
     onOpenNoteInfo: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenAbout: () -> Unit,
+    showCanvasFullscreen: Boolean = false,
+    onCanvasFullscreen: () -> Unit = {},
 ) {
     var sortViewMenuExpanded by remember { mutableStateOf(false) }
     var recentMenuExpanded by remember { mutableStateOf(false) }
@@ -3554,6 +3590,27 @@ private fun NotesTopChrome(
                                     )
                                 },
                             )
+                            if (showCanvasFullscreen) {
+                                NotesDropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            text =
+                                            stringResource(R.string.markdown_notes_canvas_fullscreen),
+                                            maxLines = 1,
+                                        )
+                                    },
+                                    onClick = {
+                                        onMenuExpandedChange(false)
+                                        onCanvasFullscreen()
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Filled.Fullscreen,
+                                            contentDescription = null,
+                                        )
+                                    },
+                                )
+                            }
                             if (canPinNote) {
                                 NotesDropdownMenuItem(
                                     text = {

@@ -49,6 +49,8 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Fullscreen
+import androidx.compose.material.icons.filled.FullscreenExit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.LightMode
@@ -204,6 +206,8 @@ fun NotesCanvasPane(
     contentResolver: ContentResolver,
     preferences: NotesViewerPreferences,
     modifier: Modifier = Modifier,
+    fullscreen: Boolean = false,
+    onToggleFullscreen: (() -> Unit)? = null,
     onStatusMessage: (String?) -> Unit = {},
     onNoteMarkdownChange: (String) -> Unit = {},
 ) {
@@ -631,6 +635,8 @@ fun NotesCanvasPane(
             canUndo = canUndo,
             canRedo = canRedo,
             canClear = hasImage,
+            fullscreen = fullscreen,
+            onToggleFullscreen = onToggleFullscreen,
             onToolChange = { next ->
                 tool = next
                 drawingEnabled = true
@@ -1116,6 +1122,8 @@ private fun CanvasToolbar(
     onRedo: () -> Unit,
     onClear: () -> Unit,
     onMenuOpenChange: (Boolean) -> Unit = {},
+    fullscreen: Boolean = false,
+    onToggleFullscreen: (() -> Unit)? = null,
     vertical: Boolean = false,
 ) {
     var showCustomColorDialog by remember { mutableStateOf(false) }
@@ -1184,6 +1192,8 @@ private fun CanvasToolbar(
                     onWidthMenuExpandedChange = { widthMenuExpanded = it },
                     onPaperMenuExpandedChange = { paperMenuExpanded = it },
                     onShowCustomColorDialog = { showCustomColorDialog = true },
+                    fullscreen = fullscreen,
+                    onToggleFullscreen = onToggleFullscreen,
                 )
             }
         } else {
@@ -1222,6 +1232,8 @@ private fun CanvasToolbar(
                     onWidthMenuExpandedChange = { widthMenuExpanded = it },
                     onPaperMenuExpandedChange = { paperMenuExpanded = it },
                     onShowCustomColorDialog = { showCustomColorDialog = true },
+                    fullscreen = fullscreen,
+                    onToggleFullscreen = onToggleFullscreen,
                 )
             }
         }
@@ -1256,6 +1268,8 @@ private fun CanvasToolbarButtons(
     onWidthMenuExpandedChange: (Boolean) -> Unit,
     onPaperMenuExpandedChange: (Boolean) -> Unit,
     onShowCustomColorDialog: () -> Unit,
+    fullscreen: Boolean = false,
+    onToggleFullscreen: (() -> Unit)? = null,
 ) {
     CanvasToolbarIconButton(
         tooltip =
@@ -1642,6 +1656,36 @@ private fun CanvasToolbarButtons(
             imageVector = Icons.Filled.DeleteSweep,
             contentDescription = stringResource(R.string.markdown_notes_canvas_clear),
         )
+    }
+    if (onToggleFullscreen != null) {
+        CanvasToolbarIconButton(
+            tooltip =
+            stringResource(
+                if (fullscreen) {
+                    R.string.markdown_notes_canvas_exit_fullscreen
+                } else {
+                    R.string.markdown_notes_canvas_fullscreen
+                },
+            ),
+            onClick = onToggleFullscreen,
+        ) {
+            Icon(
+                imageVector =
+                if (fullscreen) {
+                    Icons.Filled.FullscreenExit
+                } else {
+                    Icons.Filled.Fullscreen
+                },
+                contentDescription =
+                stringResource(
+                    if (fullscreen) {
+                        R.string.markdown_notes_canvas_exit_fullscreen
+                    } else {
+                        R.string.markdown_notes_canvas_fullscreen
+                    },
+                ),
+            )
+        }
     }
 }
 
