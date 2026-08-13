@@ -94,6 +94,12 @@ class NotesViewerViewModel(
     /** Provider mtime/size after last successful load or save; used for external-change detection. */
     var loadedNoteBaseline: NotesLoadedDocumentBaseline? = null
 
+    /**
+     * Last seen mtime/size per open tab; used to refresh titles when background tabs change
+     * without reading every file on each poll.
+     */
+    val openTabBaselines = mutableMapOf<String, NotesLoadedDocumentBaseline>()
+
     /** Fingerprints of directories last seen while browsing (current folder + expanded tree). */
     val directoryFingerprints = mutableStateOf<Map<String, String>>(emptyMap())
 

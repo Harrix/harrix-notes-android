@@ -104,6 +104,11 @@ data class OpenNoteTab(
      * (Android “Open with” / Share). External tabs use a distinct chip color.
      */
     val isExternal: Boolean = false,
+    /**
+     * True when periodic sync found the document URI missing (deleted/moved).
+     * Not persisted in the open-tabs session; re-probed after restore.
+     */
+    val missingOnDisk: Boolean = false,
 ) {
     /** Tab chip / tabs popup label; year/date titles include the parent folder. */
     val displayTitle: String

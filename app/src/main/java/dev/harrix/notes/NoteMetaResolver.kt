@@ -62,6 +62,33 @@ object NoteMetaResolver {
         return titleFromId(fileStem).ifEmpty { "Untitled" }
     }
 
+    /**
+     * Universal note display title from Markdown + file name.
+     *
+     * Priority: YAML `title` → first `#` heading → stem from [fileName] (via [titleFromId]) →
+     * `Untitled`. Use this wherever a note label is derived from content on disk or in memory.
+     */
+    fun resolveNoteTitle(
+        mdText: String,
+        fileName: String,
+    ): String = resolveTitle(mdText, noteStemFromName(fileName))
+
+    /**
+     * Title for open tabs / lists respecting [NotesTitleSource].
+     * File-name mode uses the raw stem; content mode uses [resolveNoteTitle].
+     */
+    fun resolveNoteTitle(
+        mdText: String,
+        fileName: String,
+        source: NotesTitleSource,
+    ): String {
+        val stem = noteStemFromName(fileName)
+        return when (source) {
+            NotesTitleSource.FileName -> stem.ifEmpty { "Untitled" }
+            NotesTitleSource.Content -> resolveTitle(mdText, stem)
+        }
+    }
+
     fun titleFromId(fileStem: String): String {
         val stem = fileStem.trim()
         if (stem.isEmpty()) {

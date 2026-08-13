@@ -113,6 +113,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -658,35 +659,36 @@ fun NotesViewerScreen(
                 statusMessage = null
                 val tab = openTabs.firstOrNull { it.documentId == selectedTabDocumentId }
                 if (tab != null) {
-                    val (contentTitle, contentIcon) =
-                        repository.rememberMetaFromContent(tab.documentId, text)
-                    val fileStem =
+                    val fileNameForTitle =
                         tab.fileName
-                            .takeIf { it.isNotBlank() }
-                            ?.let { NotesTreeRepository.noteDisplayLabel(it) }
-                            ?: entries
-                                .filterIsInstance<NotesEntry.Note>()
-                                .firstOrNull { note -> note.documentId == tab.documentId }
-                                ?.let { note -> NotesTreeRepository.noteDisplayLabel(note.name) }
+                            .ifBlank {
+                                entries
+                                    .filterIsInstance<NotesEntry.Note>()
+                                    .firstOrNull { note -> note.documentId == tab.documentId }
+                                    ?.name
+                                    .orEmpty()
+                            }
+                    val (_, contentIcon) =
+                        repository.rememberMetaFromContent(
+                            tab.documentId,
+                            text,
+                            fileName = fileNameForTitle,
+                        )
                     val label =
-                        when (titleSource) {
-                            NotesTitleSource.FileName -> fileStem ?: tab.title
-                            NotesTitleSource.Content -> contentTitle ?: fileStem ?: tab.title
-                        }
+                        NoteMetaResolver.resolveNoteTitle(
+                            mdText = text,
+                            fileName = fileNameForTitle,
+                            source = titleSource,
+                        )
                     openTabs =
                         openTabs.map { openTab ->
                             if (openTab.documentId == tab.documentId) {
-                                openTab.copy(title = label)
+                                openTab.copy(title = label, missingOnDisk = false)
                             } else {
                                 openTab
                             }
                         }
-                    val titles =
-                        if (titleSource == NotesTitleSource.Content || fileStem != null) {
-                            mapOf(tab.documentId to label)
-                        } else {
-                            emptyMap()
-                        }
+                    val titles = mapOf(tab.documentId to label)
                     val icons = mapOf(tab.documentId to contentIcon)
                     entries =
                         repository.withUpdatedNoteMeta(
@@ -1450,6 +1452,7 @@ fun NotesViewerScreen(
         if (closingSelected) {
             persistCurrentDraft {
                 openTabs = openTabs.filterNot { it.documentId == documentId }
+                viewModel.openTabBaselines.remove(documentId)
                 val nextId = openTabs.lastOrNull()?.documentId
                 selectedTabDocumentId = nextId
                 if (nextId == null) {
@@ -1464,6 +1467,7 @@ fun NotesViewerScreen(
             }
         } else {
             openTabs = openTabs.filterNot { it.documentId == documentId }
+            viewModel.openTabBaselines.remove(documentId)
         }
     }
 
@@ -1524,6 +1528,7 @@ fun NotesViewerScreen(
         autosaveJob = null
         val closingSelected = selectedTabDocumentId == documentId
         openTabs = openTabs.filterNot { it.documentId == documentId }
+        viewModel.openTabBaselines.remove(documentId)
         if (!closingSelected) {
             return
         }
@@ -1605,8 +1610,144 @@ fun NotesViewerScreen(
         )
     }
 
+    suspend fun syncOpenTabsPresenceAndTitles() {
+        val tabsSnapshot = openTabs
+        if (tabsSnapshot.isEmpty()) {
+            viewModel.openTabBaselines.keys.retainAll(emptySet())
+            return
+        }
+        val openIds = tabsSnapshot.map { it.documentId }.toSet()
+        viewModel.openTabBaselines.keys.retainAll(openIds)
+
+        var anyTabChanged = false
+        val nextTabs =
+            tabsSnapshot.map { tab ->
+                if (isSaving) {
+                    return@map tab
+                }
+                val exists =
+                    withContext(Dispatchers.IO) {
+                        repository.documentExists(tab.uri)
+                    }
+                if (!exists) {
+                    if (!tab.missingOnDisk) {
+                        anyTabChanged = true
+                    }
+                    viewModel.openTabBaselines.remove(tab.documentId)
+                    return@map tab.copy(missingOnDisk = true)
+                }
+
+                val info =
+                    withContext(Dispatchers.IO) {
+                        repository.queryDocumentInfo(tab.uri)
+                    }
+                val displayName = info?.displayName?.takeIf { it.isNotBlank() } ?: tab.fileName
+                val nextBaseline =
+                    NotesLoadedDocumentBaseline(
+                        documentId = tab.documentId,
+                        uri = tab.uri.toString(),
+                        lastModifiedEpochMs = info?.lastModifiedEpochMs,
+                        sizeBytes = info?.sizeBytes,
+                    )
+                val previousBaseline = viewModel.openTabBaselines[tab.documentId]
+                viewModel.openTabBaselines[tab.documentId] = nextBaseline
+
+                var next = tab
+                if (tab.missingOnDisk) {
+                    anyTabChanged = true
+                    next = next.copy(missingOnDisk = false)
+                }
+                if (displayName.isNotBlank() && displayName != next.fileName) {
+                    anyTabChanged = true
+                    next = next.copy(fileName = displayName)
+                }
+
+                val metadataChanged =
+                    previousBaseline != null &&
+                        (
+                            previousBaseline.lastModifiedEpochMs != nextBaseline.lastModifiedEpochMs ||
+                                previousBaseline.sizeBytes != nextBaseline.sizeBytes
+                            )
+                val fileNameChanged = displayName.isNotBlank() && displayName != tab.fileName
+                val shouldRefreshTitle =
+                    when (titleSource) {
+                        NotesTitleSource.FileName ->
+                            fileNameChanged || metadataChanged || previousBaseline == null
+
+                        NotesTitleSource.Content ->
+                            metadataChanged ||
+                                (previousBaseline == null && next.title.isBlank())
+                    }
+                if (shouldRefreshTitle) {
+                    val fileNameForTitle = displayName.ifBlank { next.fileName }
+                    val resolvedTitle =
+                        when (titleSource) {
+                            NotesTitleSource.FileName ->
+                                NoteMetaResolver.resolveNoteTitle(
+                                    mdText = "",
+                                    fileName = fileNameForTitle,
+                                    source = NotesTitleSource.FileName,
+                                )
+
+                            NotesTitleSource.Content -> {
+                                val text =
+                                    if (tab.documentId == selectedTabDocumentId &&
+                                        (draftText.isNotBlank() || noteContent != null)
+                                    ) {
+                                        draftText.ifBlank { noteContent.orEmpty() }
+                                    } else if (metadataChanged || previousBaseline == null) {
+                                        withContext(Dispatchers.IO) {
+                                            runCatching { repository.readText(tab.uri) }.getOrNull()
+                                        }
+                                    } else {
+                                        null
+                                    }
+                                if (text != null) {
+                                    repository.rememberMetaFromContent(
+                                        tab.documentId,
+                                        text,
+                                        fileName = fileNameForTitle,
+                                        lastModifiedEpochMs = info?.lastModifiedEpochMs,
+                                    )
+                                    NoteMetaResolver.resolveNoteTitle(
+                                        mdText = text,
+                                        fileName = fileNameForTitle,
+                                        source = NotesTitleSource.Content,
+                                    )
+                                } else {
+                                    next.title
+                                }
+                            }
+                        }
+                    if (resolvedTitle.isNotBlank() && resolvedTitle != next.title) {
+                        anyTabChanged = true
+                        next = next.copy(title = resolvedTitle)
+                    }
+                }
+                next
+            }
+
+        if (anyTabChanged) {
+            openTabs = nextTabs
+        }
+
+        val selectedId = selectedTabDocumentId ?: return
+        if (externalNoteConflict != null || noteLoading || isSaving) {
+            return
+        }
+        val selected =
+            (if (anyTabChanged) nextTabs else tabsSnapshot)
+                .firstOrNull { it.documentId == selectedId }
+                ?: return
+        if (selected.missingOnDisk) {
+            autosaveJob?.cancel()
+            autosaveJob = null
+            externalNoteConflict = NotesExternalNoteConflict.Deleted(tab = selected)
+        }
+    }
+
     suspend fun syncExternalChanges() {
-        if (externalNoteConflict != null || isSaving || noteLoading) {
+        if (isSaving || noteLoading) {
             return
         }
         if (android.os.SystemClock.elapsedRealtime() < viewModel.suppressExternalProbeUntilElapsedMs) {
@@ -1621,7 +1762,7 @@ fun NotesViewerScreen(
                 addAll(treeExpandedFolderIds)
             }
         for (dirId in dirsToCheck) {
-            if (isSaving || noteLoading || externalNoteConflict != null) {
+            if (isSaving || noteLoading) {
                 return
             }
             val fingerprint =
@@ -1635,9 +1776,14 @@ fun NotesViewerScreen(
             }
         }
 
+        syncOpenTabsPresenceAndTitles()
+
+        if (externalNoteConflict != null || isSaving || noteLoading) {
+            return
+        }
         val selectedId = selectedTabDocumentId ?: return
         val tab = openTabs.firstOrNull { it.documentId == selectedId } ?: return
-        if (noteLoading || isSaving) {
+        if (tab.missingOnDisk) {
             return
         }
         if (viewModel.loadedNoteDocumentId != tab.documentId ||
@@ -1669,35 +1815,21 @@ fun NotesViewerScreen(
         when (probe) {
             is NotesExternalNoteProbe.Unchanged -> {
                 viewModel.loadedNoteBaseline = probe.baseline
-                val displayName = probe.displayName
-                if (!displayName.isNullOrBlank() && displayName != tab.fileName) {
-                    openTabs =
-                        openTabs.map { openTab ->
-                            if (openTab.documentId != tab.documentId) {
-                                openTab
-                            } else {
-                                val nextTitle =
-                                    if (titleSource == NotesTitleSource.FileName) {
-                                        NotesTreeRepository.noteDisplayLabel(displayName)
-                                    } else {
-                                        openTab.title
-                                    }
-                                openTab.copy(fileName = displayName, title = nextTitle)
-                            }
-                        }
-                }
+                viewModel.openTabBaselines[tab.documentId] = probe.baseline
             }
 
             is NotesExternalNoteProbe.Modified -> {
                 // Content already matches what we have — refresh baseline only.
                 if (probe.diskText == draftText || probe.diskText == lastSavedText) {
-                    viewModel.loadedNoteBaseline =
+                    val baseline =
                         NotesLoadedDocumentBaseline(
                             documentId = tab.documentId,
                             uri = tab.uri.toString(),
                             lastModifiedEpochMs = probe.diskLastModifiedEpochMs,
                             sizeBytes = probe.diskSizeBytes,
                         )
+                    viewModel.loadedNoteBaseline = baseline
+                    viewModel.openTabBaselines[tab.documentId] = baseline
                     return
                 }
                 autosaveJob?.cancel()
@@ -1714,7 +1846,17 @@ fun NotesViewerScreen(
             NotesExternalNoteProbe.Missing -> {
                 autosaveJob?.cancel()
                 autosaveJob = null
-                externalNoteConflict = NotesExternalNoteConflict.Deleted(tab = tab)
+                openTabs =
+                    openTabs.map { openTab ->
+                        if (openTab.documentId == tab.documentId) {
+                            openTab.copy(missingOnDisk = true)
+                        } else {
+                            openTab
+                        }
+                    }
+                viewModel.openTabBaselines.remove(tab.documentId)
+                externalNoteConflict =
+                    NotesExternalNoteConflict.Deleted(tab = tab.copy(missingOnDisk = true))
             }
         }
     }
@@ -1765,10 +1907,16 @@ fun NotesViewerScreen(
                                 OpenNoteTab(
                                     documentId = note.documentId,
                                     uri = note.uri,
-                                    title = note.displayLabel,
+                                    title =
+                                    NoteMetaResolver.resolveNoteTitle(
+                                        mdText = text,
+                                        fileName = note.name,
+                                        source = titleSource,
+                                    ),
                                     fileName = note.name,
                                     folderPath = pathForNote,
                                     isExternal = false,
+                                    missingOnDisk = false,
                                 )
                             } else {
                                 openTab
@@ -1837,6 +1985,7 @@ fun NotesViewerScreen(
         if (closingSelected) {
             persistCurrentDraft {
                 openTabs = openTabs.filterNot { it.documentId in removedIds }
+                removedIds.forEach { viewModel.openTabBaselines.remove(it) }
                 val nextId = openTabs.lastOrNull()?.documentId
                 selectedTabDocumentId = nextId
                 if (nextId == null) {
@@ -1851,6 +2000,7 @@ fun NotesViewerScreen(
             }
         } else {
             openTabs = openTabs.filterNot { it.documentId in removedIds }
+            removedIds.forEach { viewModel.openTabBaselines.remove(it) }
         }
     }
 
@@ -2423,30 +2573,95 @@ fun NotesViewerScreen(
                 withContext(Dispatchers.IO) {
                     repository.queryDocumentInfo(tab.uri)
                 }
-            viewModel.markNoteLoaded(
-                tab.documentId,
-                tabUri,
+            val baseline =
                 NotesLoadedDocumentBaseline(
                     documentId = tab.documentId,
                     uri = tabUri,
                     lastModifiedEpochMs = info?.lastModifiedEpochMs,
                     sizeBytes = info?.sizeBytes,
-                ),
-            )
+                )
+            viewModel.markNoteLoaded(tab.documentId, tabUri, baseline)
+            viewModel.openTabBaselines[tab.documentId] = baseline
+            if (tab.missingOnDisk) {
+                openTabs =
+                    openTabs.map { openTab ->
+                        if (openTab.documentId == tab.documentId) {
+                            openTab.copy(missingOnDisk = false)
+                        } else {
+                            openTab
+                        }
+                    }
+            }
+            val fileNameForTitle = info?.displayName?.takeIf { it.isNotBlank() } ?: tab.fileName
+            if (fileNameForTitle.isNotBlank()) {
+                repository.rememberMetaFromContent(
+                    tab.documentId,
+                    loaded,
+                    fileName = fileNameForTitle,
+                    lastModifiedEpochMs = info?.lastModifiedEpochMs,
+                )
+                val resolvedTitle =
+                    NoteMetaResolver.resolveNoteTitle(
+                        mdText = loaded,
+                        fileName = fileNameForTitle,
+                        source = titleSource,
+                    )
+                if (resolvedTitle != tab.title ||
+                    (info?.displayName != null && info.displayName != tab.fileName)
+                ) {
+                    openTabs =
+                        openTabs.map { openTab ->
+                            if (openTab.documentId != tab.documentId) {
+                                openTab
+                            } else {
+                                openTab.copy(
+                                    title = resolvedTitle,
+                                    fileName = fileNameForTitle,
+                                    missingOnDisk = false,
+                                )
+                            }
+                        }
+                }
+            }
         } else {
             val error = result.exceptionOrNull()
-            noteContent = null
-            draftText = ""
-            lastSavedText = null
-            previewDraftText = ""
+            val missing =
+                withContext(Dispatchers.IO) {
+                    !repository.documentExists(tab.uri)
+                }
             canvasMarkdownMode = false
             if (autoEditDocumentId == tab.documentId) {
                 autoEditDocumentId = null
             }
             isEditing = false
-            statusMessage =
-                error?.message ?: context.getString(R.string.markdown_notes_load_failed)
             viewModel.clearLoadedNote()
+            viewModel.openTabBaselines.remove(tab.documentId)
+            if (missing) {
+                val missingTab = tab.copy(missingOnDisk = true)
+                openTabs =
+                    openTabs.map { openTab ->
+                        if (openTab.documentId == tab.documentId) {
+                            missingTab
+                        } else {
+                            openTab
+                        }
+                    }
+                // Keep any in-memory draft empty for a cold open of a deleted tab.
+                if (noteContent == null && draftText.isBlank()) {
+                    noteContent = null
+                    lastSavedText = null
+                    previewDraftText = ""
+                }
+                statusMessage = null
+                externalNoteConflict = NotesExternalNoteConflict.Deleted(tab = missingTab)
+            } else {
+                noteContent = null
+                draftText = ""
+                lastSavedText = null
+                previewDraftText = ""
+                statusMessage =
+                    error?.message ?: context.getString(R.string.markdown_notes_load_failed)
+            }
         }
         noteLoading = false
     }
@@ -3938,6 +4153,7 @@ private fun NotesTabChip(
     onClose: () -> Unit,
     onLongPress: () -> Unit,
     isExternal: Boolean = false,
+    missingOnDisk: Boolean = false,
 ) {
     val density = LocalDensity.current
     val dismissThresholdPx = with(density) { NotesTabSwipeCloseThreshold.toPx() }
@@ -3945,6 +4161,8 @@ private fun NotesTabChip(
     val colors = MaterialTheme.colorScheme
     val chipColor =
         when {
+            missingOnDisk && selected -> colors.errorContainer
+            missingOnDisk -> colors.errorContainer.copy(alpha = 0.7f)
             selected && isExternal -> colors.tertiaryContainer
             selected -> colors.secondaryContainer
             isExternal -> colors.tertiaryContainer.copy(alpha = 0.55f)
@@ -3952,6 +4170,7 @@ private fun NotesTabChip(
         }
     val labelColor =
         when {
+            missingOnDisk -> colors.onErrorContainer
             selected && isExternal -> colors.onTertiaryContainer
             selected -> colors.onSecondaryContainer
             isExternal -> colors.onTertiaryContainer
@@ -4092,6 +4311,8 @@ private fun NotesOpenTabMenuRow(
             .offset { IntOffset(0, dragOffsetY.roundToInt()) }
             .background(
                 when {
+                    tab.missingOnDisk && selected -> MaterialTheme.colorScheme.errorContainer
+                    tab.missingOnDisk -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.7f)
                     selected && tab.isExternal -> MaterialTheme.colorScheme.tertiaryContainer
                     selected -> MaterialTheme.colorScheme.secondaryContainer
                     tab.isExternal -> MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.45f)
@@ -4104,7 +4325,12 @@ private fun NotesOpenTabMenuRow(
         Icon(
             imageVector = Icons.Filled.DragHandle,
             contentDescription = stringResource(R.string.markdown_notes_reorder_tab),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint =
+            if (tab.missingOnDisk) {
+                MaterialTheme.colorScheme.onErrorContainer
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
             modifier =
             Modifier
                 .size(40.dp)
@@ -4129,6 +4355,12 @@ private fun NotesOpenTabMenuRow(
             text = tab.displayTitle,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            color =
+            if (tab.missingOnDisk) {
+                MaterialTheme.colorScheme.onErrorContainer
+            } else {
+                Color.Unspecified
+            },
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             modifier =
@@ -4299,6 +4531,7 @@ private fun NotesNavigationRow(
                             onClose = { onCloseTab(tab.documentId) },
                             onLongPress = { tabsMenuExpanded = true },
                             isExternal = tab.isExternal,
+                            missingOnDisk = tab.missingOnDisk,
                         )
                     }
                     if (openTabs.isEmpty()) {

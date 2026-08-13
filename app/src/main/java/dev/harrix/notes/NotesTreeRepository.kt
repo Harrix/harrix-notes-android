@@ -489,14 +489,27 @@ class NotesTreeRepository(
         tab: OpenNoteTab,
         source: NotesTitleSource,
     ): String {
-        val fileStem =
-            tab.fileName
-                .takeIf { it.isNotBlank() }
-                ?.let { noteDisplayLabel(it) }
-        return when (source) {
-            NotesTitleSource.FileName -> fileStem ?: tab.title
-            NotesTitleSource.Content -> titleByDocumentId[tab.documentId] ?: fileStem ?: tab.title
+        val cachedContentTitle = titleByDocumentId[tab.documentId]
+        val fileName = tab.fileName
+        if (fileName.isNotBlank()) {
+            return when (source) {
+                NotesTitleSource.FileName ->
+                    NoteMetaResolver.resolveNoteTitle(
+                        mdText = "",
+                        fileName = fileName,
+                        source = NotesTitleSource.FileName,
+                    )
+
+                NotesTitleSource.Content ->
+                    cachedContentTitle
+                        ?: NoteMetaResolver.resolveNoteTitle(
+                            mdText = "",
+                            fileName = fileName,
+                            source = NotesTitleSource.Content,
+                        )
+            }
         }
+        return cachedContentTitle ?: tab.title.ifBlank { "Untitled" }
     }
 
     fun patchListingNoteLabels(
