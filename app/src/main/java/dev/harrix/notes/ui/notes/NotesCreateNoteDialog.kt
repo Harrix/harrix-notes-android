@@ -10,12 +10,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Article
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.Brush
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
@@ -31,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
@@ -67,17 +74,31 @@ fun NotesCreateKindMenu(
                     onDismissRequest()
                     onSelect(kind)
                 },
+                leadingIcon = {
+                    Icon(
+                        imageVector = createKindIcon(kind),
+                        contentDescription = null,
+                    )
+                },
             )
         }
     }
 }
 
 fun createKindLabelRes(kind: NotesCreateKind): Int = when (kind) {
-    NotesCreateKind.RegularNote -> R.string.markdown_notes_create_kind_regular
     NotesCreateKind.QuickNote -> R.string.markdown_notes_create_kind_quick
-    NotesCreateKind.CanvasNote -> R.string.markdown_notes_create_kind_canvas
     NotesCreateKind.QuickCanvas -> R.string.markdown_notes_create_kind_quick_canvas
+    NotesCreateKind.RegularNote -> R.string.markdown_notes_create_kind_regular
+    NotesCreateKind.CanvasNote -> R.string.markdown_notes_create_kind_canvas
     NotesCreateKind.FromTemplate -> R.string.markdown_notes_create_kind_template
+}
+
+fun createKindIcon(kind: NotesCreateKind): ImageVector = when (kind) {
+    NotesCreateKind.QuickNote -> Icons.Filled.Bolt
+    NotesCreateKind.QuickCanvas -> Icons.Filled.Bolt
+    NotesCreateKind.RegularNote -> Icons.Filled.Description
+    NotesCreateKind.CanvasNote -> Icons.Filled.Brush
+    NotesCreateKind.FromTemplate -> Icons.AutoMirrored.Filled.Article
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

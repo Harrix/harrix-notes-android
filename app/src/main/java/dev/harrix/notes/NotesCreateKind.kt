@@ -1,10 +1,10 @@
 package dev.harrix.notes
 
-/** Ways to create a note from the FAB / new-note tab menu. */
+/** Ways to create a note from the FAB / new-note tab menu (menu order). */
 enum class NotesCreateKind {
-    RegularNote,
     QuickNote,
-    CanvasNote,
     QuickCanvas,
+    RegularNote,
+    CanvasNote,
     FromTemplate,
 }
