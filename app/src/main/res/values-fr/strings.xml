@@ -65,6 +65,15 @@
     <string name="settings_other_summary">Réinitialiser aux valeurs par défaut</string>
     <string name="settings_reset">Réinitialiser les paramètres</string>
     <string name="settings_reset_hint">Restaure l\'apparence et les options des notes par défaut. Le dossier des notes est conservé.</string>
+    <string name="settings_reset_warning_title">Reset settings?</string>
+    <string name="settings_reset_warning_message">This restores appearance and notes options to defaults. The notes folder is kept. This cannot be undone.</string>
+    <string name="settings_reset_warning_continue">Continue</string>
+    <string name="settings_reset_warning_cancel">Cancel</string>
+    <string name="settings_reset_confirm_title">Confirm reset</string>
+    <string name="settings_reset_confirm_message">Type yes to reset settings.</string>
+    <string name="settings_reset_confirm_hint">yes</string>
+    <string name="settings_reset_confirm">Reset</string>
+    <string name="settings_reset_confirm_cancel">Cancel</string>
     <string name="settings_reset_done">Paramètres réinitialisés</string>
     <string name="settings_markdown_notes_title">Notes</string>
     <string name="settings_markdown_notes_path">Dossier des notes</string>

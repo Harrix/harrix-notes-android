@@ -65,6 +65,15 @@
     <string name="settings_other_summary">Đặt lại về mặc định</string>
     <string name="settings_reset">Đặt lại cài đặt</string>
     <string name="settings_reset_hint">Khôi phục các tùy chọn giao diện và ghi chú về mặc định. Thư mục ghi chú được giữ lại.</string>
+    <string name="settings_reset_warning_title">Reset settings?</string>
+    <string name="settings_reset_warning_message">This restores appearance and notes options to defaults. The notes folder is kept. This cannot be undone.</string>
+    <string name="settings_reset_warning_continue">Continue</string>
+    <string name="settings_reset_warning_cancel">Cancel</string>
+    <string name="settings_reset_confirm_title">Confirm reset</string>
+    <string name="settings_reset_confirm_message">Type yes to reset settings.</string>
+    <string name="settings_reset_confirm_hint">yes</string>
+    <string name="settings_reset_confirm">Reset</string>
+    <string name="settings_reset_confirm_cancel">Cancel</string>
     <string name="settings_reset_done">Cài đặt được khôi phục về mặc định</string>
     <string name="settings_markdown_notes_title">Ghi chú</string>
     <string name="settings_markdown_notes_path">Thư mục ghi chú</string>

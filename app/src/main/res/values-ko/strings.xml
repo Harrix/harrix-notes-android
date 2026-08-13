@@ -65,6 +65,15 @@
     <string name="settings_other_summary">기본값으로 재설정</string>
     <string name="settings_reset">설정 재설정</string>
     <string name="settings_reset_hint">모양 및 메모 옵션을 기본값으로 복원합니다. 메모 폴더는 유지됩니다.</string>
+    <string name="settings_reset_warning_title">Reset settings?</string>
+    <string name="settings_reset_warning_message">This restores appearance and notes options to defaults. The notes folder is kept. This cannot be undone.</string>
+    <string name="settings_reset_warning_continue">Continue</string>
+    <string name="settings_reset_warning_cancel">Cancel</string>
+    <string name="settings_reset_confirm_title">Confirm reset</string>
+    <string name="settings_reset_confirm_message">Type yes to reset settings.</string>
+    <string name="settings_reset_confirm_hint">yes</string>
+    <string name="settings_reset_confirm">Reset</string>
+    <string name="settings_reset_confirm_cancel">Cancel</string>
     <string name="settings_reset_done">설정이 기본값으로 복원되었습니다.</string>
     <string name="settings_markdown_notes_title">메모</string>
     <string name="settings_markdown_notes_path">메모 폴더</string>

@@ -65,6 +65,15 @@
     <string name="settings_other_summary">Auf Standardwerte zurücksetzen</string>
     <string name="settings_reset">Einstellungen zurücksetzen</string>
     <string name="settings_reset_hint">Stellt das Standard-Aussehen und die Notiz-Optionen wieder her. Der Notizordner bleibt erhalten.</string>
+    <string name="settings_reset_warning_title">Reset settings?</string>
+    <string name="settings_reset_warning_message">This restores appearance and notes options to defaults. The notes folder is kept. This cannot be undone.</string>
+    <string name="settings_reset_warning_continue">Continue</string>
+    <string name="settings_reset_warning_cancel">Cancel</string>
+    <string name="settings_reset_confirm_title">Confirm reset</string>
+    <string name="settings_reset_confirm_message">Type yes to reset settings.</string>
+    <string name="settings_reset_confirm_hint">yes</string>
+    <string name="settings_reset_confirm">Reset</string>
+    <string name="settings_reset_confirm_cancel">Cancel</string>
     <string name="settings_reset_done">Einstellungen zurückgesetzt</string>
     <string name="settings_markdown_notes_title">Notizen</string>
     <string name="settings_markdown_notes_path">Notizordner</string>

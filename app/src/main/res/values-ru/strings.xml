@@ -65,6 +65,15 @@
     <string name="settings_other_summary">Сброс настроек</string>
     <string name="settings_reset">Сбросить настройки</string>
     <string name="settings_reset_hint">Восстановить оформление и параметры заметок по умолчанию. Папка заметок сохраняется.</string>
+    <string name="settings_reset_warning_title">Сбросить настройки?</string>
+    <string name="settings_reset_warning_message">Будут восстановлены оформление и параметры заметок по умолчанию. Папка заметок сохранится. Это действие нельзя отменить.</string>
+    <string name="settings_reset_warning_continue">Продолжить</string>
+    <string name="settings_reset_warning_cancel">Отмена</string>
+    <string name="settings_reset_confirm_title">Подтверждение сброса</string>
+    <string name="settings_reset_confirm_message">Введите yes, чтобы сбросить настройки.</string>
+    <string name="settings_reset_confirm_hint">yes</string>
+    <string name="settings_reset_confirm">Сбросить</string>
+    <string name="settings_reset_confirm_cancel">Отмена</string>
     <string name="settings_reset_done">Настройки сброшены</string>
     <string name="settings_markdown_notes_title">Заметки</string>
     <string name="settings_markdown_notes_path">Папка заметок</string>

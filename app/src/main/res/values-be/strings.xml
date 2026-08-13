@@ -65,6 +65,15 @@
     <string name="settings_other_summary">Скінуць налады па змаўчанні</string>
     <string name="settings_reset">Скінуць налады</string>
     <string name="settings_reset_hint">Аднавіць параметры выгляду і нататак да значэнняў па змаўчанні. Папка з запісамі захоўваецца.</string>
+    <string name="settings_reset_warning_title">Reset settings?</string>
+    <string name="settings_reset_warning_message">This restores appearance and notes options to defaults. The notes folder is kept. This cannot be undone.</string>
+    <string name="settings_reset_warning_continue">Continue</string>
+    <string name="settings_reset_warning_cancel">Cancel</string>
+    <string name="settings_reset_confirm_title">Confirm reset</string>
+    <string name="settings_reset_confirm_message">Type yes to reset settings.</string>
+    <string name="settings_reset_confirm_hint">yes</string>
+    <string name="settings_reset_confirm">Reset</string>
+    <string name="settings_reset_confirm_cancel">Cancel</string>
     <string name="settings_reset_done">Налады адноўлены да стандартных</string>
     <string name="settings_markdown_notes_title">Нататкі</string>
     <string name="settings_markdown_notes_path">Папка з нататкамі</string>

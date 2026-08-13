@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -50,6 +51,7 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -149,7 +151,23 @@ fun SettingsScreen(
     val notesPreferences = remember { NotesViewerPreferences(context.applicationContext) }
     var settingsEpoch by rememberSaveable { mutableIntStateOf(0) }
     var resetMessage by rememberSaveable { mutableStateOf<String?>(null) }
+    var showResetWarning by rememberSaveable { mutableStateOf(false) }
+    var showResetConfirm by rememberSaveable { mutableStateOf(false) }
+    var resetConfirmText by rememberSaveable { mutableStateOf("") }
     var page by rememberSaveable { mutableStateOf(NotesSettingsPage.Hub) }
+
+    fun performResetSettings() {
+        appPreferences.resetAppearanceToDefaults()
+        notesPreferences.resetSettingsToDefaults()
+        onThemeModeChange(ThemeMode.System)
+        onUiFontSizeChange(AppPreferences.DEFAULT_UI_FONT_SIZE_SP)
+        onAppLanguageChange(AppLanguage.System)
+        settingsEpoch += 1
+        resetMessage = context.getString(R.string.settings_reset_done)
+        showResetWarning = false
+        showResetConfirm = false
+        resetConfirmText = ""
+    }
 
     val pageTitle =
         when (page) {
@@ -315,13 +333,8 @@ fun SettingsScreen(
                     )
                     SettingsFullWidthOutlinedButton(
                         onClick = {
-                            appPreferences.resetAppearanceToDefaults()
-                            notesPreferences.resetSettingsToDefaults()
-                            onThemeModeChange(ThemeMode.System)
-                            onUiFontSizeChange(AppPreferences.DEFAULT_UI_FONT_SIZE_SP)
-                            onAppLanguageChange(AppLanguage.System)
-                            settingsEpoch += 1
-                            resetMessage = context.getString(R.string.settings_reset_done)
+                            resetConfirmText = ""
+                            showResetWarning = true
                         },
                         label = stringResource(R.string.settings_reset),
                     )
@@ -336,7 +349,76 @@ fun SettingsScreen(
             }
         }
     }
+
+    if (showResetWarning) {
+        AlertDialog(
+            onDismissRequest = { showResetWarning = false },
+            title = { Text(stringResource(R.string.settings_reset_warning_title)) },
+            text = { Text(stringResource(R.string.settings_reset_warning_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showResetWarning = false
+                        resetConfirmText = ""
+                        showResetConfirm = true
+                    },
+                ) {
+                    Text(stringResource(R.string.settings_reset_warning_continue))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetWarning = false }) {
+                    Text(stringResource(R.string.settings_reset_warning_cancel))
+                }
+            },
+        )
+    }
+
+    if (showResetConfirm) {
+        val canConfirm = resetConfirmText.trim() == SETTINGS_RESET_CONFIRM_WORD
+        AlertDialog(
+            onDismissRequest = {
+                showResetConfirm = false
+                resetConfirmText = ""
+            },
+            title = { Text(stringResource(R.string.settings_reset_confirm_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.settings_reset_confirm_message))
+                    OutlinedTextField(
+                        value = resetConfirmText,
+                        onValueChange = { resetConfirmText = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        label = {
+                            Text(stringResource(R.string.settings_reset_confirm_hint))
+                        },
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { performResetSettings() },
+                    enabled = canConfirm,
+                ) {
+                    Text(stringResource(R.string.settings_reset_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showResetConfirm = false
+                        resetConfirmText = ""
+                    },
+                ) {
+                    Text(stringResource(R.string.settings_reset_confirm_cancel))
+                }
+            },
+        )
+    }
 }
+
+private const val SETTINGS_RESET_CONFIRM_WORD = "yes"
 
 @Composable
 private fun SettingsDetailPane(
