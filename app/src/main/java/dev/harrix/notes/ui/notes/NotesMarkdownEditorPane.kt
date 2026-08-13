@@ -123,6 +123,9 @@ class NotesMarkdownEditorController {
     internal var errorListener: (String) -> Unit = {}
     internal var scrollListener: (NotesScrollMetrics) -> Unit = {}
 
+    /** Active match is 1-based; both are 0 when there are no matches. */
+    var findResultListener: (activeMatch: Int, totalMatches: Int) -> Unit = { _, _ -> }
+
     /**
      * Sends the document to Compose immediately instead of waiting for the
      * editor debounce, and returns once the text has arrived.
@@ -193,6 +196,32 @@ class NotesMarkdownEditorController {
         val target = webView ?: return
         if (!ready) return
         target.evaluateJavascript("window.notesEditor && window.notesEditor.reportScroll();", null)
+    }
+
+    /** Exact-match find; highlights all hits and selects the first. */
+    fun find(query: String) {
+        val target = webView ?: return
+        if (!ready) return
+        val literal = JSONObject.quote(query)
+        target.evaluateJavascript("window.notesEditor && window.notesEditor.find($literal);", null)
+    }
+
+    fun findNext() {
+        val target = webView ?: return
+        if (!ready) return
+        target.evaluateJavascript("window.notesEditor && window.notesEditor.findNext();", null)
+    }
+
+    fun findPrev() {
+        val target = webView ?: return
+        if (!ready) return
+        target.evaluateJavascript("window.notesEditor && window.notesEditor.findPrev();", null)
+    }
+
+    fun clearFind() {
+        val target = webView ?: return
+        if (!ready) return
+        target.evaluateJavascript("window.notesEditor && window.notesEditor.clearFind();", null)
     }
 
     /**
@@ -348,6 +377,16 @@ class NotesMarkdownEditorController {
             cancelBootTimeout()
             errorListener(message)
         }
+    }
+
+    @JavascriptInterface
+    fun onFindResult(
+        activeMatchStr: String,
+        totalMatchesStr: String,
+    ) {
+        val active = activeMatchStr.toIntOrNull() ?: 0
+        val total = totalMatchesStr.toIntOrNull() ?: 0
+        mainHandler.post { findResultListener(active, total) }
     }
 }
 

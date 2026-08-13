@@ -243,6 +243,12 @@
     <string name="markdown_notes_canvas_paper_light">Светлая бумага</string>
     <string name="markdown_notes_canvas_paper_dark">Тёмная бумага</string>
     <string name="markdown_notes_canvas_paper_theme">Как тема</string>
+    <string name="markdown_notes_find">Поиск</string>
+    <string name="markdown_notes_find_hint">Найти</string>
+    <string name="markdown_notes_find_count">%1$d / %2$d</string>
+    <string name="markdown_notes_find_next">Следующее совпадение</string>
+    <string name="markdown_notes_find_prev">Предыдущее совпадение</string>
+    <string name="markdown_notes_find_close">Закрыть поиск</string>
     <string name="markdown_notes_note_info">О заметке</string>
     <string name="markdown_notes_note_info_title">Название</string>
     <string name="markdown_notes_note_info_file_name">Имя файла</string>

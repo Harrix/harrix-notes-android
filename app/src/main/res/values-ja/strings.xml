@@ -236,6 +236,12 @@
     <string name="markdown_notes_canvas_paper_light">明るい紙</string>
     <string name="markdown_notes_canvas_paper_dark">暗い紙</string>
     <string name="markdown_notes_canvas_paper_theme">テーマに合わせる</string>
+        <string name="markdown_notes_find">Find</string>
+    <string name="markdown_notes_find_hint">Find</string>
+    <string name="markdown_notes_find_count">%1$d / %2$d</string>
+    <string name="markdown_notes_find_next">Next match</string>
+    <string name="markdown_notes_find_prev">Previous match</string>
+    <string name="markdown_notes_find_close">Close find</string>
     <string name="markdown_notes_note_info">ノート情報</string>
     <string name="markdown_notes_note_info_title">タイトル</string>
     <string name="markdown_notes_note_info_file_name">ファイル名</string>

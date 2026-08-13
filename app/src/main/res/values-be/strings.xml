@@ -236,6 +236,12 @@
     <string name="markdown_notes_canvas_paper_light">Светлая папера</string>
     <string name="markdown_notes_canvas_paper_dark">Цёмная папера</string>
     <string name="markdown_notes_canvas_paper_theme">Як тэма</string>
+        <string name="markdown_notes_find">Find</string>
+    <string name="markdown_notes_find_hint">Find</string>
+    <string name="markdown_notes_find_count">%1$d / %2$d</string>
+    <string name="markdown_notes_find_next">Next match</string>
+    <string name="markdown_notes_find_prev">Previous match</string>
+    <string name="markdown_notes_find_close">Close find</string>
     <string name="markdown_notes_note_info">Пра нататку</string>
     <string name="markdown_notes_note_info_title">Назва</string>
     <string name="markdown_notes_note_info_file_name">Імя файла</string>

@@ -7,8 +7,8 @@
 // and pushed to Kotlin in chunks. Numeric bridge arguments travel as strings —
 // older System WebView builds mishandle primitive ints.
 
-import { Compartment, EditorState } from "@codemirror/state";
-import { EditorView, keymap } from "@codemirror/view";
+import { Compartment, EditorState, StateEffect, StateField } from "@codemirror/state";
+import { Decoration, EditorView, keymap } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
@@ -25,6 +25,30 @@ let config = null;
 let pushTimer = null;
 let suppressPush = false;
 let booted = false;
+
+/** Exact-match find-in-note state (UTF-16 offsets, same as CodeMirror doc). */
+let findMatches = [];
+let findIndex = -1;
+let findQuery = "";
+
+const setFindDecorations = StateEffect.define();
+const findMatchMark = Decoration.mark({ class: "cm-find-match" });
+const findCurrentMark = Decoration.mark({ class: "cm-find-current" });
+
+const findDecorationsField = StateField.define({
+  create() {
+    return Decoration.none;
+  },
+  update(value, tr) {
+    for (const effect of tr.effects) {
+      if (effect.is(setFindDecorations)) {
+        return effect.value;
+      }
+    }
+    return value.map(tr.changes);
+  },
+  provide: (field) => EditorView.decorations.from(field),
+});
 
 function host() {
   const bridge = window.NotesEditorHost;
@@ -129,6 +153,16 @@ function buildTheme() {
       },
       ".cm-cursor, .cm-dropCursor": { borderLeftColor: config.caret },
       "::selection": { backgroundColor: config.selection },
+      ".cm-find-match": {
+        backgroundColor: config.dark
+          ? "rgba(255, 213, 0, 0.35)"
+          : "rgba(255, 213, 0, 0.55)",
+      },
+      ".cm-find-current": {
+        backgroundColor: config.dark
+          ? "rgba(255, 152, 0, 0.55)"
+          : "rgba(255, 152, 0, 0.75)",
+      },
     },
     { dark: !!config.dark },
   );
@@ -272,8 +306,106 @@ function buildExtensions() {
     }),
     themeConf.of(buildTheme()),
     languageConf.of(buildLanguage()),
+    findDecorationsField,
     EditorView.updateListener.of(onUpdate),
   ];
+}
+
+function reportFindResult() {
+  try {
+    const total = findMatches.length;
+    const active = total === 0 || findIndex < 0 ? 0 : findIndex + 1;
+    host().onFindResult(String(active), String(total));
+  } catch (_) {
+    // Older hosts without onFindResult.
+  }
+}
+
+function buildFindDecorations() {
+  if (findMatches.length === 0) {
+    return Decoration.none;
+  }
+  const ranges = [];
+  for (let i = 0; i < findMatches.length; i++) {
+    const match = findMatches[i];
+    const mark = i === findIndex ? findCurrentMark : findMatchMark;
+    ranges.push(mark.range(match.from, match.to));
+  }
+  return Decoration.set(ranges, true);
+}
+
+function applyFindDecorations() {
+  if (!view) {
+    return;
+  }
+  view.dispatch({
+    effects: setFindDecorations.of(buildFindDecorations()),
+  });
+}
+
+function clearFindState() {
+  findMatches = [];
+  findIndex = -1;
+  findQuery = "";
+  applyFindDecorations();
+  reportFindResult();
+}
+
+function collectExactMatches(docText, query) {
+  const matches = [];
+  if (!query) {
+    return matches;
+  }
+  let from = 0;
+  while (from <= docText.length - query.length) {
+    const idx = docText.indexOf(query, from);
+    if (idx < 0) {
+      break;
+    }
+    matches.push({ from: idx, to: idx + query.length });
+    from = idx + query.length;
+  }
+  return matches;
+}
+
+function goToFindIndex(index) {
+  if (!view || findMatches.length === 0) {
+    findIndex = -1;
+    applyFindDecorations();
+    reportFindResult();
+    return;
+  }
+  findIndex = ((index % findMatches.length) + findMatches.length) % findMatches.length;
+  const match = findMatches[findIndex];
+  applyFindDecorations();
+  view.dispatch({
+    selection: { anchor: match.from, head: match.to },
+    effects: EditorView.scrollIntoView(match.from, { y: "center" }),
+  });
+  reportFindResult();
+}
+
+function runFind(query) {
+  if (!view) {
+    findMatches = [];
+    findIndex = -1;
+    findQuery = "";
+    reportFindResult();
+    return;
+  }
+  findQuery = String(query || "");
+  if (!findQuery) {
+    clearFindState();
+    return;
+  }
+  findMatches = collectExactMatches(view.state.doc.toString(), findQuery);
+  if (findMatches.length === 0) {
+    findIndex = -1;
+    applyFindDecorations();
+    reportFindResult();
+    return;
+  }
+  goToFindIndex(0);
 }
 
 function withoutPush(action) {
@@ -340,12 +472,16 @@ window.notesEditor = {
     }
     try {
       cancelPush();
+      findMatches = [];
+      findIndex = -1;
+      findQuery = "";
       const doc = readHostText();
       withoutPush(function () {
         view.setState(EditorState.create({ doc: doc, extensions: buildExtensions() }));
       });
       view.requestMeasure();
       host().onReady();
+      reportFindResult();
     } catch (error) {
       reportError(error);
     }
@@ -404,6 +540,47 @@ window.notesEditor = {
 
   keepCaretVisible: function () {
     scheduleKeepCaretVisible();
+  },
+
+  /** Exact substring find; highlights all matches and selects the first. */
+  find: function (query) {
+    try {
+      runFind(query);
+    } catch (error) {
+      reportError(error);
+    }
+  },
+
+  findNext: function () {
+    try {
+      if (findMatches.length === 0) {
+        reportFindResult();
+        return;
+      }
+      goToFindIndex(findIndex + 1);
+    } catch (error) {
+      reportError(error);
+    }
+  },
+
+  findPrev: function () {
+    try {
+      if (findMatches.length === 0) {
+        reportFindResult();
+        return;
+      }
+      goToFindIndex(findIndex - 1);
+    } catch (error) {
+      reportError(error);
+    }
+  },
+
+  clearFind: function () {
+    try {
+      clearFindState();
+    } catch (error) {
+      reportError(error);
+    }
   },
 };
 

@@ -236,6 +236,12 @@
     <string name="markdown_notes_canvas_paper_light">浅色纸张</string>
     <string name="markdown_notes_canvas_paper_dark">深色纸张</string>
     <string name="markdown_notes_canvas_paper_theme">跟随主题</string>
+        <string name="markdown_notes_find">Find</string>
+    <string name="markdown_notes_find_hint">Find</string>
+    <string name="markdown_notes_find_count">%1$d / %2$d</string>
+    <string name="markdown_notes_find_next">Next match</string>
+    <string name="markdown_notes_find_prev">Previous match</string>
+    <string name="markdown_notes_find_close">Close find</string>
     <string name="markdown_notes_note_info">笔记信息</string>
     <string name="markdown_notes_note_info_title">标题</string>
     <string name="markdown_notes_note_info_file_name">文件名</string>

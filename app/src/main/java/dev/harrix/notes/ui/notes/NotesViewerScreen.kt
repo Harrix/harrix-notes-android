@@ -74,6 +74,7 @@ import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.outlined.PushPin
@@ -100,6 +101,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -277,7 +279,39 @@ fun NotesViewerScreen(
     var treeLoadingRoot by viewModel.treeLoadingRoot
     var externalNoteConflict by viewModel.externalNoteConflict
     val editorController = remember { NotesMarkdownEditorController() }
+    val previewFindController = remember { NotesPreviewFindController() }
+    var showFindBar by remember { mutableStateOf(false) }
+    var findQuery by remember { mutableStateOf("") }
+    var findActiveMatch by remember { mutableIntStateOf(0) }
+    var findTotalMatches by remember { mutableIntStateOf(0) }
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    fun clearNoteFind() {
+        editorController.clearFind()
+        previewFindController.clearFind()
+        findActiveMatch = 0
+        findTotalMatches = 0
+    }
+
+    fun closeFindBar() {
+        showFindBar = false
+        findQuery = ""
+        clearNoteFind()
+    }
+
+    fun runNoteFind(query: String) {
+        if (query.isEmpty()) {
+            clearNoteFind()
+            return
+        }
+        if (isEditing) {
+            previewFindController.clearFind()
+            editorController.find(query)
+        } else {
+            editorController.clearFind()
+            previewFindController.find(query)
+        }
+    }
 
     fun reloadPath() {
         notesTreeUri = preferences.loadNotesTreeUri()
@@ -2303,6 +2337,31 @@ fun NotesViewerScreen(
     val useDualPane = dualPaneEnabled && isDualPaneLayoutEligible()
     val useDualPaneState = rememberUpdatedState(useDualPane)
 
+    LaunchedEffect(editorController) {
+        editorController.findResultListener = { active, total ->
+            findActiveMatch = active
+            findTotalMatches = total
+        }
+    }
+    LaunchedEffect(previewFindController) {
+        previewFindController.findResultListener = { active, total ->
+            findActiveMatch = active
+            findTotalMatches = total
+        }
+    }
+    LaunchedEffect(showFindBar, findQuery, isEditing, selectedTabDocumentId) {
+        if (!showFindBar) {
+            return@LaunchedEffect
+        }
+        delay(200)
+        runNoteFind(findQuery)
+    }
+    LaunchedEffect(selectedTabDocumentId) {
+        if (showFindBar) {
+            closeFindBar()
+        }
+    }
+
     LaunchedEffect(selectedTabDocumentId, selectedTab?.uri) {
         val tab = selectedTab
         if (tab == null) {
@@ -2646,6 +2705,13 @@ fun NotesViewerScreen(
                             onPaste = { pasteClipboard() },
                             recentNotes = recentNotes,
                             onOpenRecentNote = { openRecentNote(it) },
+                            onFindInNote = {
+                                if (canvasSurfaceTab != null && !canvasMarkdownMode) {
+                                    canvasMarkdownMode = true
+                                    isEditing = false
+                                }
+                                showFindBar = true
+                            },
                             onOpenNoteInfo = {
                                 val tab = selectedTab
                                 if (tab != null) {
@@ -2661,6 +2727,29 @@ fun NotesViewerScreen(
                             onOpenSettings = onOpenSettings,
                             onOpenAbout = onOpenAbout,
                         )
+                        if (showFindBar && selectedTab != null) {
+                            NotesFindBar(
+                                query = findQuery,
+                                onQueryChange = { findQuery = it },
+                                activeMatch = findActiveMatch,
+                                totalMatches = findTotalMatches,
+                                onNext = {
+                                    if (isEditing) {
+                                        editorController.findNext()
+                                    } else {
+                                        previewFindController.findNext()
+                                    }
+                                },
+                                onPrev = {
+                                    if (isEditing) {
+                                        editorController.findPrev()
+                                    } else {
+                                        previewFindController.findPrev()
+                                    }
+                                },
+                                onClose = { closeFindBar() },
+                            )
+                        }
                         if (notesTreeUri.isNullOrBlank()) {
                             Box(
                                 modifier = Modifier.weight(1f).fillMaxWidth(),
@@ -2793,6 +2882,7 @@ fun NotesViewerScreen(
                                                         treeUri = notesTreeUri?.let { Uri.parse(it) },
                                                         folderPath = selectedTab.folderPath,
                                                         noteDocumentId = selectedTab.documentId,
+                                                        findController = previewFindController,
                                                         modifier = Modifier.weight(1f).fillMaxSize(),
                                                     )
                                                 }
@@ -2827,6 +2917,7 @@ fun NotesViewerScreen(
                                                         treeUri = notesTreeUri?.let { Uri.parse(it) },
                                                         folderPath = selectedTab.folderPath,
                                                         noteDocumentId = selectedTab.documentId,
+                                                        findController = previewFindController,
                                                     )
                                                 }
                                             }
@@ -3303,6 +3394,7 @@ private fun NotesTopChrome(
     onPaste: () -> Unit,
     recentNotes: List<NotesRecentItem>,
     onOpenRecentNote: (NotesRecentItem) -> Unit,
+    onFindInNote: () -> Unit,
     onOpenNoteInfo: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenAbout: () -> Unit,
@@ -3433,6 +3525,24 @@ private fun NotesTopChrome(
                                 leadingIcon = {
                                     Icon(
                                         imageVector = Icons.Filled.Description,
+                                        contentDescription = null,
+                                    )
+                                },
+                            )
+                            NotesDropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = stringResource(R.string.markdown_notes_find),
+                                        maxLines = 1,
+                                    )
+                                },
+                                onClick = {
+                                    onMenuExpandedChange(false)
+                                    onFindInNote()
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Filled.Search,
                                         contentDescription = null,
                                     )
                                 },

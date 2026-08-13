@@ -128,6 +128,7 @@ fun NotesHtmlPreviewPane(
     treeUri: Uri? = null,
     folderPath: List<NotesPathSegment> = emptyList(),
     noteDocumentId: String? = null,
+    findController: NotesPreviewFindController? = null,
 ) {
     val context = LocalContext.current
     val resolver = remember(context) { context.applicationContext.contentResolver }
@@ -215,10 +216,14 @@ fun NotesHtmlPreviewPane(
                                 onScrollMetrics = { metrics ->
                                     scrollMetricsSink.emit(metrics)
                                 },
-                            ).also { previewWebView = it }
+                            ).also { created ->
+                                previewWebView = created
+                                findController?.attach(created)
+                            }
                         },
                         update = { webView ->
                             previewWebView = webView as NotesPreviewWebView
+                            findController?.attach(webView)
                             webView.setBackgroundColor(palette.background.toArgb())
                             val tag = webView.tag as? String
                             if (tag != document) {
@@ -233,6 +238,7 @@ fun NotesHtmlPreviewPane(
                             }
                         },
                         onRelease = { webView ->
+                            findController?.detach(webView)
                             if (previewWebView === webView) {
                                 previewWebView = null
                             }

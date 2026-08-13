@@ -236,6 +236,12 @@
     <string name="markdown_notes_canvas_paper_light">Giấy sáng</string>
     <string name="markdown_notes_canvas_paper_dark">Giấy tối</string>
     <string name="markdown_notes_canvas_paper_theme">Theo giao diện</string>
+        <string name="markdown_notes_find">Find</string>
+    <string name="markdown_notes_find_hint">Find</string>
+    <string name="markdown_notes_find_count">%1$d / %2$d</string>
+    <string name="markdown_notes_find_next">Next match</string>
+    <string name="markdown_notes_find_prev">Previous match</string>
+    <string name="markdown_notes_find_close">Close find</string>
     <string name="markdown_notes_note_info">Thông tin ghi chú</string>
     <string name="markdown_notes_note_info_title">Tiêu đề</string>
     <string name="markdown_notes_note_info_file_name">Tên tệp</string>

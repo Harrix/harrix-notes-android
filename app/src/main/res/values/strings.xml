@@ -243,6 +243,12 @@
     <string name="markdown_notes_canvas_paper_light">Light paper</string>
     <string name="markdown_notes_canvas_paper_dark">Dark paper</string>
     <string name="markdown_notes_canvas_paper_theme">Match theme</string>
+    <string name="markdown_notes_find">Find</string>
+    <string name="markdown_notes_find_hint">Find</string>
+    <string name="markdown_notes_find_count">%1$d / %2$d</string>
+    <string name="markdown_notes_find_next">Next match</string>
+    <string name="markdown_notes_find_prev">Previous match</string>
+    <string name="markdown_notes_find_close">Close find</string>
     <string name="markdown_notes_note_info">Note info</string>
     <string name="markdown_notes_note_info_title">Title</string>
     <string name="markdown_notes_note_info_file_name">File name</string>
