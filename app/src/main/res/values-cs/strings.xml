@@ -160,6 +160,8 @@
     <string name="markdown_notes_pin">Připnout</string>
     <string name="markdown_notes_unpin">Odepnout</string>
     <string name="markdown_notes_pinned">Připnuto</string>
+    <string name="markdown_notes_show_pinned_bar">Zobrazit připnutou lištu</string>
+    <string name="markdown_notes_hide_pinned_bar">Skrýt připnutou lištu</string>
     <string name="markdown_notes_pin_empty">prázdný</string>
     <string name="markdown_notes_pin_how_title">Jak připnout</string>
     <string name="markdown_notes_pin_how_message">Otevřete nabídku složky nebo poznámky (⋯ v zobrazení seznamu nebo dlouze stiskněte v zobrazení ikon) a vyberte možnost Připnout. Můžete odepnout ze stejné nabídky nebo dlouhým stisknutím položky v této liště.</string>

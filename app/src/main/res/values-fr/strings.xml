@@ -160,6 +160,8 @@
     <string name="markdown_notes_pin">Épingler</string>
     <string name="markdown_notes_unpin">Désépingler</string>
     <string name="markdown_notes_pinned">Épinglé</string>
+    <string name="markdown_notes_show_pinned_bar">Afficher la barre d\'épingles</string>
+    <string name="markdown_notes_hide_pinned_bar">Masquer la barre d\'épingles</string>
     <string name="markdown_notes_pin_empty">vide</string>
     <string name="markdown_notes_pin_how_title">Comment épingler</string>
     <string name="markdown_notes_pin_how_message">Ouvrez le menu d\'un dossier ou d\'une note (⋯ dans la liste ou par un appui long en vue icônes) et choisissez « Épingler ». Vous pouvez désépingler à partir du même menu ou par un appui long sur un élément de la barre.</string>

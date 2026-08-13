@@ -160,6 +160,8 @@
     <string name="markdown_notes_pin">Sematkan</string>
     <string name="markdown_notes_unpin">Lepas sematan</string>
     <string name="markdown_notes_pinned">Disematkan</string>
+    <string name="markdown_notes_show_pinned_bar">Tampilkan bilah yang disematkan</string>
+    <string name="markdown_notes_hide_pinned_bar">Sembunyikan bilah yang disematkan</string>
     <string name="markdown_notes_pin_empty">kosong</string>
     <string name="markdown_notes_pin_how_title">Bagaimana cara menyematkan</string>
     <string name="markdown_notes_pin_how_message">Buka menu folder atau catatan (⋯ dalam tampilan daftar, atau tekan lama dalam tampilan ikon), lalu pilih Pin. Anda dapat melepas pin dari menu yang sama atau dengan menekan lama item di bilah ini.</string>

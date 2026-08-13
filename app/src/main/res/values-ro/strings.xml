@@ -160,6 +160,8 @@
     <string name="markdown_notes_pin">Fixează</string>
     <string name="markdown_notes_unpin">Anulează fixarea</string>
     <string name="markdown_notes_pinned">Fixat</string>
+    <string name="markdown_notes_show_pinned_bar">Afișează bara fixată</string>
+    <string name="markdown_notes_hide_pinned_bar">Ascunde bara fixată</string>
     <string name="markdown_notes_pin_empty">gol</string>
     <string name="markdown_notes_pin_how_title">Cum să fixați</string>
     <string name="markdown_notes_pin_how_message">Deschideți un folder sau un meniu de note (⋯ în vizualizarea listă sau apăsați lung în vizualizarea pictogramelor), apoi alegeți Fixați. Puteți anula fixarea din același meniu sau apăsând lung pe un element din această bară.</string>

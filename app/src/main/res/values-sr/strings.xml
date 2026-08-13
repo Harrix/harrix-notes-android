@@ -160,6 +160,8 @@
     <string name="markdown_notes_pin">Закачи</string>
     <string name="markdown_notes_unpin">Отквачи</string>
     <string name="markdown_notes_pinned">Закачено</string>
+    <string name="markdown_notes_show_pinned_bar">Прикажи траку са закаченим</string>
+    <string name="markdown_notes_hide_pinned_bar">Сакриј траку са закаченим</string>
     <string name="markdown_notes_pin_empty">празно</string>
     <string name="markdown_notes_pin_how_title">Како закачити</string>
     <string name="markdown_notes_pin_how_message">Отворите мени фасцикле или белешке (⋯ у приказу листе или дуго притисните у приказу икона), а затим изаберите Закачи. Можете откачити из истог менија или дугим притиском на ставку на овој траци.</string>

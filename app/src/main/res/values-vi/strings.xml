@@ -160,6 +160,8 @@
     <string name="markdown_notes_pin">Ghim</string>
     <string name="markdown_notes_unpin">Bỏ ghim</string>
     <string name="markdown_notes_pinned">Đã ghim</string>
+    <string name="markdown_notes_show_pinned_bar">Hiện thanh ghim</string>
+    <string name="markdown_notes_hide_pinned_bar">Ẩn thanh ghim</string>
     <string name="markdown_notes_pin_empty">trống rỗng</string>
     <string name="markdown_notes_pin_how_title">Cách ghim</string>
     <string name="markdown_notes_pin_how_message">Mở thư mục hoặc menu ghi chú (⋯ trong chế độ xem danh sách hoặc nhấn và giữ trong chế độ xem biểu tượng), sau đó chọn Ghim. Bạn có thể bỏ ghim khỏi cùng một menu hoặc bằng cách nhấn và giữ một mục trong thanh này.</string>

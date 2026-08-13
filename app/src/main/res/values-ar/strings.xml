@@ -160,6 +160,8 @@
     <string name="markdown_notes_pin">تثبيت</string>
     <string name="markdown_notes_unpin">إلغاء التثبيت</string>
     <string name="markdown_notes_pinned">مثبت</string>
+    <string name="markdown_notes_show_pinned_bar">إظهار الشريط المثبت</string>
+    <string name="markdown_notes_hide_pinned_bar">إخفاء الشريط المثبت</string>
     <string name="markdown_notes_pin_empty">فارغ</string>
     <string name="markdown_notes_pin_how_title">كيفية تثبيت</string>
     <string name="markdown_notes_pin_how_message">افتح مجلدًا أو قائمة ملاحظات (⋯ في عرض القائمة، أو اضغط مطولاً في عرض الأيقونات)، ثم اختر تثبيت. يمكنك إلغاء التثبيت من نفس القائمة أو عن طريق الضغط لفترة طويلة على أحد العناصر في هذا الشريط.</string>

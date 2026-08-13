@@ -160,6 +160,8 @@
     <string name="markdown_notes_pin">Anheften</string>
     <string name="markdown_notes_unpin">Losheften</string>
     <string name="markdown_notes_pinned">Angeheftet</string>
+    <string name="markdown_notes_show_pinned_bar">Angepinnte Leiste anzeigen</string>
+    <string name="markdown_notes_hide_pinned_bar">Angepinnte Leiste ausblenden</string>
     <string name="markdown_notes_pin_empty">leer</string>
     <string name="markdown_notes_pin_how_title">Wie man anheftet</string>
     <string name="markdown_notes_pin_how_message">Öffnen Sie das Ordner- oder Notizmenü (⋯ in der Liste oder langer Klick in der Symbolansicht) und wählen Sie „Anheften“. Sie können Elemente über dasselbe Menü oder durch langes Drücken auf der Leiste loslösen.</string>

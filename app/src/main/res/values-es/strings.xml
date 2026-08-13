@@ -160,6 +160,8 @@
     <string name="markdown_notes_pin">Fijar</string>
     <string name="markdown_notes_unpin">Desfijar</string>
     <string name="markdown_notes_pinned">Fijado</string>
+    <string name="markdown_notes_show_pinned_bar">Mostrar barra de fijados</string>
+    <string name="markdown_notes_hide_pinned_bar">Ocultar barra de fijados</string>
     <string name="markdown_notes_pin_empty">vacío</string>
     <string name="markdown_notes_pin_how_title">Cómo fijar</string>
     <string name="markdown_notes_pin_how_message">Abre el menú de una carpeta o nota (⋯ en la lista, o mantén pulsado en la vista de iconos) y elige Fijar. Puedes desfijar desde el mismo menú o manteniendo pulsado un elemento de esta barra.</string>

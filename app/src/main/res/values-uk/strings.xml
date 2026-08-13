@@ -160,6 +160,8 @@
     <string name="markdown_notes_pin">Закріпити</string>
     <string name="markdown_notes_unpin">Відкріпити</string>
     <string name="markdown_notes_pinned">Закріплено</string>
+    <string name="markdown_notes_show_pinned_bar">Показати панель закріплень</string>
+    <string name="markdown_notes_hide_pinned_bar">Сховати панель закріплень</string>
     <string name="markdown_notes_pin_empty">порожній</string>
     <string name="markdown_notes_pin_how_title">Як закріпити</string>
     <string name="markdown_notes_pin_how_message">Відкрийте папку або меню нотаток (⋯ у списку або натисніть і утримуйте в режимі піктограм), а потім виберіть «Закріпити». Відкріпити можна в тому ж меню або довго натискаючи елемент на цій панелі.</string>

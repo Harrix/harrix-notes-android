@@ -160,6 +160,8 @@
     <string name="markdown_notes_pin">Замацаваць</string>
     <string name="markdown_notes_unpin">Адмацаваць</string>
     <string name="markdown_notes_pinned">Замацаваны</string>
+    <string name="markdown_notes_show_pinned_bar">Паказаць панэль замацаванняў</string>
+    <string name="markdown_notes_hide_pinned_bar">Схаваць панэль замацаванняў</string>
     <string name="markdown_notes_pin_empty">пусты</string>
     <string name="markdown_notes_pin_how_title">Як замацаваць</string>
     <string name="markdown_notes_pin_how_message">Адкрыйце меню папкі або нататкі (⋯ у праглядзе спіса або доўгае націсканне ў праглядзе значкоў), затым выберыце «Замацаваць». Вы можаце адмацаваць з таго ж меню або доўгім націскам на элемент у гэтай панэлі.</string>

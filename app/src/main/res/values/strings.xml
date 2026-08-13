@@ -185,6 +185,8 @@
     <string name="markdown_notes_copy_failed">Could not copy</string>
     <string name="markdown_notes_paste_failed">Could not paste</string>
     <string name="markdown_notes_pinned">Pinned</string>
+    <string name="markdown_notes_show_pinned_bar">Show pinned bar</string>
+    <string name="markdown_notes_hide_pinned_bar">Hide pinned bar</string>
     <string name="markdown_notes_pin_empty">empty</string>
     <string name="markdown_notes_pin_how_title">How to pin</string>
     <string name="markdown_notes_pin_how_message">Open a folder or note menu (⋯), or long-press in icons/list view, then choose Pin. You can also pin from the ⋮ menu while a note is open. Unpin from the same menus or by long-pressing an item in this bar.</string>

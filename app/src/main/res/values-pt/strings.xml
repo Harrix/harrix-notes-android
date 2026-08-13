@@ -160,6 +160,8 @@
     <string name="markdown_notes_pin">Afixar</string>
     <string name="markdown_notes_unpin">Desafixar</string>
     <string name="markdown_notes_pinned">Afixado</string>
+    <string name="markdown_notes_show_pinned_bar">Mostrar barra de fixados</string>
+    <string name="markdown_notes_hide_pinned_bar">Ocultar barra de fixados</string>
     <string name="markdown_notes_pin_empty">vazio</string>
     <string name="markdown_notes_pin_how_title">Como afixar</string>
     <string name="markdown_notes_pin_how_message">Abra o menu da pasta ou nota (⋯ na lista, ou pressione longamente na vista de ícones) e escolha «Afixar». Pode desafixar através do mesmo menu ou pressionando longamente num item da barra.</string>

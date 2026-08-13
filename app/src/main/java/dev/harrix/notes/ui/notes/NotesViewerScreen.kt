@@ -2712,6 +2712,11 @@ fun NotesViewerScreen(
                                 }
                                 showFindBar = true
                             },
+                            pinnedBarEnabled = pinnedBarEnabled,
+                            onPinnedBarEnabledChange = { enabled ->
+                                pinnedBarEnabled = enabled
+                                preferences.savePinnedBarEnabled(enabled)
+                            },
                             onOpenNoteInfo = {
                                 val tab = selectedTab
                                 if (tab != null) {
@@ -3395,6 +3400,8 @@ private fun NotesTopChrome(
     recentNotes: List<NotesRecentItem>,
     onOpenRecentNote: (NotesRecentItem) -> Unit,
     onFindInNote: () -> Unit,
+    pinnedBarEnabled: Boolean,
+    onPinnedBarEnabledChange: (Boolean) -> Unit,
     onOpenNoteInfo: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenAbout: () -> Unit,
@@ -3664,6 +3671,36 @@ private fun NotesTopChrome(
                             }
                         }
                         HorizontalDivider()
+                        NotesDropdownMenuItem(
+                            text = {
+                                Text(
+                                    text =
+                                    stringResource(
+                                        if (pinnedBarEnabled) {
+                                            R.string.markdown_notes_hide_pinned_bar
+                                        } else {
+                                            R.string.markdown_notes_show_pinned_bar
+                                        },
+                                    ),
+                                    maxLines = 1,
+                                )
+                            },
+                            onClick = {
+                                onMenuExpandedChange(false)
+                                onPinnedBarEnabledChange(!pinnedBarEnabled)
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector =
+                                    if (pinnedBarEnabled) {
+                                        Icons.Filled.PushPin
+                                    } else {
+                                        Icons.Outlined.PushPin
+                                    },
+                                    contentDescription = null,
+                                )
+                            },
+                        )
                         NotesDropdownMenuItem(
                             text = {
                                 Text(

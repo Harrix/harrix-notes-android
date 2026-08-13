@@ -160,6 +160,8 @@
     <string name="markdown_notes_pin">固定</string>
     <string name="markdown_notes_unpin">取消固定</string>
     <string name="markdown_notes_pinned">已固定</string>
+    <string name="markdown_notes_show_pinned_bar">显示固定栏</string>
+    <string name="markdown_notes_hide_pinned_bar">隐藏固定栏</string>
     <string name="markdown_notes_pin_empty">空</string>
     <string name="markdown_notes_pin_how_title">如何固定</string>
     <string name="markdown_notes_pin_how_message">打开文件夹或笔记菜单（列表中的 ⋯，或在图标视图中长按），然后选择“固定”。您可以从同一菜单中取消固定，或者通过长按栏上的项目取消固定。</string>

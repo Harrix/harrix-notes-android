@@ -160,6 +160,8 @@
     <string name="markdown_notes_pin">Sabitle</string>
     <string name="markdown_notes_unpin">Sabitlemeyi kaldır</string>
     <string name="markdown_notes_pinned">Sabitlendi</string>
+    <string name="markdown_notes_show_pinned_bar">Sabitlenmiş çubuğu göster</string>
+    <string name="markdown_notes_hide_pinned_bar">Sabitlenmiş çubuğu gizle</string>
     <string name="markdown_notes_pin_empty">boş</string>
     <string name="markdown_notes_pin_how_title">Nasıl sabitlenir</string>
     <string name="markdown_notes_pin_how_message">Bir klasör veya not menüsü açın (liste görünümünde ⋯ veya simgeler görünümünde uzun basın), ardından Sabitle\'yi seçin. Aynı menüden veya bu çubuktaki bir öğeye uzun basarak sabitlemeyi kaldırabilirsiniz.</string>

@@ -160,6 +160,8 @@
     <string name="markdown_notes_pin">ピン留め</string>
     <string name="markdown_notes_unpin">ピン留めを解除</string>
     <string name="markdown_notes_pinned">ピン留め済み</string>
+    <string name="markdown_notes_show_pinned_bar">ピン留めバーを表示</string>
+    <string name="markdown_notes_hide_pinned_bar">ピン留めバーを非表示</string>
     <string name="markdown_notes_pin_empty">空</string>
     <string name="markdown_notes_pin_how_title">ピン留めする方法</string>
     <string name="markdown_notes_pin_how_message">フォルダまたはノートのメニューを開き（リストの場合は ⋯、アイコンビューの場合は長押し）、「ピン留めする」を選択します。同じメニューから、またはバーのアイテムを長押しすることでピン留めを解除できます。</string>

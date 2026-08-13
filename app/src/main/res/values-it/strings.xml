@@ -160,6 +160,8 @@
     <string name="markdown_notes_pin">Fissa</string>
     <string name="markdown_notes_unpin">Rimuovi fissaggio</string>
     <string name="markdown_notes_pinned">Fissato</string>
+    <string name="markdown_notes_show_pinned_bar">Mostra barra fissati</string>
+    <string name="markdown_notes_hide_pinned_bar">Nascondi barra fissati</string>
     <string name="markdown_notes_pin_empty">vuoto</string>
     <string name="markdown_notes_pin_how_title">Come fissare</string>
     <string name="markdown_notes_pin_how_message">Apri il menu di una cartella o nota (⋯ nell\'elenco o tieni premuto nella visualizzazione a icone) e scegli «Fissa». Puoi rimuovere dallo stesso menu o tenendo premuto un elemento sulla barra.</string>

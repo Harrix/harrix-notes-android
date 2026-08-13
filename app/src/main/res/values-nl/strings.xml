@@ -160,6 +160,8 @@
     <string name="markdown_notes_pin">Vastzetten</string>
     <string name="markdown_notes_unpin">Losmaken</string>
     <string name="markdown_notes_pinned">Vastgezet</string>
+    <string name="markdown_notes_show_pinned_bar">Vastgezette balk tonen</string>
+    <string name="markdown_notes_hide_pinned_bar">Vastgezette balk verbergen</string>
     <string name="markdown_notes_pin_empty">leeg</string>
     <string name="markdown_notes_pin_how_title">Hoe vast te pinnen</string>
     <string name="markdown_notes_pin_how_message">Open een map- of notitiemenu (⋯ in de lijstweergave, of houd ingedrukt in de pictogrammenweergave) en kies vervolgens Vastzetten. Je kunt losmaken via hetzelfde menu of door lang op een item in deze balk te drukken.</string>

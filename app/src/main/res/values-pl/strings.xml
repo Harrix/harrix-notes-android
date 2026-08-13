@@ -160,6 +160,8 @@
     <string name="markdown_notes_pin">Przypnij</string>
     <string name="markdown_notes_unpin">Odepnij</string>
     <string name="markdown_notes_pinned">Przypięty</string>
+    <string name="markdown_notes_show_pinned_bar">Pokaż pasek przypięć</string>
+    <string name="markdown_notes_hide_pinned_bar">Ukryj pasek przypięć</string>
     <string name="markdown_notes_pin_empty">pusty</string>
     <string name="markdown_notes_pin_how_title">Jak przypiąć</string>
     <string name="markdown_notes_pin_how_message">Otwórz menu folderu lub notatki (⋯ w widoku listy lub naciśnij długo w widoku ikon), a następnie wybierz Przypnij. Możesz odpiąć z tego samego menu lub przez długie naciśnięcie elementu na tym pasku.</string>
