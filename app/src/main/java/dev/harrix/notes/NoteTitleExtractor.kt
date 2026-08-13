@@ -4,7 +4,7 @@
  * Extracts note display metadata from Markdown.
  *
  * `@hsk-sync:note-meta` — title/icon parsing stays aligned with
- * `note-meta.js` (VS Code) and `note_meta.py` (pyssg). Prefer
+ * `note-meta.js` (VS Code) and `harrix_pylib.note_meta`. Prefer
  * [NoteMetaResolver.resolveTitle] when a file-stem fallback is needed.
  */
 object NoteTitleExtractor {

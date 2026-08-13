@@ -10,10 +10,10 @@ import java.time.format.DateTimeParseException
  * Resolve note title and date from Markdown metadata.
  *
  * `@hsk-sync:note-meta` — keep behavior aligned with:
- * - `harrix-pyssg` `note_meta.py`
+ * - `harrix_pylib.note_meta`
  * - `harrix-swiss-knife/vscode/harrix-notes-explorer-hsk/note-meta.js`
  *
- * Title priority: YAML `title` → first `#` heading → file stem.
+ * Title priority: YAML `title` → first `#` heading → `titleFromId(fileStem)`.
  *
  * Date priority: date in file name → YAML `date` → file ctime → file mtime.
  */
@@ -59,8 +59,16 @@ object NoteMetaResolver {
         if (fromContent.isNotEmpty()) {
             return fromContent
         }
+        return titleFromId(fileStem).ifEmpty { "Untitled" }
+    }
+
+    fun titleFromId(fileStem: String): String {
         val stem = fileStem.trim()
-        return stem.ifEmpty { "Untitled" }
+        if (stem.isEmpty()) {
+            return ""
+        }
+        val slug = if ("__" in stem) stem.substringAfter("__") else stem
+        return pythonTitle(slug.replace("-", " ").replace("_", " "))
     }
 
     fun resolveDate(
@@ -167,6 +175,21 @@ object NoteMetaResolver {
         value: LocalDate,
         zoneId: ZoneId,
     ): Long = value.atStartOfDay(zoneId).toInstant().toEpochMilli()
+
+    private fun pythonTitle(text: String): String {
+        val out = StringBuilder(text.length)
+        var cap = true
+        for (ch in text) {
+            if (ch.isLetter()) {
+                out.append(if (cap) ch.titlecase() else ch.lowercase())
+                cap = false
+            } else {
+                out.append(ch)
+                cap = true
+            }
+        }
+        return out.toString()
+    }
 
     private fun unquoteYamlScalar(value: String): String {
         var v = value.trim()

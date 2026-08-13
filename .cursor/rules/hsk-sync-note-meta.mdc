@@ -1,5 +1,5 @@
 ---
-description: Keep @hsk-sync:note-meta title/date resolvers aligned with pyssg and VS Code
+description: Keep @hsk-sync:note-meta title/date resolvers aligned with pylib and VS Code
 globs: app/src/main/java/dev/harrix/notes/NoteMetaResolver.kt,app/src/main/java/dev/harrix/notes/NoteTitleExtractor.kt,app/src/main/java/dev/harrix/notes/NotesDateFormats.kt,app/src/main/java/dev/harrix/notes/NotesTreeRepository.kt,app/src/main/java/dev/harrix/notes/NotesModels.kt,app/src/main/java/dev/harrix/notes/ui/notes/NotesViewerScreen.kt
 alwaysApply: false
 ---
@@ -14,7 +14,7 @@ If priority, parsing rules, or date formats change here, update the sibling impl
 
 | Block | Path |
 |-------|------|
-| Python (pyssg) | `D:\GitHub\harrix-pyssg\src\harrix_pyssg\note_meta.py` |
+| Python (pylib, source of truth) | `D:\GitHub\harrix-pylib\src\harrix_pylib\note_meta.py` |
 | VS Code (JS) | `D:\GitHub\harrix-swiss-knife\vscode\harrix-notes-explorer-hsk\note-meta.js` |
 | Android (this repo) | `NoteMetaResolver.kt`, `NoteTitleExtractor.kt`, list date captions |
 
@@ -24,7 +24,8 @@ If priority, parsing rules, or date formats change here, update the sibling impl
 
 1. YAML `title:`
 2. Else first `#` heading
-3. Else file stem (`.md` / `.g.md` stripped)
+3. Else `titleFromId(fileStem)` (part after `__`, `-`/`_` → spaces, title case)
+4. Else `Untitled`
 
 ### Date
 
