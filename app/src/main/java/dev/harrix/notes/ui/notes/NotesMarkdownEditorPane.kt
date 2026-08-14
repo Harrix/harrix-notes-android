@@ -198,7 +198,7 @@ class NotesMarkdownEditorController {
         target.evaluateJavascript("window.notesEditor && window.notesEditor.reportScroll();", null)
     }
 
-    /** Exact-match find; highlights all hits and selects the first. */
+    /** Case-insensitive find; highlights all hits and selects the first. */
     fun find(query: String) {
         val target = webView ?: return
         if (!ready) return

@@ -4,7 +4,7 @@ import android.webkit.WebView
 
 /**
  * Find-in-page for the Markdown HTML preview WebView using the platform
- * [WebView.findAllAsync] / [WebView.findNext] APIs (exact match + native highlight).
+ * [WebView.findAllAsync] / [WebView.findNext] APIs (case-insensitive + native highlight).
  */
 class NotesPreviewFindController {
     private var webView: WebView? = null

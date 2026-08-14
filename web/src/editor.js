@@ -26,7 +26,7 @@ let pushTimer = null;
 let suppressPush = false;
 let booted = false;
 
-/** Exact-match find-in-note state (UTF-16 offsets, same as CodeMirror doc). */
+/** Case-insensitive substring find-in-note state (UTF-16 offsets, same as CodeMirror doc). */
 let findMatches = [];
 let findIndex = -1;
 let findQuery = "";
@@ -351,19 +351,22 @@ function clearFindState() {
   reportFindResult();
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function collectExactMatches(docText, query) {
   const matches = [];
   if (!query) {
     return matches;
   }
-  let from = 0;
-  while (from <= docText.length - query.length) {
-    const idx = docText.indexOf(query, from);
-    if (idx < 0) {
-      break;
+  const re = new RegExp(escapeRegExp(query), "giu");
+  let match;
+  while ((match = re.exec(docText)) !== null) {
+    matches.push({ from: match.index, to: match.index + match[0].length });
+    if (match[0].length === 0) {
+      re.lastIndex += 1;
     }
-    matches.push({ from: idx, to: idx + query.length });
-    from = idx + query.length;
   }
   return matches;
 }
@@ -542,7 +545,7 @@ window.notesEditor = {
     scheduleKeepCaretVisible();
   },
 
-  /** Exact substring find; highlights all matches and selects the first. */
+  /** Case-insensitive substring find; highlights all matches and selects the first. */
   find: function (query) {
     try {
       runFind(query);
