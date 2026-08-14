@@ -1161,80 +1161,98 @@ private fun CanvasToolbar(
                 modifier =
                 Modifier
                     .fillMaxHeight()
-                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = 4.dp, vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                CanvasToolbarButtons(
-                    tool = tool,
-                    drawingEnabled = drawingEnabled,
-                    penColor = penColor,
-                    paperMode = paperMode,
-                    baseWidth = baseWidth,
-                    canUndo = canUndo,
-                    canRedo = canRedo,
-                    canClear = canClear,
-                    isCustomColor = isCustomColor,
-                    widthIconColor = widthIconColor,
-                    colorMenuExpanded = colorMenuExpanded,
-                    widthMenuExpanded = widthMenuExpanded,
-                    paperMenuExpanded = paperMenuExpanded,
-                    onToolChange = onToolChange,
-                    onDrawingEnabledChange = onDrawingEnabledChange,
-                    onColorChange = onColorChange,
-                    onPaperModeChange = onPaperModeChange,
-                    onWidthChange = onWidthChange,
-                    onUndo = onUndo,
-                    onRedo = onRedo,
-                    onClear = onClear,
-                    onColorMenuExpandedChange = { colorMenuExpanded = it },
-                    onWidthMenuExpandedChange = { widthMenuExpanded = it },
-                    onPaperMenuExpandedChange = { paperMenuExpanded = it },
-                    onShowCustomColorDialog = { showCustomColorDialog = true },
-                    fullscreen = fullscreen,
-                    onToggleFullscreen = onToggleFullscreen,
-                )
+                if (onToggleFullscreen != null) {
+                    CanvasFullscreenToolbarButton(
+                        fullscreen = fullscreen,
+                        onToggleFullscreen = onToggleFullscreen,
+                    )
+                }
+                Column(
+                    modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    CanvasToolbarButtons(
+                        tool = tool,
+                        drawingEnabled = drawingEnabled,
+                        penColor = penColor,
+                        paperMode = paperMode,
+                        baseWidth = baseWidth,
+                        canUndo = canUndo,
+                        canRedo = canRedo,
+                        canClear = canClear,
+                        isCustomColor = isCustomColor,
+                        widthIconColor = widthIconColor,
+                        colorMenuExpanded = colorMenuExpanded,
+                        widthMenuExpanded = widthMenuExpanded,
+                        paperMenuExpanded = paperMenuExpanded,
+                        onToolChange = onToolChange,
+                        onDrawingEnabledChange = onDrawingEnabledChange,
+                        onColorChange = onColorChange,
+                        onPaperModeChange = onPaperModeChange,
+                        onWidthChange = onWidthChange,
+                        onUndo = onUndo,
+                        onRedo = onRedo,
+                        onClear = onClear,
+                        onColorMenuExpandedChange = { colorMenuExpanded = it },
+                        onWidthMenuExpandedChange = { widthMenuExpanded = it },
+                        onPaperMenuExpandedChange = { paperMenuExpanded = it },
+                        onShowCustomColorDialog = { showCustomColorDialog = true },
+                    )
+                }
             }
         } else {
             Row(
                 modifier =
                 Modifier
                     .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
                     .padding(horizontal = 8.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                CanvasToolbarButtons(
-                    tool = tool,
-                    drawingEnabled = drawingEnabled,
-                    penColor = penColor,
-                    paperMode = paperMode,
-                    baseWidth = baseWidth,
-                    canUndo = canUndo,
-                    canRedo = canRedo,
-                    canClear = canClear,
-                    isCustomColor = isCustomColor,
-                    widthIconColor = widthIconColor,
-                    colorMenuExpanded = colorMenuExpanded,
-                    widthMenuExpanded = widthMenuExpanded,
-                    paperMenuExpanded = paperMenuExpanded,
-                    onToolChange = onToolChange,
-                    onDrawingEnabledChange = onDrawingEnabledChange,
-                    onColorChange = onColorChange,
-                    onPaperModeChange = onPaperModeChange,
-                    onWidthChange = onWidthChange,
-                    onUndo = onUndo,
-                    onRedo = onRedo,
-                    onClear = onClear,
-                    onColorMenuExpandedChange = { colorMenuExpanded = it },
-                    onWidthMenuExpandedChange = { widthMenuExpanded = it },
-                    onPaperMenuExpandedChange = { paperMenuExpanded = it },
-                    onShowCustomColorDialog = { showCustomColorDialog = true },
-                    fullscreen = fullscreen,
-                    onToggleFullscreen = onToggleFullscreen,
-                )
+                if (onToggleFullscreen != null) {
+                    CanvasFullscreenToolbarButton(
+                        fullscreen = fullscreen,
+                        onToggleFullscreen = onToggleFullscreen,
+                    )
+                }
+                Row(
+                    modifier = Modifier.weight(1f).horizontalScroll(rememberScrollState()),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    CanvasToolbarButtons(
+                        tool = tool,
+                        drawingEnabled = drawingEnabled,
+                        penColor = penColor,
+                        paperMode = paperMode,
+                        baseWidth = baseWidth,
+                        canUndo = canUndo,
+                        canRedo = canRedo,
+                        canClear = canClear,
+                        isCustomColor = isCustomColor,
+                        widthIconColor = widthIconColor,
+                        colorMenuExpanded = colorMenuExpanded,
+                        widthMenuExpanded = widthMenuExpanded,
+                        paperMenuExpanded = paperMenuExpanded,
+                        onToolChange = onToolChange,
+                        onDrawingEnabledChange = onDrawingEnabledChange,
+                        onColorChange = onColorChange,
+                        onPaperModeChange = onPaperModeChange,
+                        onWidthChange = onWidthChange,
+                        onUndo = onUndo,
+                        onRedo = onRedo,
+                        onClear = onClear,
+                        onColorMenuExpandedChange = { colorMenuExpanded = it },
+                        onWidthMenuExpandedChange = { widthMenuExpanded = it },
+                        onPaperMenuExpandedChange = { paperMenuExpanded = it },
+                        onShowCustomColorDialog = { showCustomColorDialog = true },
+                    )
+                }
             }
         }
     }
@@ -1268,8 +1286,6 @@ private fun CanvasToolbarButtons(
     onWidthMenuExpandedChange: (Boolean) -> Unit,
     onPaperMenuExpandedChange: (Boolean) -> Unit,
     onShowCustomColorDialog: () -> Unit,
-    fullscreen: Boolean = false,
-    onToggleFullscreen: (() -> Unit)? = null,
 ) {
     CanvasToolbarIconButton(
         tooltip =
@@ -1657,35 +1673,34 @@ private fun CanvasToolbarButtons(
             contentDescription = stringResource(R.string.markdown_notes_canvas_clear),
         )
     }
-    if (onToggleFullscreen != null) {
-        CanvasToolbarIconButton(
-            tooltip =
-            stringResource(
-                if (fullscreen) {
-                    R.string.markdown_notes_canvas_exit_fullscreen
-                } else {
-                    R.string.markdown_notes_canvas_fullscreen
-                },
-            ),
-            onClick = onToggleFullscreen,
-        ) {
-            Icon(
-                imageVector =
-                if (fullscreen) {
-                    Icons.Filled.FullscreenExit
-                } else {
-                    Icons.Filled.Fullscreen
-                },
-                contentDescription =
-                stringResource(
-                    if (fullscreen) {
-                        R.string.markdown_notes_canvas_exit_fullscreen
-                    } else {
-                        R.string.markdown_notes_canvas_fullscreen
-                    },
-                ),
-            )
-        }
+}
+
+@Composable
+private fun CanvasFullscreenToolbarButton(
+    fullscreen: Boolean,
+    onToggleFullscreen: () -> Unit,
+) {
+    val label =
+        stringResource(
+            if (fullscreen) {
+                R.string.markdown_notes_canvas_exit_fullscreen
+            } else {
+                R.string.markdown_notes_canvas_fullscreen
+            },
+        )
+    CanvasToolbarIconButton(
+        tooltip = label,
+        onClick = onToggleFullscreen,
+    ) {
+        Icon(
+            imageVector =
+            if (fullscreen) {
+                Icons.Filled.FullscreenExit
+            } else {
+                Icons.Filled.Fullscreen
+            },
+            contentDescription = label,
+        )
     }
 }
 
