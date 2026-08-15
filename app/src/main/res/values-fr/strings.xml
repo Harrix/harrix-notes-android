@@ -82,6 +82,7 @@
     <string name="settings_markdown_notes_open_mode">Ouvrir les notes en</string>
     <string name="settings_markdown_notes_open_mode_preview">Aperçu</string>
     <string name="settings_markdown_notes_open_mode_edit">Éditeur</string>
+    <string name="settings_markdown_notes_open_mode_visual">Visual editor</string>
     <string name="settings_markdown_notes_preview_font_size">Taille de police de l\'aperçu</string>
     <string name="settings_markdown_notes_editor_font_size">Taille de police de l\'éditeur</string>
     <string name="settings_markdown_notes_highlight_max_mb">Limite de coloration syntaxique (Mo)</string>
@@ -181,6 +182,11 @@
     <string name="markdown_notes_copy_failed">Échec de la copie</string>
     <string name="markdown_notes_paste_failed">Échec du collage</string>
     <string name="markdown_notes_edit">Modifier</string>
+    <string name="markdown_notes_visual">Visual editor</string>
+    <string name="markdown_notes_visual_link_title">Link URL</string>
+    <string name="markdown_notes_visual_link_hint">https://</string>
+    <string name="markdown_notes_visual_link_ok">OK</string>
+    <string name="markdown_notes_visual_link_cancel">Cancel</string>
     <string name="markdown_notes_save">Enregistrer</string>
     <string name="markdown_notes_preview">Aperçu</string>
     <string name="markdown_notes_saved">Enregistré</string>

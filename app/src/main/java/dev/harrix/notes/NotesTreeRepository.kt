@@ -783,6 +783,104 @@ class NotesTreeRepository(
         } ?: error("Could not save file")
     }
 
+    /**
+     * Copies [bytes] into the note's `img/` folder (creates the folder if needed).
+     * Used by the visual Markdown editor for Image / paste / drop — same layout as VS Code.
+     */
+    fun insertImageIntoNoteFolder(
+        treeUri: Uri,
+        folderPath: List<NotesPathSegment>,
+        noteDocumentId: String,
+        fileName: String,
+        bytes: ByteArray,
+        mime: String,
+    ): NoteInsertedImage {
+        val parentId =
+            NotesRelativeDocuments.noteParentDocumentId(noteDocumentId)
+                ?: folderPath.lastOrNull()?.documentId
+                ?: DocumentsContract.getTreeDocumentId(treeUri)
+        val parentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, parentId)
+        val imgId =
+            findChildDirectoryId(treeUri, parentId, CanvasNoteDefaults.IMAGE_FOLDER)
+                ?: run {
+                    val created =
+                        DocumentsContract.createDocument(
+                            resolver,
+                            parentUri,
+                            DocumentsContract.Document.MIME_TYPE_DIR,
+                            CanvasNoteDefaults.IMAGE_FOLDER,
+                        ) ?: error("Could not create img folder")
+                    DocumentsContract.getDocumentId(created)
+                }
+        val imgUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, imgId)
+        val uniqueName = uniqueChildFileName(treeUri, imgId, sanitizeImageFileName(fileName))
+        val imageMime = mime.ifBlank { guessImageMime(uniqueName) }
+        val fileUri =
+            DocumentsContract.createDocument(
+                resolver,
+                imgUri,
+                imageMime,
+                uniqueName,
+            ) ?: error("Could not create $uniqueName")
+        writeBytes(fileUri, bytes)
+        invalidateDirectory(treeUri, imgId)
+        invalidateDirectory(treeUri, parentId)
+        val relativePath = "${CanvasNoteDefaults.IMAGE_FOLDER}/$uniqueName"
+        val dataUri = "data:$imageMime;base64,${android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)}"
+        return NoteInsertedImage(relativePath = relativePath, dataUri = dataUri)
+    }
+
+    private fun findChildDirectoryId(
+        treeUri: Uri,
+        parentDocumentId: String,
+        name: String,
+    ): String? = queryChildren(treeUri, parentDocumentId).firstOrNull { child ->
+        child.isDirectory && child.name.equals(name, ignoreCase = true)
+    }?.documentId
+
+    private fun uniqueChildFileName(
+        treeUri: Uri,
+        parentDocumentId: String,
+        fileName: String,
+    ): String {
+        val existing =
+            queryChildren(treeUri, parentDocumentId)
+                .map { it.name.lowercase(Locale.ROOT) }
+                .toSet()
+        if (fileName.lowercase(Locale.ROOT) !in existing) {
+            return fileName
+        }
+        val dot = fileName.lastIndexOf('.')
+        val stem = if (dot > 0) fileName.substring(0, dot) else fileName
+        val ext = if (dot > 0) fileName.substring(dot) else ""
+        var index = 2
+        while (true) {
+            val candidate = "$stem-$index$ext"
+            if (candidate.lowercase(Locale.ROOT) !in existing) {
+                return candidate
+            }
+            index += 1
+        }
+    }
+
+    private fun sanitizeImageFileName(name: String): String {
+        val cleaned = name.replace(Regex("""[<>:"/\\|?*\u0000-\u001f]"""), "_").trim()
+        return cleaned.ifBlank { "image.png" }
+    }
+
+    private fun guessImageMime(fileName: String): String {
+        val lower = fileName.lowercase(Locale.ROOT)
+        return when {
+            lower.endsWith(".png") -> "image/png"
+            lower.endsWith(".jpg") || lower.endsWith(".jpeg") -> "image/jpeg"
+            lower.endsWith(".gif") -> "image/gif"
+            lower.endsWith(".webp") -> "image/webp"
+            lower.endsWith(".svg") -> "image/svg+xml"
+            lower.endsWith(".avif") -> "image/avif"
+            else -> "image/png"
+        }
+    }
+
     /** Drops cached listings for one directory so the next list reflects create/delete. */
     fun invalidateDirectory(
         treeUri: Uri,

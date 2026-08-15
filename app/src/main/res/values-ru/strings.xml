@@ -82,6 +82,7 @@
     <string name="settings_markdown_notes_open_mode">Открывать заметки в</string>
     <string name="settings_markdown_notes_open_mode_preview">Превью</string>
     <string name="settings_markdown_notes_open_mode_edit">Редактор</string>
+    <string name="settings_markdown_notes_open_mode_visual">Визуальный редактор</string>
     <string name="settings_markdown_notes_preview_font">Шрифт превью</string>
     <string name="settings_markdown_notes_preview_font_size">Размер шрифта превью</string>
     <string name="settings_markdown_notes_editor_font">Шрифт редактора</string>
@@ -195,6 +196,11 @@
     <string name="markdown_notes_load_failed">Не удалось загрузить заметки</string>
     <string name="markdown_notes_save_failed">Не удалось сохранить заметку</string>
     <string name="markdown_notes_edit">Редактировать</string>
+    <string name="markdown_notes_visual">Визуальный редактор</string>
+    <string name="markdown_notes_visual_link_title">Адрес ссылки</string>
+    <string name="markdown_notes_visual_link_hint">https://</string>
+    <string name="markdown_notes_visual_link_ok">OK</string>
+    <string name="markdown_notes_visual_link_cancel">Отмена</string>
     <string name="markdown_notes_save">Сохранить</string>
     <string name="markdown_notes_preview">Превью</string>
     <string name="markdown_notes_saved">Сохранено</string>

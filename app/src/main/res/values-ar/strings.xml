@@ -82,6 +82,7 @@
     <string name="settings_markdown_notes_open_mode">فتح الملاحظات في</string>
     <string name="settings_markdown_notes_open_mode_preview">معاينة</string>
     <string name="settings_markdown_notes_open_mode_edit">محرر</string>
+    <string name="settings_markdown_notes_open_mode_visual">Visual editor</string>
     <string name="settings_markdown_notes_preview_font_size">معاينة حجم الخط</string>
     <string name="settings_markdown_notes_editor_font_size">حجم خط المحرر</string>
     <string name="settings_markdown_notes_highlight_max_mb">حد تمييز بناء الجملة (ميجابايت)</string>
@@ -181,6 +182,11 @@
     <string name="markdown_notes_copy_failed">تعذر النسخ</string>
     <string name="markdown_notes_paste_failed">تعذر اللصق</string>
     <string name="markdown_notes_edit">تحرير</string>
+    <string name="markdown_notes_visual">Visual editor</string>
+    <string name="markdown_notes_visual_link_title">Link URL</string>
+    <string name="markdown_notes_visual_link_hint">https://</string>
+    <string name="markdown_notes_visual_link_ok">OK</string>
+    <string name="markdown_notes_visual_link_cancel">Cancel</string>
     <string name="markdown_notes_save">حفظ</string>
     <string name="markdown_notes_preview">معاينة</string>
     <string name="markdown_notes_saved">تم الحفظ</string>

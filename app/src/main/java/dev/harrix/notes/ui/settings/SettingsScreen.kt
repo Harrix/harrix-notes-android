@@ -579,6 +579,7 @@ private fun GeneralSettingsSection(modifier: Modifier = Modifier) {
         listOf(
             NotesOpenMode.Preview to R.string.settings_markdown_notes_open_mode_preview,
             NotesOpenMode.Edit to R.string.settings_markdown_notes_open_mode_edit,
+            NotesOpenMode.Visual to R.string.settings_markdown_notes_open_mode_visual,
         )
     val sortByOptions =
         listOf(

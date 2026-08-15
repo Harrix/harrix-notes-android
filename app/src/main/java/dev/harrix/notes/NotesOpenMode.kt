@@ -7,8 +7,11 @@ enum class NotesOpenMode {
     /** Read-only HTML preview (`NotesHtmlPreviewPane`). */
     Preview,
 
-    /** CodeMirror editor (`NotesMarkdownEditorPane`). */
+    /** CodeMirror source editor (`NotesMarkdownEditorPane`). */
     Edit,
+
+    /** Visual Markdown editor (`NotesVisualEditorPane`, `@hsk-sync:visual-markdown`). */
+    Visual,
     ;
 
     companion object {

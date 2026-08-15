@@ -82,6 +82,7 @@
     <string name="settings_markdown_notes_open_mode">Notları şurada aç:</string>
     <string name="settings_markdown_notes_open_mode_preview">Önizleme</string>
     <string name="settings_markdown_notes_open_mode_edit">Editör</string>
+    <string name="settings_markdown_notes_open_mode_visual">Visual editor</string>
     <string name="settings_markdown_notes_preview_font_size">Yazı tipi boyutunu önizleyin</string>
     <string name="settings_markdown_notes_editor_font_size">Düzenleyici yazı tipi boyutu</string>
     <string name="settings_markdown_notes_highlight_max_mb">Sözdizimi vurgulama sınırı (MB)</string>
@@ -181,6 +182,11 @@
     <string name="markdown_notes_copy_failed">Kopyalanamadı</string>
     <string name="markdown_notes_paste_failed">Yapıştırılamadı</string>
     <string name="markdown_notes_edit">Düzenle</string>
+    <string name="markdown_notes_visual">Visual editor</string>
+    <string name="markdown_notes_visual_link_title">Link URL</string>
+    <string name="markdown_notes_visual_link_hint">https://</string>
+    <string name="markdown_notes_visual_link_ok">OK</string>
+    <string name="markdown_notes_visual_link_cancel">Cancel</string>
     <string name="markdown_notes_save">Kaydet</string>
     <string name="markdown_notes_preview">Önizleme</string>
     <string name="markdown_notes_saved">Kaydedildi</string>

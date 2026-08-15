@@ -65,6 +65,7 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileCopy
+import androidx.compose.material.icons.filled.FormatPaint
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.History
@@ -238,6 +239,7 @@ fun NotesViewerScreen(
     var noteContent by viewModel.noteContent
     var noteLoading by viewModel.noteLoading
     var isEditing by viewModel.isEditing
+    var visualMarkdownMode by viewModel.visualMarkdownMode
     var canvasMarkdownMode by viewModel.canvasMarkdownMode
     var canvasFullscreen by viewModel.canvasFullscreen
     var autoEditDocumentId by viewModel.autoEditDocumentId
@@ -282,6 +284,7 @@ fun NotesViewerScreen(
     var treeLoadingRoot by viewModel.treeLoadingRoot
     var externalNoteConflict by viewModel.externalNoteConflict
     val editorController = remember { NotesMarkdownEditorController() }
+    val visualEditorController = remember { NotesVisualEditorController() }
     val previewFindController = remember { NotesPreviewFindController() }
     var showFindBar by remember { mutableStateOf(false) }
     var findQuery by remember { mutableStateOf("") }
@@ -307,12 +310,20 @@ fun NotesViewerScreen(
             clearNoteFind()
             return
         }
-        if (isEditing) {
+        if (isEditing && !visualMarkdownMode) {
             previewFindController.clearFind()
             editorController.find(query)
         } else {
             editorController.clearFind()
             previewFindController.find(query)
+        }
+    }
+
+    suspend fun flushActiveEditor() {
+        if (visualMarkdownMode) {
+            visualEditorController.flush()
+        } else {
+            editorController.flush()
         }
     }
 
@@ -633,6 +644,7 @@ fun NotesViewerScreen(
 
     fun resetEditorState() {
         isEditing = false
+        visualMarkdownMode = false
         canvasMarkdownMode = false
         canvasFullscreen = false
         draftText = ""
@@ -751,7 +763,7 @@ fun NotesViewerScreen(
         }
         scope.launch {
             // The editor owns the text, so pull the newest edits before saving.
-            editorController.flush()
+            flushActiveEditor()
             if (draftText != lastSavedText) {
                 saveNoteText(tab.uri, draftText)
             }
@@ -767,7 +779,7 @@ fun NotesViewerScreen(
         autosaveJob?.cancel()
         autosaveJob = null
         scope.launch {
-            editorController.flush()
+            flushActiveEditor()
             if (saveNoteText(tab.uri, draftText)) {
                 Toast.makeText(
                     context,
@@ -1868,7 +1880,7 @@ fun NotesViewerScreen(
             return
         }
         scope.launch {
-            editorController.flush()
+            flushActiveEditor()
             val tab = conflict.tab
             val text = draftText
             val treeUri = Uri.parse(tree)
@@ -2561,12 +2573,20 @@ fun NotesViewerScreen(
 
                     useDualPaneState.value -> true
 
-                    else -> noteOpenMode == NotesOpenMode.Edit
+                    noteOpenMode == NotesOpenMode.Edit ||
+                        noteOpenMode == NotesOpenMode.Visual -> true
+
+                    else -> false
                 }
             if (autoEditDocumentId == tab.documentId && canvasNote) {
                 autoEditDocumentId = null
             }
             isEditing = shouldEdit
+            visualMarkdownMode =
+                shouldEdit &&
+                !canvasNote &&
+                noteOpenMode == NotesOpenMode.Visual &&
+                !useDualPaneState.value
             previewDraftText = loaded
             statusMessage = null
             val info =
@@ -2980,14 +3000,14 @@ fun NotesViewerScreen(
                                     activeMatch = findActiveMatch,
                                     totalMatches = findTotalMatches,
                                     onNext = {
-                                        if (isEditing) {
+                                        if (isEditing && !visualMarkdownMode) {
                                             editorController.findNext()
                                         } else {
                                             previewFindController.findNext()
                                         }
                                     },
                                     onPrev = {
-                                        if (isEditing) {
+                                        if (isEditing && !visualMarkdownMode) {
                                             editorController.findPrev()
                                         } else {
                                             previewFindController.findPrev()
@@ -3024,8 +3044,10 @@ fun NotesViewerScreen(
                                         onCreateMenuExpandedChange = { tabCreateMenuExpanded = it },
                                         onCreateKind = { onCreateKindSelected(it) },
                                         showEditActions = selectedTab != null && !noteLoading && noteContent != null,
-                                        showEditPreviewToggle = !useDualPane && canvasSurfaceTab == null,
+                                        showEditPreviewToggle = canvasSurfaceTab == null,
+                                        useDualPane = useDualPane,
                                         isEditing = isEditing,
+                                        visualMarkdownMode = visualMarkdownMode,
                                         isSaving = isSaving,
                                         isCanvasNote = isCanvasNote,
                                         canvasMarkdownMode = canvasMarkdownMode,
@@ -3034,13 +3056,18 @@ fun NotesViewerScreen(
                                                 persistCurrentDraft {
                                                     canvasMarkdownMode = false
                                                     isEditing = false
+                                                    visualMarkdownMode = false
                                                     draftText = noteContent.orEmpty()
                                                     lastSavedText = noteContent
                                                 }
                                             } else {
                                                 canvasFullscreen = false
                                                 canvasMarkdownMode = true
-                                                isEditing = useDualPane || noteOpenMode == NotesOpenMode.Edit
+                                                visualMarkdownMode = noteOpenMode == NotesOpenMode.Visual && !useDualPane
+                                                isEditing =
+                                                    useDualPane ||
+                                                    noteOpenMode == NotesOpenMode.Edit ||
+                                                    noteOpenMode == NotesOpenMode.Visual
                                                 draftText = noteContent.orEmpty()
                                                 lastSavedText = noteContent
                                                 previewDraftText = noteContent.orEmpty()
@@ -3049,14 +3076,26 @@ fun NotesViewerScreen(
                                         onPreview = {
                                             persistCurrentDraft {
                                                 isEditing = false
+                                                visualMarkdownMode = false
                                                 draftText = noteContent.orEmpty()
                                                 lastSavedText = noteContent
                                             }
                                         },
                                         onEdit = {
-                                            isEditing = true
-                                            draftText = noteContent.orEmpty()
-                                            lastSavedText = noteContent
+                                            persistCurrentDraft {
+                                                isEditing = true
+                                                visualMarkdownMode = false
+                                                draftText = noteContent.orEmpty()
+                                                lastSavedText = noteContent
+                                            }
+                                        },
+                                        onVisual = {
+                                            persistCurrentDraft {
+                                                isEditing = true
+                                                visualMarkdownMode = true
+                                                draftText = noteContent.orEmpty()
+                                                lastSavedText = noteContent
+                                            }
                                         },
                                         showCloseNote = selectedTab != null,
                                         onCloseNote = {
@@ -3107,25 +3146,46 @@ fun NotesViewerScreen(
 
                                             selectedTab != null && useDualPane -> {
                                                 Row(modifier = Modifier.fillMaxSize()) {
-                                                    NotesMarkdownEditorPane(
-                                                        isLoading = noteLoading,
-                                                        docKey = selectedTab.documentId,
-                                                        text = draftText,
-                                                        errorMessage = statusMessage,
-                                                        hasContent = noteContent != null,
-                                                        fontSizeSp = editorFontSizeSp,
-                                                        font = editorFont,
-                                                        highlightMaxChars =
-                                                        NotesViewerPreferences.highlightMaxChars(
-                                                            highlightMaxMb,
-                                                        ),
-                                                        controller = editorController,
-                                                        onTextChange = { value ->
-                                                            draftText = value
-                                                            scheduleAutosave()
-                                                        },
-                                                        modifier = Modifier.weight(1f).fillMaxSize(),
-                                                    )
+                                                    if (visualMarkdownMode) {
+                                                        NotesVisualEditorPane(
+                                                            isLoading = noteLoading,
+                                                            docKey = selectedTab.documentId,
+                                                            text = draftText,
+                                                            errorMessage = statusMessage,
+                                                            hasContent = noteContent != null,
+                                                            treeUri = notesTreeUri?.let { Uri.parse(it) },
+                                                            folderPath = selectedTab.folderPath,
+                                                            noteDocumentId = selectedTab.documentId,
+                                                            repository = repository,
+                                                            controller = visualEditorController,
+                                                            onTextChange = { value ->
+                                                                draftText = value
+                                                                scheduleAutosave()
+                                                            },
+                                                            findController = previewFindController,
+                                                            modifier = Modifier.weight(1f).fillMaxSize(),
+                                                        )
+                                                    } else {
+                                                        NotesMarkdownEditorPane(
+                                                            isLoading = noteLoading,
+                                                            docKey = selectedTab.documentId,
+                                                            text = draftText,
+                                                            errorMessage = statusMessage,
+                                                            hasContent = noteContent != null,
+                                                            fontSizeSp = editorFontSizeSp,
+                                                            font = editorFont,
+                                                            highlightMaxChars =
+                                                            NotesViewerPreferences.highlightMaxChars(
+                                                                highlightMaxMb,
+                                                            ),
+                                                            controller = editorController,
+                                                            onTextChange = { value ->
+                                                                draftText = value
+                                                                scheduleAutosave()
+                                                            },
+                                                            modifier = Modifier.weight(1f).fillMaxSize(),
+                                                        )
+                                                    }
                                                     VerticalDivider()
                                                     NotesHtmlPreviewPane(
                                                         isLoading = noteLoading,
@@ -3136,14 +3196,37 @@ fun NotesViewerScreen(
                                                         treeUri = notesTreeUri?.let { Uri.parse(it) },
                                                         folderPath = selectedTab.folderPath,
                                                         noteDocumentId = selectedTab.documentId,
-                                                        findController = previewFindController,
+                                                        findController =
+                                                        if (visualMarkdownMode) {
+                                                            null
+                                                        } else {
+                                                            previewFindController
+                                                        },
                                                         modifier = Modifier.weight(1f).fillMaxSize(),
                                                     )
                                                 }
                                             }
 
                                             selectedTab != null -> {
-                                                if (isEditing) {
+                                                if (isEditing && visualMarkdownMode) {
+                                                    NotesVisualEditorPane(
+                                                        isLoading = noteLoading,
+                                                        docKey = selectedTab.documentId,
+                                                        text = draftText,
+                                                        errorMessage = statusMessage,
+                                                        hasContent = noteContent != null,
+                                                        treeUri = notesTreeUri?.let { Uri.parse(it) },
+                                                        folderPath = selectedTab.folderPath,
+                                                        noteDocumentId = selectedTab.documentId,
+                                                        repository = repository,
+                                                        controller = visualEditorController,
+                                                        onTextChange = { value ->
+                                                            draftText = value
+                                                            scheduleAutosave()
+                                                        },
+                                                        findController = previewFindController,
+                                                    )
+                                                } else if (isEditing) {
                                                     NotesMarkdownEditorPane(
                                                         isLoading = noteLoading,
                                                         docKey = selectedTab.documentId,
@@ -4476,13 +4559,16 @@ private fun NotesNavigationRow(
     onCreateKind: (NotesCreateKind) -> Unit,
     showEditActions: Boolean,
     showEditPreviewToggle: Boolean = true,
+    useDualPane: Boolean = false,
     isEditing: Boolean,
+    visualMarkdownMode: Boolean = false,
     isSaving: Boolean,
     isCanvasNote: Boolean = false,
     canvasMarkdownMode: Boolean = false,
     onToggleCanvasMarkdown: () -> Unit = {},
     onPreview: () -> Unit,
     onEdit: () -> Unit,
+    onVisual: () -> Unit = {},
     showCloseNote: Boolean,
     onCloseNote: () -> Unit,
 ) {
@@ -4575,7 +4661,9 @@ private fun NotesNavigationRow(
                     }
                 }
                 if (showEditActions && showEditPreviewToggle) {
-                    if (isEditing) {
+                    val inSource = isEditing && !visualMarkdownMode
+                    val inVisual = isEditing && visualMarkdownMode
+                    if (!useDualPane && isEditing) {
                         IconButton(
                             onClick = onPreview,
                             enabled = !isSaving,
@@ -4586,7 +4674,8 @@ private fun NotesNavigationRow(
                                 contentDescription = stringResource(R.string.markdown_notes_preview),
                             )
                         }
-                    } else {
+                    }
+                    if (!inSource) {
                         IconButton(
                             onClick = onEdit,
                             modifier = Modifier.size(TopBarActionButtonSize),
@@ -4594,6 +4683,17 @@ private fun NotesNavigationRow(
                             Icon(
                                 imageVector = Icons.Filled.Edit,
                                 contentDescription = stringResource(R.string.markdown_notes_edit),
+                            )
+                        }
+                    }
+                    if (!inVisual) {
+                        IconButton(
+                            onClick = onVisual,
+                            modifier = Modifier.size(TopBarActionButtonSize),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.FormatPaint,
+                                contentDescription = stringResource(R.string.markdown_notes_visual),
                             )
                         }
                     }

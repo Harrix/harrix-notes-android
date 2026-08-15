@@ -114,3 +114,9 @@ data class OpenNoteTab(
     val displayTitle: String
         get() = contextualNoteTitle(title, folderPath)
 }
+
+/** Image written into a note's `img/` folder by the visual Markdown editor. */
+data class NoteInsertedImage(
+    val relativePath: String,
+    val dataUri: String,
+)

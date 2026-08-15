@@ -82,6 +82,7 @@
     <string name="settings_markdown_notes_open_mode">Open notes in</string>
     <string name="settings_markdown_notes_open_mode_preview">Preview</string>
     <string name="settings_markdown_notes_open_mode_edit">Editor</string>
+    <string name="settings_markdown_notes_open_mode_visual">Visual editor</string>
     <string name="settings_markdown_notes_preview_font">Preview font</string>
     <string name="settings_markdown_notes_preview_font_size">Preview font size</string>
     <string name="settings_markdown_notes_editor_font">Editor font</string>
@@ -195,6 +196,11 @@
     <string name="markdown_notes_load_failed">Could not load notes</string>
     <string name="markdown_notes_save_failed">Could not save note</string>
     <string name="markdown_notes_edit">Edit note</string>
+    <string name="markdown_notes_visual">Visual editor</string>
+    <string name="markdown_notes_visual_link_title">Link URL</string>
+    <string name="markdown_notes_visual_link_hint">https://</string>
+    <string name="markdown_notes_visual_link_ok">OK</string>
+    <string name="markdown_notes_visual_link_cancel">Cancel</string>
     <string name="markdown_notes_save">Save note</string>
     <string name="markdown_notes_preview">Preview note</string>
     <string name="markdown_notes_saved">Saved</string>
