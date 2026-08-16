@@ -2,6 +2,8 @@ package dev.harrix.notes
 
 /**
  * Filters and sorts folder-browser entries (list, icons, drawer tree children).
+ *
+ * @hsk-sync:notes-browse — keep aligned with VS Code `icons-browse-listing.js`.
  */
 object NotesListingOptions {
     fun apply(

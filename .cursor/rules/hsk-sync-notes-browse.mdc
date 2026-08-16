@@ -1,0 +1,38 @@
+---
+description: Keep folder Sort and view menu aligned with VS Code Notes Icons Browse
+globs: app/src/main/java/dev/harrix/notes/NotesListingOptions.kt,app/src/main/java/dev/harrix/notes/NotesBrowseLayout.kt,app/src/main/java/dev/harrix/notes/NotesSortBy.kt,app/src/main/java/dev/harrix/notes/ui/notes/NotesViewerScreen.kt
+alwaysApply: false
+---
+
+# @hsk-sync:notes-browse
+
+Token `@hsk-sync:notes-browse` marks the folder **Sort and view** control and listing rules shared with VS Code **Notes Icons Browse**.
+
+If the toolbar button, menu items, or listing behavior change here, update the VS Code extension.
+
+## Sibling implementations
+
+| Side | Path |
+|------|------|
+| Android (this repo) | `NotesBrowseLayout`, `NotesSortBy`, `NotesListingOptions`, `NotesFolderSortViewMenuContent` |
+| VS Code | `D:\GitHub\harrix-swiss-knife\vscode\harrix-notes-explorer-hsk\icons-browse*.js`, `media/icons-browse.*` |
+
+## Contract
+
+Toolbar: Material **Sort** icon. Click opens a dropdown (does not toggle layout).
+
+Menu (same labels and order):
+
+1. List / Icons — radio, leading ViewList / GridView, trailing check
+2. separator
+3. Name / Date / Size — radio, leading check
+4. separator
+5. Folders on top / Reverse order / Show .g.md files / Show dates — checkboxes
+
+Listing (`NotesListingOptions.apply`): hide `*.g.md` notes unless Show .g.md; sort by display name / mtime / size; optional reverse; optional folders first. Show dates only in **list** rows (`dd.MM.yyyy` for filename/YAML, `dd.MM.yyyy, HH:mm` for file times).
+
+## Change checklist
+
+- Keep option names, icons, and sort/filter semantics identical.
+- After Android changes: `hsk android format` / `hsk android check`.
+- After VS Code changes: `hsk vscode format` / `hsk vscode check` / sync notes explorer in swiss-knife.

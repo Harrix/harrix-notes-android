@@ -4100,7 +4100,7 @@ private fun NotesTopChrome(
     }
 }
 
-/** Sort, filter, and browse-layout options for the folder browser. */
+/** Sort, filter, and browse-layout options for the folder browser. `@hsk-sync:notes-browse` */
 @Composable
 private fun NotesFolderSortViewMenuContent(
     browseLayout: NotesBrowseLayout,
