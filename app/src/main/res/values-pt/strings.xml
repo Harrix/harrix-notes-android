@@ -91,6 +91,7 @@
     <string name="settings_markdown_notes_browse_layout_list">Lista</string>
     <string name="settings_markdown_notes_browse_layout_icons">Ícones</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Miniaturas</string>
+    <string name="settings_markdown_notes_browse_layout_tree">Árvore</string>
     <string name="settings_markdown_notes_icon_style">Ícones de pastas e ficheiros</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

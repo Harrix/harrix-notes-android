@@ -7,6 +7,7 @@ enum class NotesBrowseLayout {
     List,
     Icons,
     Thumbnails,
+    Tree,
     ;
 
     companion object {

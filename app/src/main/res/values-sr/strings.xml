@@ -91,6 +91,7 @@
     <string name="settings_markdown_notes_browse_layout_list">Листа</string>
     <string name="settings_markdown_notes_browse_layout_icons">Иконе</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Сличице</string>
+    <string name="settings_markdown_notes_browse_layout_tree">Стабло</string>
     <string name="settings_markdown_notes_icon_style">Иконице фасцикли и датотека</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

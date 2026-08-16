@@ -57,7 +57,7 @@ class NotesTreeRepository(
 
     /**
      * Instant listing from a single SAF query: filenames only, no per-folder probes.
-     * Collapse / empty-folder filtering happen later in [listChildren].
+     * Folders wait for [listChildren] so empty trees are not shown.
      */
     suspend fun listChildrenShallow(
         treeUri: Uri,
@@ -67,23 +67,7 @@ class NotesTreeRepository(
         val entries = queryChildrenCached(treeUri, dirDocumentId)
         val items = ArrayList<NotesEntry>(entries.size)
         for (entry in entries) {
-            if (entry.isDirectory) {
-                if (isSkipScanDirName(entry.name)) {
-                    continue
-                }
-                items.add(
-                    NotesEntry.Folder(
-                        documentId = entry.documentId,
-                        name = entry.name,
-                        uri = entry.uri,
-                        hasMergedNote = false,
-                        mergedNoteDocumentId = null,
-                        mergedNoteUri = null,
-                        lastModifiedEpochMs = entry.lastModifiedEpochMs,
-                        sizeBytes = entry.sizeBytes,
-                    ),
-                )
-            } else if (isMd(entry.name)) {
+            if (!entry.isDirectory && isMd(entry.name)) {
                 items.add(
                     NotesEntry.Note(
                         documentId = entry.documentId,
@@ -158,7 +142,7 @@ class NotesTreeRepository(
 
         for (folder in directories) {
             val folderChildren = folderChildMap[folder.documentId].orEmpty()
-            if (!folderLooksListable(folder.name, folderChildren)) {
+            if (!folderLooksListable(treeUri, folder.name, folderChildren)) {
                 continue
             }
 
@@ -192,7 +176,8 @@ class NotesTreeRepository(
                         .map { childDir ->
                             async {
                                 isSpecialNotesFolderName(childDir.name) ||
-                                    directoryLooksInterestingShallow(
+                                    directoryHasMarkdownNotes(
+                                        treeUri,
                                         queryChildrenCached(treeUri, childDir.documentId),
                                     )
                             }
@@ -595,26 +580,44 @@ class NotesTreeRepository(
     }
 
     private fun folderLooksListable(
+        treeUri: Uri,
         folderName: String,
         children: List<RawEntry>,
     ): Boolean {
         if (isSpecialNotesFolderName(folderName)) {
             return true
         }
-        return directoryLooksInterestingShallow(children)
+        return directoryHasMarkdownNotes(treeUri, children)
     }
 
     /**
-     * Fast stand-in for a full recursive markdown scan: the folder is interesting if it
-     * already has a `.md` file or any non-skipped subdirectory (nested notes open later).
+     * True when this folder or a descendant contains a Markdown note.
+     * `@hsk-sync:notes-browse` — keep aligned with VS Code `hasMarkdownRecursive`.
      */
-    private fun directoryLooksInterestingShallow(children: List<RawEntry>): Boolean {
+    private fun directoryHasMarkdownNotes(
+        treeUri: Uri,
+        children: List<RawEntry>,
+        depth: Int = 0,
+    ): Boolean {
+        if (depth > 16) {
+            return false
+        }
         for (child in children) {
             if (!child.isDirectory && isMd(child.name)) {
                 return true
             }
+        }
+        for (child in children) {
             if (child.isDirectory && !isSkipScanDirName(child.name)) {
-                return true
+                if (isSpecialNotesFolderName(child.name) ||
+                    directoryHasMarkdownNotes(
+                        treeUri,
+                        queryChildrenCached(treeUri, child.documentId),
+                        depth + 1,
+                    )
+                ) {
+                    return true
+                }
             }
         }
         return false

@@ -91,6 +91,7 @@
     <string name="settings_markdown_notes_browse_layout_list">Спіс</string>
     <string name="settings_markdown_notes_browse_layout_icons">Значкі</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Эскізы</string>
+    <string name="settings_markdown_notes_browse_layout_tree">Дрэва</string>
     <string name="settings_markdown_notes_icon_style">Значкі папак і файлаў</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

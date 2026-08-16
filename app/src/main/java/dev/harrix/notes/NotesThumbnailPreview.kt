@@ -17,7 +17,7 @@ object NotesThumbnailPreview {
     private val IMAGE_EXT = setOf("png", "jpg", "jpeg", "webp", "avif", "gif")
     private val CANVAS_NAME = Regex("^canvas(?:_\\d{2})?\\.png$", RegexOption.IGNORE_CASE)
     private const val NOTE_PREFIX_BYTES = 16 * 1024
-    private const val THUMB_MAX_PX = 512
+    const val DEFAULT_THUMB_MAX_PX = 1280
 
     data class Loaded(
         val excerpt: String,
@@ -29,6 +29,7 @@ object NotesThumbnailPreview {
         treeUri: Uri?,
         folderPath: List<NotesPathSegment>,
         note: NotesEntry.Note,
+        maxPx: Int = DEFAULT_THUMB_MAX_PX,
     ): Loaded {
         val markdown = readPrefix(resolver, note.uri)
         val excerpt = NotesMarkdownExcerpt.excerptFromMarkdown(markdown)
@@ -38,7 +39,10 @@ object NotesThumbnailPreview {
         val imageUri =
             findImageUri(resolver, treeUri, folderPath, note, markdown)
                 ?: return Loaded(excerpt = excerpt, bitmap = null)
-        return Loaded(excerpt = excerpt, bitmap = decodeDownsampled(resolver, imageUri))
+        return Loaded(
+            excerpt = excerpt,
+            bitmap = decodeDownsampled(resolver, imageUri, maxPx.coerceIn(320, 2048)),
+        )
     }
 
     private fun findImageUri(
@@ -98,21 +102,38 @@ object NotesThumbnailPreview {
     private fun decodeDownsampled(
         resolver: ContentResolver,
         uri: Uri,
+        maxPx: Int,
     ): Bitmap? {
         val bytes = NotesRelativeDocuments.readBytes(resolver, uri) ?: return null
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
-        var sample = 1
         val width = bounds.outWidth
         val height = bounds.outHeight
         if (width <= 0 || height <= 0) {
             return null
         }
-        while (width / sample > THUMB_MAX_PX || height / sample > THUMB_MAX_PX) {
+        var sample = 1
+        while (width / (sample * 2) >= maxPx && height / (sample * 2) >= maxPx) {
             sample *= 2
         }
-        val opts = BitmapFactory.Options().apply { inSampleSize = sample }
-        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
+        val opts =
+            BitmapFactory.Options().apply {
+                inSampleSize = sample
+                inPreferredConfig = Bitmap.Config.ARGB_8888
+            }
+        val decoded = BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts) ?: return null
+        val longest = maxOf(decoded.width, decoded.height)
+        if (longest <= maxPx) {
+            return decoded
+        }
+        val scale = maxPx.toFloat() / longest
+        val scaledWidth = (decoded.width * scale).toInt().coerceAtLeast(1)
+        val scaledHeight = (decoded.height * scale).toInt().coerceAtLeast(1)
+        val scaled = Bitmap.createScaledBitmap(decoded, scaledWidth, scaledHeight, true)
+        if (scaled != decoded) {
+            decoded.recycle()
+        }
+        return scaled
     }
 
     private fun readPrefix(

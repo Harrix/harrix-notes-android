@@ -96,6 +96,7 @@
     <string name="settings_markdown_notes_browse_layout_list">List</string>
     <string name="settings_markdown_notes_browse_layout_icons">Icons</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Thumbnails</string>
+    <string name="settings_markdown_notes_browse_layout_tree">Tree</string>
     <string name="settings_markdown_notes_icon_style">Folder and file icons</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

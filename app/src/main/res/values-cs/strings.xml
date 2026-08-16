@@ -91,6 +91,7 @@
     <string name="settings_markdown_notes_browse_layout_list">Seznam</string>
     <string name="settings_markdown_notes_browse_layout_icons">ikony</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Miniatury</string>
+    <string name="settings_markdown_notes_browse_layout_tree">Strom</string>
     <string name="settings_markdown_notes_icon_style">Ikony složek a souborů</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

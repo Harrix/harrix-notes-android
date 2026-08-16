@@ -559,6 +559,7 @@ private fun GeneralSettingsSection(modifier: Modifier = Modifier) {
             NotesBrowseLayout.List to R.string.settings_markdown_notes_browse_layout_list,
             NotesBrowseLayout.Icons to R.string.settings_markdown_notes_browse_layout_icons,
             NotesBrowseLayout.Thumbnails to R.string.settings_markdown_notes_browse_layout_thumbnails,
+            NotesBrowseLayout.Tree to R.string.settings_markdown_notes_browse_layout_tree,
         )
     val iconStyleOptions =
         listOf(

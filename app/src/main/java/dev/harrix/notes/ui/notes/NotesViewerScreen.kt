@@ -56,6 +56,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.automirrored.filled.ViewList
+import androidx.compose.material.icons.filled.AccountTree
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Brush
 import androidx.compose.material.icons.filled.Check
@@ -122,6 +123,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -188,6 +190,7 @@ import dev.harrix.notes.ui.isCompactHeight
 import dev.harrix.notes.ui.isDualPaneLayoutEligible
 import dev.harrix.notes.ui.notesIconsGridColumnCount
 import dev.harrix.notes.ui.notesThumbnailsGridColumnCount
+import dev.harrix.notes.ui.screenWidthDp
 import dev.harrix.notes.ui.theme.NotesTopAppBarHeight
 import dev.harrix.notes.ui.theme.notesScaffoldContainerColor
 import dev.harrix.notes.ui.theme.notesScaffoldContentWindowInsets
@@ -3316,6 +3319,9 @@ fun NotesViewerScreen(
                                                                     ),
                                                             )
                                                         },
+                                                        onNavigateToPathIndex = { index ->
+                                                            openFolderList(folderPath.take(index + 1))
+                                                        },
                                                         onOpenNote = { note ->
                                                             openNote(
                                                                 note,
@@ -3778,7 +3784,8 @@ private fun NotesTopChrome(
             }
             val showBrandTitle =
                 breadcrumbSegments == null ||
-                    (!lastIsNote && breadcrumbSegments.size <= 1)
+                    (!lastIsNote && breadcrumbSegments.size <= 1) ||
+                    (!lastIsNote && browseLayout == NotesBrowseLayout.Tree)
             if (showBrandTitle) {
                 NotesBrandTitle(
                     logoSize = TopBarLogoSize,
@@ -4145,6 +4152,7 @@ private fun NotesFolderSortViewMenuContent(
                         NotesBrowseLayout.List -> Icons.AutoMirrored.Filled.ViewList
                         NotesBrowseLayout.Icons -> Icons.Filled.GridView
                         NotesBrowseLayout.Thumbnails -> Icons.Filled.Dashboard
+                        NotesBrowseLayout.Tree -> Icons.Filled.AccountTree
                     },
                     contentDescription = null,
                 )
@@ -4240,6 +4248,7 @@ private fun browseLayoutLabelRes(layout: NotesBrowseLayout): Int = when (layout)
     NotesBrowseLayout.List -> R.string.settings_markdown_notes_browse_layout_list
     NotesBrowseLayout.Icons -> R.string.settings_markdown_notes_browse_layout_icons
     NotesBrowseLayout.Thumbnails -> R.string.settings_markdown_notes_browse_layout_thumbnails
+    NotesBrowseLayout.Tree -> R.string.settings_markdown_notes_browse_layout_tree
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -4834,6 +4843,40 @@ private fun NotesBreadcrumbs(
 }
 
 @Composable
+private fun NotesTreeLevelRow(
+    name: String,
+    depth: Int,
+    current: Boolean,
+    onClick: () -> Unit,
+) {
+    val iconSize = 24.dp
+    Row(
+        modifier =
+        Modifier
+            .fillMaxWidth()
+            .height(40.dp)
+            .then(
+                if (current) {
+                    Modifier
+                } else {
+                    Modifier.clickable(onClick = onClick)
+                },
+            ).padding(start = 12.dp + (depth * 16).dp, end = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        NotesFolderGlyph(size = iconSize)
+        Spacer(modifier = Modifier.width(10.dp))
+        Text(
+            text = name,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (current) FontWeight.SemiBold else FontWeight.Normal,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
 private fun NotesFolderList(
     entries: List<NotesEntry>,
     statusMessage: String?,
@@ -4850,6 +4893,7 @@ private fun NotesFolderList(
     onListScrollPositionChange: (Int, Int) -> Unit,
     onGridScrollPositionChange: (Int, Int) -> Unit,
     onOpenFolder: (NotesEntry.Folder) -> Unit,
+    onNavigateToPathIndex: (Int) -> Unit,
     onOpenNote: (NotesEntry.Note) -> Unit,
     onShowMergedNote: (NotesEntry.Folder) -> Unit,
     onPinFolder: (NotesEntry.Folder) -> Unit,
@@ -4864,7 +4908,7 @@ private fun NotesFolderList(
 ) {
     val onEmptySpaceLongPressState = rememberUpdatedState(onEmptySpaceLongPress)
     when {
-        statusMessage != null && entries.isEmpty() -> {
+        statusMessage != null && entries.isEmpty() && layout != NotesBrowseLayout.Tree -> {
             Text(
                 text = statusMessage,
                 color = MaterialTheme.colorScheme.error,
@@ -4872,7 +4916,7 @@ private fun NotesFolderList(
             )
         }
 
-        entries.isEmpty() -> {
+        entries.isEmpty() && layout != NotesBrowseLayout.Tree -> {
             Box(
                 modifier =
                 Modifier
@@ -5081,6 +5125,137 @@ private fun NotesFolderList(
                         }
                     }
                 }
+            }
+        }
+
+        layout == NotesBrowseLayout.Tree -> {
+            val gridState =
+                rememberLazyGridState(
+                    initialFirstVisibleItemIndex = gridFirstVisibleIndex,
+                    initialFirstVisibleItemScrollOffset = gridFirstVisibleOffset,
+                )
+            val onGridScrollPositionChangeState =
+                rememberUpdatedState(onGridScrollPositionChange)
+            LaunchedEffect(gridState) {
+                snapshotFlow {
+                    gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset
+                }.distinctUntilChanged()
+                    .collect { (index, offset) ->
+                        onGridScrollPositionChangeState.value(index, offset)
+                    }
+            }
+            val zoneInset = (folderPath.lastIndex.coerceAtLeast(0) * 16).dp
+            Column(modifier = Modifier.fillMaxSize()) {
+                folderPath.forEachIndexed { index, segment ->
+                    NotesTreeLevelRow(
+                        name = segment.name,
+                        depth = index,
+                        current = index == folderPath.lastIndex,
+                        onClick = { onNavigateToPathIndex(index) },
+                    )
+                }
+                HorizontalDivider(modifier = Modifier.padding(start = 10.dp + zoneInset, end = 10.dp))
+                Box(
+                    modifier =
+                    Modifier
+                        .weight(1f)
+                        .padding(start = zoneInset)
+                        .then(
+                            if (onEmptySpaceLongPress != null) {
+                                Modifier.pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onLongPress = { offset ->
+                                            val hitItem =
+                                                gridState.layoutInfo.visibleItemsInfo.any { item ->
+                                                    val left = item.offset.x.toFloat()
+                                                    val top = item.offset.y.toFloat()
+                                                    val right = left + item.size.width
+                                                    val bottom = top + item.size.height
+                                                    offset.x in left..right && offset.y in top..bottom
+                                                }
+                                            if (!hitItem) {
+                                                onEmptySpaceLongPressState.value?.invoke(offset)
+                                            }
+                                        },
+                                    )
+                                }
+                            } else {
+                                Modifier
+                            },
+                        ),
+                ) {
+                    when {
+                        statusMessage != null && entries.isEmpty() -> {
+                            Text(
+                                text = statusMessage,
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.padding(24.dp),
+                            )
+                        }
+
+                        entries.isEmpty() -> {
+                            Text(
+                                text = stringResource(R.string.markdown_notes_folder_empty),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(24.dp),
+                            )
+                        }
+
+                        else -> {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(notesIconsGridColumnCount()),
+                                state = gridState,
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding =
+                                PaddingValues(
+                                    start = 8.dp,
+                                    top = 8.dp,
+                                    end = 8.dp,
+                                    bottom = NotesFabListBottomClearance,
+                                ),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                items(entries, key = { it.documentId }) { entry ->
+                                    when (entry) {
+                                        is NotesEntry.Folder -> {
+                                            NotesFolderIconCell(
+                                                folder = entry,
+                                                density = density,
+                                                pinned = entry.documentId in pinnedDocumentIds,
+                                                onOpen = { onOpenFolder(entry) },
+                                                onShowMergedNote = { onShowMergedNote(entry) },
+                                                onPin = { onPinFolder(entry) },
+                                                onUnpin = { onUnpinFolder(entry) },
+                                                onCopy = { onCopyEntry(entry) },
+                                                onCut = { onCutEntry(entry) },
+                                                onDuplicate = { onDuplicateEntry(entry) },
+                                                onDelete = { onDeleteEntry(entry) },
+                                            )
+                                        }
+
+                                        is NotesEntry.Note -> {
+                                            NotesNoteIconCell(
+                                                note = entry,
+                                                density = density,
+                                                pinned = entry.documentId in pinnedDocumentIds,
+                                                onOpen = { onOpenNote(entry) },
+                                                onPin = { onPinNote(entry) },
+                                                onUnpin = { onUnpinNote(entry) },
+                                                onCopy = { onCopyEntry(entry) },
+                                                onCut = { onCutEntry(entry) },
+                                                onDuplicate = { onDuplicateEntry(entry) },
+                                                onDelete = { onDeleteEntry(entry) },
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                HorizontalDivider(modifier = Modifier.padding(start = 10.dp + zoneInset, end = 10.dp))
             }
         }
 
@@ -5573,10 +5748,16 @@ private fun NotesNoteThumbnailCard(
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val columns = notesThumbnailsGridColumnCount()
+    val targetPx =
+        ((screenWidthDp() / columns) * LocalDensity.current.density * 2f)
+            .toInt()
+            .coerceIn(640, 1600)
     val preview by produceState(
         initialValue = NotesThumbnailPreview.Loaded(excerpt = "", bitmap = null),
         note.documentId,
         treeUri,
+        targetPx,
     ) {
         value =
             withContext(Dispatchers.IO) {
@@ -5585,6 +5766,7 @@ private fun NotesNoteThumbnailCard(
                     treeUri = treeUri,
                     folderPath = folderPath,
                     note = note,
+                    maxPx = targetPx,
                 )
             }
     }
@@ -5604,7 +5786,8 @@ private fun NotesNoteThumbnailCard(
                     Image(
                         bitmap = bitmap.asImageBitmap(),
                         contentDescription = null,
-                        contentScale = ContentScale.Crop,
+                        contentScale = ContentScale.Fit,
+                        filterQuality = FilterQuality.High,
                         modifier = Modifier.fillMaxSize(),
                     )
                 } else if (preview.excerpt.isNotBlank()) {
