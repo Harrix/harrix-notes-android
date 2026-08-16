@@ -90,6 +90,7 @@
     <string name="settings_markdown_notes_browse_layout">عرض المجلد</string>
     <string name="settings_markdown_notes_browse_layout_list">قائمة</string>
     <string name="settings_markdown_notes_browse_layout_icons">أيقونات</string>
+    <string name="settings_markdown_notes_browse_layout_thumbnails">صور مصغرة</string>
     <string name="settings_markdown_notes_icon_style">أيقونات المجلدات والملفات</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

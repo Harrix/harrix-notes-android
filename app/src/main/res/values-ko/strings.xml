@@ -90,6 +90,7 @@
     <string name="settings_markdown_notes_browse_layout">폴더 보기</string>
     <string name="settings_markdown_notes_browse_layout_list">목록</string>
     <string name="settings_markdown_notes_browse_layout_icons">아이콘</string>
+    <string name="settings_markdown_notes_browse_layout_thumbnails">미리보기</string>
     <string name="settings_markdown_notes_icon_style">폴더 및 파일 아이콘</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

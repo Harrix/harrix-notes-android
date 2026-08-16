@@ -54,6 +54,20 @@ fun notesIconsGridColumnCount(): Int {
     }
 }
 
+/** Thumbnail cards: two columns on phones, more on tablets. */
+@Composable
+fun notesThumbnailsGridColumnCount(): Int {
+    val configuration = LocalConfiguration.current
+    val width = configuration.screenWidthDp
+    val height = configuration.screenHeightDp
+    return when {
+        width >= ExpandedScreenWidthDp -> 4
+        height < CompactScreenWidthDp && width >= MediumScreenWidthDp -> 3
+        width >= MediumScreenWidthDp -> 3
+        else -> 2
+    }
+}
+
 /** Limits settings / welcome content width on tablets and centers it. */
 @Composable
 fun Modifier.adaptiveContentWidth(): Modifier = this

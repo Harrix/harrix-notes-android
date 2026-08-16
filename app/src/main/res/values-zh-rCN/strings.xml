@@ -90,6 +90,7 @@
     <string name="settings_markdown_notes_browse_layout">文件夹视图</string>
     <string name="settings_markdown_notes_browse_layout_list">列表</string>
     <string name="settings_markdown_notes_browse_layout_icons">图标</string>
+    <string name="settings_markdown_notes_browse_layout_thumbnails">缩略图</string>
     <string name="settings_markdown_notes_icon_style">文件夹和文件图标</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

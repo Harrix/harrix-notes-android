@@ -90,6 +90,7 @@
     <string name="settings_markdown_notes_browse_layout">Visualizzazione cartella</string>
     <string name="settings_markdown_notes_browse_layout_list">Elenco</string>
     <string name="settings_markdown_notes_browse_layout_icons">Icone</string>
+    <string name="settings_markdown_notes_browse_layout_thumbnails">Miniature</string>
     <string name="settings_markdown_notes_icon_style">Icone di cartelle e file</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>
