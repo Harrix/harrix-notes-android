@@ -85,6 +85,7 @@ class NotesViewerViewModel(
     val treeRoot = mutableStateOf<NotesPathSegment?>(null)
     val treeChildrenByFolderId = mutableStateOf<Map<String, List<NotesEntry>>>(emptyMap())
     val treeExpandedFolderIds = mutableStateOf<Set<String>>(emptySet())
+    val browseTreeExpandedFolderIds = mutableStateOf<Set<String>>(emptySet())
     val treeLoadingRoot = mutableStateOf(false)
 
     /** Document id last expanded in the drawer tree; skips reset on rotation. */

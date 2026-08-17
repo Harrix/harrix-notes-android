@@ -92,6 +92,10 @@
     <string name="settings_markdown_notes_browse_layout_icons">图标</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">缩略图</string>
     <string name="settings_markdown_notes_browse_layout_tree">树形</string>
+    <string name="markdown_notes_browse_tree_expand_all">全部展开</string>
+    <string name="markdown_notes_browse_tree_collapse_all">全部折叠</string>
+    <string name="markdown_notes_browse_tree_expand">展开</string>
+    <string name="markdown_notes_browse_tree_collapse">折叠</string>
     <string name="settings_markdown_notes_icon_style">文件夹和文件图标</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

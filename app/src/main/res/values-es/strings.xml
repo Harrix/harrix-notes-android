@@ -92,6 +92,10 @@
     <string name="settings_markdown_notes_browse_layout_icons">Iconos</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Miniaturas</string>
     <string name="settings_markdown_notes_browse_layout_tree">Árbol</string>
+    <string name="markdown_notes_browse_tree_expand_all">Expandir todo</string>
+    <string name="markdown_notes_browse_tree_collapse_all">Contraer todo</string>
+    <string name="markdown_notes_browse_tree_expand">Expandir</string>
+    <string name="markdown_notes_browse_tree_collapse">Contraer</string>
     <string name="settings_markdown_notes_icon_style">Iconos de carpetas y archivos</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

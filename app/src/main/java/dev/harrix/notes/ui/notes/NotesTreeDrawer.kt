@@ -57,7 +57,28 @@ data class BrowseFolderTreeRow(
     val depth: Int,
     /** Path from notes root through this folder (includes the folder). */
     val path: List<NotesPathSegment>,
+    val hasChildren: Boolean = false,
+    val expanded: Boolean = false,
 )
+
+fun browseTreeAncestorIds(folderPath: List<NotesPathSegment>): Set<String> = folderPath.dropLast(1).mapTo(HashSet()) { it.documentId }
+
+fun collectBrowseFolderIds(
+    root: NotesPathSegment,
+    childrenByFolderId: Map<String, List<NotesEntry>>,
+): Set<String> {
+    val ids = HashSet<String>()
+    ids.add(root.documentId)
+    childrenByFolderId.forEach { (dirId, children) ->
+        ids.add(dirId)
+        children.forEach { entry ->
+            if (entry is NotesEntry.Folder) {
+                ids.add(entry.documentId)
+            }
+        }
+    }
+    return ids
+}
 
 @Composable
 fun NotesTreeDrawerContent(
@@ -323,57 +344,55 @@ fun buildVisibleNotesTreeRows(
     return result
 }
 
-/** All listable folders from [root], fully expanded, for the Tree browse layout. */
+/** Visible folders from [root] for the Tree browse layout (collapsed branches omitted). */
 fun buildBrowseFolderTreeRows(
     root: NotesPathSegment,
     childrenByFolderId: Map<String, List<NotesEntry>>,
+    expandedFolderIds: Set<String>,
     sortBy: NotesSortBy = NotesSortBy.Default,
     foldersFirst: Boolean = NotesViewerPreferences.DEFAULT_FOLDERS_FIRST,
     reverseOrder: Boolean = NotesViewerPreferences.DEFAULT_SORT_REVERSE_ORDER,
     showGmdFiles: Boolean = NotesViewerPreferences.DEFAULT_SHOW_GMD_FILES,
 ): List<BrowseFolderTreeRow> {
     val result = ArrayList<BrowseFolderTreeRow>()
-    result +=
-        BrowseFolderTreeRow(
-            segment = root,
-            depth = 0,
-            path = listOf(root),
-        )
+
+    fun childFolders(dirId: String): List<NotesEntry.Folder> = NotesListingOptions
+        .apply(
+            entries = childrenByFolderId[dirId].orEmpty(),
+            sortBy = sortBy,
+            foldersFirst = foldersFirst,
+            reverseOrder = reverseOrder,
+            showGmdFiles = showGmdFiles,
+        ).filterIsInstance<NotesEntry.Folder>()
 
     fun walk(
         dir: NotesPathSegment,
         pathToDir: List<NotesPathSegment>,
         depth: Int,
     ) {
-        val children =
-            NotesListingOptions.apply(
-                entries = childrenByFolderId[dir.documentId].orEmpty(),
-                sortBy = sortBy,
-                foldersFirst = foldersFirst,
-                reverseOrder = reverseOrder,
-                showGmdFiles = showGmdFiles,
+        val folders = childFolders(dir.documentId)
+        result +=
+            BrowseFolderTreeRow(
+                segment = dir,
+                depth = depth,
+                path = pathToDir,
+                hasChildren = folders.isNotEmpty(),
+                expanded = dir.documentId in expandedFolderIds,
             )
-        for (entry in children) {
-            if (entry !is NotesEntry.Folder) {
-                continue
-            }
+        if (dir.documentId !in expandedFolderIds) {
+            return
+        }
+        for (entry in folders) {
             val segment =
                 NotesPathSegment(
                     documentId = entry.documentId,
                     name = entry.name,
                     uri = entry.uri,
                 )
-            val nextPath = pathToDir + segment
-            result +=
-                BrowseFolderTreeRow(
-                    segment = segment,
-                    depth = depth,
-                    path = nextPath,
-                )
-            walk(dir = segment, pathToDir = nextPath, depth = depth + 1)
+            walk(dir = segment, pathToDir = pathToDir + segment, depth = depth + 1)
         }
     }
 
-    walk(dir = root, pathToDir = listOf(root), depth = 1)
+    walk(dir = root, pathToDir = listOf(root), depth = 0)
     return result
 }

@@ -92,6 +92,10 @@
     <string name="settings_markdown_notes_browse_layout_icons">Піктограми</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Ескізи</string>
     <string name="settings_markdown_notes_browse_layout_tree">Дерево</string>
+    <string name="markdown_notes_browse_tree_expand_all">Розгорнути все</string>
+    <string name="markdown_notes_browse_tree_collapse_all">Згорнути все</string>
+    <string name="markdown_notes_browse_tree_expand">Розгорнути</string>
+    <string name="markdown_notes_browse_tree_collapse">Згорнути</string>
     <string name="settings_markdown_notes_icon_style">Піктограми папок і файлів</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

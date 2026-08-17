@@ -97,6 +97,10 @@
     <string name="settings_markdown_notes_browse_layout_icons">Icons</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Thumbnails</string>
     <string name="settings_markdown_notes_browse_layout_tree">Tree</string>
+    <string name="markdown_notes_browse_tree_expand_all">Expand all</string>
+    <string name="markdown_notes_browse_tree_collapse_all">Collapse all</string>
+    <string name="markdown_notes_browse_tree_expand">Expand</string>
+    <string name="markdown_notes_browse_tree_collapse">Collapse</string>
     <string name="settings_markdown_notes_icon_style">Folder and file icons</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

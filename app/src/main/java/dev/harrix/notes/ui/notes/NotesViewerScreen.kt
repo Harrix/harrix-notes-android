@@ -69,6 +69,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.FileCopy
 import androidx.compose.material.icons.filled.FormatPaint
 import androidx.compose.material.icons.filled.Fullscreen
@@ -83,6 +84,8 @@ import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.UnfoldLess
+import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.AlertDialog
@@ -131,6 +134,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
@@ -295,6 +299,7 @@ fun NotesViewerScreen(
     var treeRoot by viewModel.treeRoot
     var treeChildrenByFolderId by viewModel.treeChildrenByFolderId
     var treeExpandedFolderIds by viewModel.treeExpandedFolderIds
+    var browseTreeExpandedFolderIds by viewModel.browseTreeExpandedFolderIds
     var treeLoadingRoot by viewModel.treeLoadingRoot
     var externalNoteConflict by viewModel.externalNoteConflict
     val editorController = remember { NotesMarkdownEditorController() }
@@ -373,6 +378,7 @@ fun NotesViewerScreen(
         treeRoot = null
         treeChildrenByFolderId = emptyMap()
         treeExpandedFolderIds = emptySet()
+        browseTreeExpandedFolderIds = emptySet()
         treeLoadingRoot = false
         notesClipboard = null
     }
@@ -2555,6 +2561,16 @@ fun NotesViewerScreen(
         }
     }
 
+    LaunchedEffect(browseLayout, folderPath) {
+        if (browseLayout != NotesBrowseLayout.Tree) {
+            return@LaunchedEffect
+        }
+        val ancestors = browseTreeAncestorIds(folderPath)
+        if (ancestors.isNotEmpty()) {
+            browseTreeExpandedFolderIds = browseTreeExpandedFolderIds + ancestors
+        }
+    }
+
     val useDualPane = dualPaneEnabled && isDualPaneLayoutEligible()
     val useDualPaneState = rememberUpdatedState(useDualPane)
 
@@ -2838,6 +2854,7 @@ fun NotesViewerScreen(
         remember(
             treeRoot,
             treeChildrenByFolderId,
+            browseTreeExpandedFolderIds,
             sortBy,
             foldersFirst,
             sortReverseOrder,
@@ -2847,6 +2864,7 @@ fun NotesViewerScreen(
             buildBrowseFolderTreeRows(
                 root = root,
                 childrenByFolderId = treeChildrenByFolderId,
+                expandedFolderIds = browseTreeExpandedFolderIds,
                 sortBy = sortBy,
                 foldersFirst = foldersFirst,
                 reverseOrder = sortReverseOrder,
@@ -3380,6 +3398,28 @@ fun NotesViewerScreen(
                                                         },
                                                         onOpenTreeFolder = { path ->
                                                             openFolderList(path)
+                                                        },
+                                                        onToggleTreeFolder = { folderId ->
+                                                            browseTreeExpandedFolderIds =
+                                                                if (folderId in browseTreeExpandedFolderIds) {
+                                                                    browseTreeExpandedFolderIds - folderId
+                                                                } else {
+                                                                    browseTreeExpandedFolderIds + folderId
+                                                                }
+                                                        },
+                                                        onExpandAllTree = {
+                                                            val root = treeRoot
+                                                            if (root != null) {
+                                                                browseTreeExpandedFolderIds =
+                                                                    collectBrowseFolderIds(
+                                                                        root,
+                                                                        treeChildrenByFolderId,
+                                                                    )
+                                                            }
+                                                        },
+                                                        onCollapseAllTree = {
+                                                            browseTreeExpandedFolderIds =
+                                                                browseTreeAncestorIds(folderPath)
                                                         },
                                                         onOpenNote = { note ->
                                                             openNote(
@@ -4906,9 +4946,13 @@ private fun NotesTreeLevelRow(
     name: String,
     depth: Int,
     current: Boolean,
+    hasChildren: Boolean,
+    expanded: Boolean,
     onClick: () -> Unit,
+    onToggle: () -> Unit,
 ) {
     val iconSize = 24.dp
+    val twistieSize = 24.dp
     Row(
         modifier =
         Modifier
@@ -4920,11 +4964,36 @@ private fun NotesTreeLevelRow(
                 } else {
                     Modifier.clickable(onClick = onClick)
                 },
-            ).padding(start = 12.dp + (depth * 16).dp, end = 12.dp),
+            ).padding(start = 8.dp + (depth * 16).dp, end = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (hasChildren) {
+            Icon(
+                imageVector =
+                if (expanded) {
+                    Icons.Filled.ExpandMore
+                } else {
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight
+                },
+                contentDescription =
+                stringResource(
+                    if (expanded) {
+                        R.string.markdown_notes_browse_tree_collapse
+                    } else {
+                        R.string.markdown_notes_browse_tree_expand
+                    },
+                ),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier =
+                Modifier
+                    .size(twistieSize)
+                    .clickable(role = Role.Button, onClick = onToggle),
+            )
+        } else {
+            Spacer(modifier = Modifier.size(twistieSize))
+        }
         NotesFolderGlyph(size = iconSize)
-        Spacer(modifier = Modifier.width(10.dp))
+        Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = name,
             style = MaterialTheme.typography.bodyMedium,
@@ -5080,6 +5149,9 @@ private fun NotesFolderList(
     onGridScrollPositionChange: (Int, Int) -> Unit,
     onOpenFolder: (NotesEntry.Folder) -> Unit,
     onOpenTreeFolder: (List<NotesPathSegment>) -> Unit,
+    onToggleTreeFolder: (String) -> Unit,
+    onExpandAllTree: () -> Unit,
+    onCollapseAllTree: () -> Unit,
     onOpenNote: (NotesEntry.Note) -> Unit,
     onShowMergedNote: (NotesEntry.Folder) -> Unit,
     onPinFolder: (NotesEntry.Folder) -> Unit,
@@ -5337,33 +5409,90 @@ private fun NotesFolderList(
                             segment = segment,
                             depth = index,
                             path = folderPath.take(index + 1),
+                            hasChildren = index < folderPath.lastIndex,
+                            expanded = index < folderPath.lastIndex,
                         )
                     }
                 }
             val currentId = folderPath.lastOrNull()?.documentId
             val columns = notesIconsGridColumnCount()
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = NotesFabListBottomClearance),
-            ) {
-                rows.forEach { row ->
-                    val isCurrent = row.segment.documentId == currentId
-                    item(key = "tree-${row.segment.documentId}") {
-                        NotesTreeLevelRow(
-                            name = row.segment.name,
-                            depth = row.depth,
-                            current = isCurrent,
-                            onClick = { onOpenTreeFolder(row.path) },
+            Column(modifier = Modifier.fillMaxSize()) {
+                Row(
+                    modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TextButton(onClick = onExpandAllTree) {
+                        Icon(
+                            imageVector = Icons.Filled.UnfoldMore,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
                         )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(text = stringResource(R.string.markdown_notes_browse_tree_expand_all))
                     }
-                    if (isCurrent) {
-                        item(key = "zone-${row.segment.documentId}") {
+                    TextButton(onClick = onCollapseAllTree) {
+                        Icon(
+                            imageVector = Icons.Filled.UnfoldLess,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(text = stringResource(R.string.markdown_notes_browse_tree_collapse_all))
+                    }
+                }
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(bottom = NotesFabListBottomClearance),
+                ) {
+                    rows.forEach { row ->
+                        val isCurrent = row.segment.documentId == currentId
+                        item(key = "tree-${row.segment.documentId}") {
+                            NotesTreeLevelRow(
+                                name = row.segment.name,
+                                depth = row.depth,
+                                current = isCurrent,
+                                hasChildren = row.hasChildren,
+                                expanded = row.expanded,
+                                onClick = { onOpenTreeFolder(row.path) },
+                                onToggle = { onToggleTreeFolder(row.segment.documentId) },
+                            )
+                        }
+                        if (isCurrent) {
+                            item(key = "zone-${row.segment.documentId}") {
+                                NotesTreeIconZone(
+                                    entries = entries,
+                                    statusMessage = statusMessage,
+                                    density = density,
+                                    depth = row.depth,
+                                    columns = columns,
+                                    pinnedDocumentIds = pinnedDocumentIds,
+                                    onOpenFolder = onOpenFolder,
+                                    onOpenNote = onOpenNote,
+                                    onShowMergedNote = onShowMergedNote,
+                                    onPinFolder = onPinFolder,
+                                    onUnpinFolder = onUnpinFolder,
+                                    onPinNote = onPinNote,
+                                    onUnpinNote = onUnpinNote,
+                                    onCopyEntry = onCopyEntry,
+                                    onCutEntry = onCutEntry,
+                                    onDuplicateEntry = onDuplicateEntry,
+                                    onDeleteEntry = onDeleteEntry,
+                                    onEmptySpaceLongPress = onEmptySpaceLongPress,
+                                )
+                            }
+                        }
+                    }
+                    if (rows.none { row -> row.segment.documentId == currentId }) {
+                        item(key = "zone-fallback") {
                             NotesTreeIconZone(
                                 entries = entries,
                                 statusMessage = statusMessage,
                                 density = density,
-                                depth = row.depth,
+                                depth = folderPath.lastIndex.coerceAtLeast(0),
                                 columns = columns,
                                 pinnedDocumentIds = pinnedDocumentIds,
                                 onOpenFolder = onOpenFolder,
@@ -5380,30 +5509,6 @@ private fun NotesFolderList(
                                 onEmptySpaceLongPress = onEmptySpaceLongPress,
                             )
                         }
-                    }
-                }
-                if (rows.none { row -> row.segment.documentId == currentId }) {
-                    item(key = "zone-fallback") {
-                        NotesTreeIconZone(
-                            entries = entries,
-                            statusMessage = statusMessage,
-                            density = density,
-                            depth = folderPath.lastIndex.coerceAtLeast(0),
-                            columns = columns,
-                            pinnedDocumentIds = pinnedDocumentIds,
-                            onOpenFolder = onOpenFolder,
-                            onOpenNote = onOpenNote,
-                            onShowMergedNote = onShowMergedNote,
-                            onPinFolder = onPinFolder,
-                            onUnpinFolder = onUnpinFolder,
-                            onPinNote = onPinNote,
-                            onUnpinNote = onUnpinNote,
-                            onCopyEntry = onCopyEntry,
-                            onCutEntry = onCutEntry,
-                            onDuplicateEntry = onDuplicateEntry,
-                            onDeleteEntry = onDeleteEntry,
-                            onEmptySpaceLongPress = onEmptySpaceLongPress,
-                        )
                     }
                 }
             }

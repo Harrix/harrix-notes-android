@@ -92,6 +92,10 @@
     <string name="settings_markdown_notes_browse_layout_icons">Ikon</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Miniatur</string>
     <string name="settings_markdown_notes_browse_layout_tree">Pohon</string>
+    <string name="markdown_notes_browse_tree_expand_all">Bentangkan semua</string>
+    <string name="markdown_notes_browse_tree_collapse_all">Ciutkan semua</string>
+    <string name="markdown_notes_browse_tree_expand">Bentangkan</string>
+    <string name="markdown_notes_browse_tree_collapse">Ciutkan</string>
     <string name="settings_markdown_notes_icon_style">Ikon folder dan file</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

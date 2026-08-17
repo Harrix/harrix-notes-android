@@ -92,6 +92,10 @@
     <string name="settings_markdown_notes_browse_layout_icons">Icônes</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Vignettes</string>
     <string name="settings_markdown_notes_browse_layout_tree">Arborescence</string>
+    <string name="markdown_notes_browse_tree_expand_all">Tout développer</string>
+    <string name="markdown_notes_browse_tree_collapse_all">Tout réduire</string>
+    <string name="markdown_notes_browse_tree_expand">Développer</string>
+    <string name="markdown_notes_browse_tree_collapse">Réduire</string>
     <string name="settings_markdown_notes_icon_style">Icônes de dossiers et fichiers</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

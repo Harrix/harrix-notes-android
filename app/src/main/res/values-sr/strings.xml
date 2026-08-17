@@ -92,6 +92,10 @@
     <string name="settings_markdown_notes_browse_layout_icons">Иконе</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Сличице</string>
     <string name="settings_markdown_notes_browse_layout_tree">Стабло</string>
+    <string name="markdown_notes_browse_tree_expand_all">Прошири све</string>
+    <string name="markdown_notes_browse_tree_collapse_all">Скупи све</string>
+    <string name="markdown_notes_browse_tree_expand">Прошири</string>
+    <string name="markdown_notes_browse_tree_collapse">Скупи</string>
     <string name="settings_markdown_notes_icon_style">Иконице фасцикли и датотека</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

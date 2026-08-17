@@ -92,6 +92,10 @@
     <string name="settings_markdown_notes_browse_layout_icons">아이콘</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">미리보기</string>
     <string name="settings_markdown_notes_browse_layout_tree">트리</string>
+    <string name="markdown_notes_browse_tree_expand_all">모두 펼치기</string>
+    <string name="markdown_notes_browse_tree_collapse_all">모두 접기</string>
+    <string name="markdown_notes_browse_tree_expand">펼치기</string>
+    <string name="markdown_notes_browse_tree_collapse">접기</string>
     <string name="settings_markdown_notes_icon_style">폴더 및 파일 아이콘</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>
