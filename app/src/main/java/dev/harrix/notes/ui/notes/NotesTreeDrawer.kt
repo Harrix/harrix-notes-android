@@ -52,6 +52,13 @@ data class NotesTreeRow(
     val parentPath: List<NotesPathSegment>,
 )
 
+data class BrowseFolderTreeRow(
+    val segment: NotesPathSegment,
+    val depth: Int,
+    /** Path from notes root through this folder (includes the folder). */
+    val path: List<NotesPathSegment>,
+)
+
 @Composable
 fun NotesTreeDrawerContent(
     rows: List<NotesTreeRow>,
@@ -313,5 +320,60 @@ fun buildVisibleNotesTreeRows(
     }
 
     walk(dir = root, pathToDir = listOf(root), depth = 0)
+    return result
+}
+
+/** All listable folders from [root], fully expanded, for the Tree browse layout. */
+fun buildBrowseFolderTreeRows(
+    root: NotesPathSegment,
+    childrenByFolderId: Map<String, List<NotesEntry>>,
+    sortBy: NotesSortBy = NotesSortBy.Default,
+    foldersFirst: Boolean = NotesViewerPreferences.DEFAULT_FOLDERS_FIRST,
+    reverseOrder: Boolean = NotesViewerPreferences.DEFAULT_SORT_REVERSE_ORDER,
+    showGmdFiles: Boolean = NotesViewerPreferences.DEFAULT_SHOW_GMD_FILES,
+): List<BrowseFolderTreeRow> {
+    val result = ArrayList<BrowseFolderTreeRow>()
+    result +=
+        BrowseFolderTreeRow(
+            segment = root,
+            depth = 0,
+            path = listOf(root),
+        )
+
+    fun walk(
+        dir: NotesPathSegment,
+        pathToDir: List<NotesPathSegment>,
+        depth: Int,
+    ) {
+        val children =
+            NotesListingOptions.apply(
+                entries = childrenByFolderId[dir.documentId].orEmpty(),
+                sortBy = sortBy,
+                foldersFirst = foldersFirst,
+                reverseOrder = reverseOrder,
+                showGmdFiles = showGmdFiles,
+            )
+        for (entry in children) {
+            if (entry !is NotesEntry.Folder) {
+                continue
+            }
+            val segment =
+                NotesPathSegment(
+                    documentId = entry.documentId,
+                    name = entry.name,
+                    uri = entry.uri,
+                )
+            val nextPath = pathToDir + segment
+            result +=
+                BrowseFolderTreeRow(
+                    segment = segment,
+                    depth = depth,
+                    path = nextPath,
+                )
+            walk(dir = segment, pathToDir = nextPath, depth = depth + 1)
+        }
+    }
+
+    walk(dir = root, pathToDir = listOf(root), depth = 1)
     return result
 }

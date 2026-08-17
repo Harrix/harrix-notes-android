@@ -575,6 +575,38 @@ fun NotesViewerScreen(
         }
     }
 
+    fun ensureBrowseFolderTreeLoaded() {
+        if (browseLayout != NotesBrowseLayout.Tree) {
+            return
+        }
+        val tree = notesTreeUri ?: return
+        val treeUri = Uri.parse(tree)
+        val root = treeRoot ?: repository.rootSegment(treeUri).also { treeRoot = it }
+        val queue = ArrayDeque<NotesPathSegment>()
+        queue.add(root)
+        val seen = HashSet<String>()
+        while (queue.isNotEmpty()) {
+            val dir = queue.removeFirst()
+            if (!seen.add(dir.documentId)) {
+                continue
+            }
+            val cached = treeChildrenByFolderId[dir.documentId]
+            if (cached != null) {
+                cached.filterIsInstance<NotesEntry.Folder>().forEach { folder ->
+                    queue.add(
+                        NotesPathSegment(
+                            documentId = folder.documentId,
+                            name = folder.name,
+                            uri = folder.uri,
+                        ),
+                    )
+                }
+            } else {
+                loadTreeFolder(treeUri, dir)
+            }
+        }
+    }
+
     fun ensureTreeRootLoaded() {
         val tree = notesTreeUri ?: run {
             clearTreeState()
@@ -2517,6 +2549,12 @@ fun NotesViewerScreen(
         }
     }
 
+    LaunchedEffect(browseLayout, notesTreeUri, treeRoot, treeChildrenByFolderId) {
+        if (browseLayout == NotesBrowseLayout.Tree) {
+            ensureBrowseFolderTreeLoaded()
+        }
+    }
+
     val useDualPane = dualPaneEnabled && isDualPaneLayoutEligible()
     val useDualPaneState = rememberUpdatedState(useDualPane)
 
@@ -2789,6 +2827,26 @@ fun NotesViewerScreen(
         remember(entries, sortBy, foldersFirst, sortReverseOrder, showGmdFiles) {
             NotesListingOptions.apply(
                 entries = entries,
+                sortBy = sortBy,
+                foldersFirst = foldersFirst,
+                reverseOrder = sortReverseOrder,
+                showGmdFiles = showGmdFiles,
+            )
+        }
+
+    val browseFolderTree =
+        remember(
+            treeRoot,
+            treeChildrenByFolderId,
+            sortBy,
+            foldersFirst,
+            sortReverseOrder,
+            showGmdFiles,
+        ) {
+            val root = treeRoot ?: return@remember emptyList()
+            buildBrowseFolderTreeRows(
+                root = root,
+                childrenByFolderId = treeChildrenByFolderId,
                 sortBy = sortBy,
                 foldersFirst = foldersFirst,
                 reverseOrder = sortReverseOrder,
@@ -3287,6 +3345,7 @@ fun NotesViewerScreen(
                                                         layout = browseLayout,
                                                         treeUri = notesTreeUri?.let { Uri.parse(it) },
                                                         folderPath = folderPath,
+                                                        folderTree = browseFolderTree,
                                                         showNoteDates = showNoteDates,
                                                         pinnedDocumentIds =
                                                         pinnedItems
@@ -3319,8 +3378,8 @@ fun NotesViewerScreen(
                                                                     ),
                                                             )
                                                         },
-                                                        onNavigateToPathIndex = { index ->
-                                                            openFolderList(folderPath.take(index + 1))
+                                                        onOpenTreeFolder = { path ->
+                                                            openFolderList(path)
                                                         },
                                                         onOpenNote = { note ->
                                                             openNote(
@@ -4877,6 +4936,132 @@ private fun NotesTreeLevelRow(
 }
 
 @Composable
+private fun NotesTreeIconZone(
+    entries: List<NotesEntry>,
+    statusMessage: String?,
+    density: NotesListDensity,
+    depth: Int,
+    columns: Int,
+    pinnedDocumentIds: Set<String>,
+    onOpenFolder: (NotesEntry.Folder) -> Unit,
+    onOpenNote: (NotesEntry.Note) -> Unit,
+    onShowMergedNote: (NotesEntry.Folder) -> Unit,
+    onPinFolder: (NotesEntry.Folder) -> Unit,
+    onUnpinFolder: (NotesEntry.Folder) -> Unit,
+    onPinNote: (NotesEntry.Note) -> Unit,
+    onUnpinNote: (NotesEntry.Note) -> Unit,
+    onCopyEntry: (NotesEntry) -> Unit,
+    onCutEntry: (NotesEntry) -> Unit,
+    onDuplicateEntry: (NotesEntry) -> Unit,
+    onDeleteEntry: (NotesEntry) -> Unit,
+    onEmptySpaceLongPress: ((Offset) -> Unit)?,
+) {
+    val onEmptySpaceLongPressState = rememberUpdatedState(onEmptySpaceLongPress)
+    val zoneInset = (depth * 16).dp
+    Column(
+        modifier =
+        Modifier
+            .fillMaxWidth()
+            .padding(start = 10.dp + zoneInset, end = 10.dp),
+    ) {
+        HorizontalDivider()
+        Box(
+            modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+                .then(
+                    if (onEmptySpaceLongPress != null) {
+                        Modifier.pointerInput(Unit) {
+                            detectTapGestures(
+                                onLongPress = { offset ->
+                                    onEmptySpaceLongPressState.value?.invoke(offset)
+                                },
+                            )
+                        }
+                    } else {
+                        Modifier
+                    },
+                ),
+        ) {
+            when {
+                statusMessage != null && entries.isEmpty() -> {
+                    Text(
+                        text = statusMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(16.dp),
+                    )
+                }
+
+                entries.isEmpty() -> {
+                    Text(
+                        text = stringResource(R.string.markdown_notes_folder_empty),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(16.dp),
+                    )
+                }
+
+                else -> {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        entries.chunked(columns).forEach { rowEntries ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                rowEntries.forEach { entry ->
+                                    Box(modifier = Modifier.weight(1f)) {
+                                        when (entry) {
+                                            is NotesEntry.Folder -> {
+                                                NotesFolderIconCell(
+                                                    folder = entry,
+                                                    density = density,
+                                                    pinned = entry.documentId in pinnedDocumentIds,
+                                                    onOpen = { onOpenFolder(entry) },
+                                                    onShowMergedNote = { onShowMergedNote(entry) },
+                                                    onPin = { onPinFolder(entry) },
+                                                    onUnpin = { onUnpinFolder(entry) },
+                                                    onCopy = { onCopyEntry(entry) },
+                                                    onCut = { onCutEntry(entry) },
+                                                    onDuplicate = { onDuplicateEntry(entry) },
+                                                    onDelete = { onDeleteEntry(entry) },
+                                                )
+                                            }
+
+                                            is NotesEntry.Note -> {
+                                                NotesNoteIconCell(
+                                                    note = entry,
+                                                    density = density,
+                                                    pinned = entry.documentId in pinnedDocumentIds,
+                                                    onOpen = { onOpenNote(entry) },
+                                                    onPin = { onPinNote(entry) },
+                                                    onUnpin = { onUnpinNote(entry) },
+                                                    onCopy = { onCopyEntry(entry) },
+                                                    onCut = { onCutEntry(entry) },
+                                                    onDuplicate = { onDuplicateEntry(entry) },
+                                                    onDelete = { onDeleteEntry(entry) },
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                                repeat(columns - rowEntries.size) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        HorizontalDivider()
+    }
+}
+
+@Composable
 private fun NotesFolderList(
     entries: List<NotesEntry>,
     statusMessage: String?,
@@ -4884,6 +5069,7 @@ private fun NotesFolderList(
     layout: NotesBrowseLayout,
     treeUri: Uri?,
     folderPath: List<NotesPathSegment>,
+    folderTree: List<BrowseFolderTreeRow>,
     showNoteDates: Boolean,
     pinnedDocumentIds: Set<String>,
     listFirstVisibleIndex: Int,
@@ -4893,7 +5079,7 @@ private fun NotesFolderList(
     onListScrollPositionChange: (Int, Int) -> Unit,
     onGridScrollPositionChange: (Int, Int) -> Unit,
     onOpenFolder: (NotesEntry.Folder) -> Unit,
-    onNavigateToPathIndex: (Int) -> Unit,
+    onOpenTreeFolder: (List<NotesPathSegment>) -> Unit,
     onOpenNote: (NotesEntry.Note) -> Unit,
     onShowMergedNote: (NotesEntry.Folder) -> Unit,
     onPinFolder: (NotesEntry.Folder) -> Unit,
@@ -5129,133 +5315,97 @@ private fun NotesFolderList(
         }
 
         layout == NotesBrowseLayout.Tree -> {
-            val gridState =
-                rememberLazyGridState(
-                    initialFirstVisibleItemIndex = gridFirstVisibleIndex,
-                    initialFirstVisibleItemScrollOffset = gridFirstVisibleOffset,
+            val listState =
+                rememberLazyListState(
+                    initialFirstVisibleItemIndex = listFirstVisibleIndex,
+                    initialFirstVisibleItemScrollOffset = listFirstVisibleOffset,
                 )
-            val onGridScrollPositionChangeState =
-                rememberUpdatedState(onGridScrollPositionChange)
-            LaunchedEffect(gridState) {
+            val onListScrollPositionChangeState =
+                rememberUpdatedState(onListScrollPositionChange)
+            LaunchedEffect(listState) {
                 snapshotFlow {
-                    gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset
+                    listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
                 }.distinctUntilChanged()
                     .collect { (index, offset) ->
-                        onGridScrollPositionChangeState.value(index, offset)
+                        onListScrollPositionChangeState.value(index, offset)
                     }
             }
-            val zoneInset = (folderPath.lastIndex.coerceAtLeast(0) * 16).dp
-            Column(modifier = Modifier.fillMaxSize()) {
-                folderPath.forEachIndexed { index, segment ->
-                    NotesTreeLevelRow(
-                        name = segment.name,
-                        depth = index,
-                        current = index == folderPath.lastIndex,
-                        onClick = { onNavigateToPathIndex(index) },
-                    )
+            val rows =
+                folderTree.ifEmpty {
+                    folderPath.mapIndexed { index, segment ->
+                        BrowseFolderTreeRow(
+                            segment = segment,
+                            depth = index,
+                            path = folderPath.take(index + 1),
+                        )
+                    }
                 }
-                HorizontalDivider(modifier = Modifier.padding(start = 10.dp + zoneInset, end = 10.dp))
-                Box(
-                    modifier =
-                    Modifier
-                        .weight(1f)
-                        .padding(start = zoneInset)
-                        .then(
-                            if (onEmptySpaceLongPress != null) {
-                                Modifier.pointerInput(Unit) {
-                                    detectTapGestures(
-                                        onLongPress = { offset ->
-                                            val hitItem =
-                                                gridState.layoutInfo.visibleItemsInfo.any { item ->
-                                                    val left = item.offset.x.toFloat()
-                                                    val top = item.offset.y.toFloat()
-                                                    val right = left + item.size.width
-                                                    val bottom = top + item.size.height
-                                                    offset.x in left..right && offset.y in top..bottom
-                                                }
-                                            if (!hitItem) {
-                                                onEmptySpaceLongPressState.value?.invoke(offset)
-                                            }
-                                        },
-                                    )
-                                }
-                            } else {
-                                Modifier
-                            },
-                        ),
-                ) {
-                    when {
-                        statusMessage != null && entries.isEmpty() -> {
-                            Text(
-                                text = statusMessage,
-                                color = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.padding(24.dp),
+            val currentId = folderPath.lastOrNull()?.documentId
+            val columns = notesIconsGridColumnCount()
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = NotesFabListBottomClearance),
+            ) {
+                rows.forEach { row ->
+                    val isCurrent = row.segment.documentId == currentId
+                    item(key = "tree-${row.segment.documentId}") {
+                        NotesTreeLevelRow(
+                            name = row.segment.name,
+                            depth = row.depth,
+                            current = isCurrent,
+                            onClick = { onOpenTreeFolder(row.path) },
+                        )
+                    }
+                    if (isCurrent) {
+                        item(key = "zone-${row.segment.documentId}") {
+                            NotesTreeIconZone(
+                                entries = entries,
+                                statusMessage = statusMessage,
+                                density = density,
+                                depth = row.depth,
+                                columns = columns,
+                                pinnedDocumentIds = pinnedDocumentIds,
+                                onOpenFolder = onOpenFolder,
+                                onOpenNote = onOpenNote,
+                                onShowMergedNote = onShowMergedNote,
+                                onPinFolder = onPinFolder,
+                                onUnpinFolder = onUnpinFolder,
+                                onPinNote = onPinNote,
+                                onUnpinNote = onUnpinNote,
+                                onCopyEntry = onCopyEntry,
+                                onCutEntry = onCutEntry,
+                                onDuplicateEntry = onDuplicateEntry,
+                                onDeleteEntry = onDeleteEntry,
+                                onEmptySpaceLongPress = onEmptySpaceLongPress,
                             )
-                        }
-
-                        entries.isEmpty() -> {
-                            Text(
-                                text = stringResource(R.string.markdown_notes_folder_empty),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(24.dp),
-                            )
-                        }
-
-                        else -> {
-                            LazyVerticalGrid(
-                                columns = GridCells.Fixed(notesIconsGridColumnCount()),
-                                state = gridState,
-                                modifier = Modifier.fillMaxSize(),
-                                contentPadding =
-                                PaddingValues(
-                                    start = 8.dp,
-                                    top = 8.dp,
-                                    end = 8.dp,
-                                    bottom = NotesFabListBottomClearance,
-                                ),
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp),
-                            ) {
-                                items(entries, key = { it.documentId }) { entry ->
-                                    when (entry) {
-                                        is NotesEntry.Folder -> {
-                                            NotesFolderIconCell(
-                                                folder = entry,
-                                                density = density,
-                                                pinned = entry.documentId in pinnedDocumentIds,
-                                                onOpen = { onOpenFolder(entry) },
-                                                onShowMergedNote = { onShowMergedNote(entry) },
-                                                onPin = { onPinFolder(entry) },
-                                                onUnpin = { onUnpinFolder(entry) },
-                                                onCopy = { onCopyEntry(entry) },
-                                                onCut = { onCutEntry(entry) },
-                                                onDuplicate = { onDuplicateEntry(entry) },
-                                                onDelete = { onDeleteEntry(entry) },
-                                            )
-                                        }
-
-                                        is NotesEntry.Note -> {
-                                            NotesNoteIconCell(
-                                                note = entry,
-                                                density = density,
-                                                pinned = entry.documentId in pinnedDocumentIds,
-                                                onOpen = { onOpenNote(entry) },
-                                                onPin = { onPinNote(entry) },
-                                                onUnpin = { onUnpinNote(entry) },
-                                                onCopy = { onCopyEntry(entry) },
-                                                onCut = { onCutEntry(entry) },
-                                                onDuplicate = { onDuplicateEntry(entry) },
-                                                onDelete = { onDeleteEntry(entry) },
-                                            )
-                                        }
-                                    }
-                                }
-                            }
                         }
                     }
                 }
-                HorizontalDivider(modifier = Modifier.padding(start = 10.dp + zoneInset, end = 10.dp))
+                if (rows.none { row -> row.segment.documentId == currentId }) {
+                    item(key = "zone-fallback") {
+                        NotesTreeIconZone(
+                            entries = entries,
+                            statusMessage = statusMessage,
+                            density = density,
+                            depth = folderPath.lastIndex.coerceAtLeast(0),
+                            columns = columns,
+                            pinnedDocumentIds = pinnedDocumentIds,
+                            onOpenFolder = onOpenFolder,
+                            onOpenNote = onOpenNote,
+                            onShowMergedNote = onShowMergedNote,
+                            onPinFolder = onPinFolder,
+                            onUnpinFolder = onUnpinFolder,
+                            onPinNote = onPinNote,
+                            onUnpinNote = onUnpinNote,
+                            onCopyEntry = onCopyEntry,
+                            onCutEntry = onCutEntry,
+                            onDuplicateEntry = onDuplicateEntry,
+                            onDeleteEntry = onDeleteEntry,
+                            onEmptySpaceLongPress = onEmptySpaceLongPress,
+                        )
+                    }
+                }
             }
         }
 
