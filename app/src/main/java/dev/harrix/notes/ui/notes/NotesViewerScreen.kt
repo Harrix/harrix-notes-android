@@ -4962,27 +4962,28 @@ private fun NotesTreeIconZone(
         modifier =
         Modifier
             .fillMaxWidth()
-            .padding(start = 10.dp + zoneInset, end = 10.dp),
+            .padding(start = 10.dp + zoneInset, end = 10.dp, top = 4.dp, bottom = 4.dp)
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant,
+            )
+            .then(
+                if (onEmptySpaceLongPress != null) {
+                    Modifier.pointerInput(Unit) {
+                        detectTapGestures(
+                            onLongPress = { offset ->
+                                onEmptySpaceLongPressState.value?.invoke(offset)
+                            },
+                        )
+                    }
+                } else {
+                    Modifier
+                },
+            )
+            .padding(vertical = 8.dp),
     ) {
-        HorizontalDivider()
         Box(
-            modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-                .then(
-                    if (onEmptySpaceLongPress != null) {
-                        Modifier.pointerInput(Unit) {
-                            detectTapGestures(
-                                onLongPress = { offset ->
-                                    onEmptySpaceLongPressState.value?.invoke(offset)
-                                },
-                            )
-                        }
-                    } else {
-                        Modifier
-                    },
-                ),
+            modifier = Modifier.fillMaxWidth(),
         ) {
             when {
                 statusMessage != null && entries.isEmpty() -> {
@@ -5057,7 +5058,6 @@ private fun NotesTreeIconZone(
                 }
             }
         }
-        HorizontalDivider()
     }
 }
 
