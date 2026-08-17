@@ -89,6 +89,7 @@
     <string name="settings_markdown_notes_highlight_max_mb_hint">Edit catatan yang lebih besar tanpa menyorot; 0 menonaktifkan penyorotan; standarnya adalah 8</string>
     <string name="settings_markdown_notes_browse_layout">Tampilan folder</string>
     <string name="settings_markdown_notes_browse_layout_list">Daftar</string>
+    <string name="settings_markdown_notes_browse_layout_table">Tabel</string>
     <string name="settings_markdown_notes_browse_layout_icons">Ikon</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Miniatur</string>
     <string name="settings_markdown_notes_browse_layout_tree">Pohon</string>
@@ -96,6 +97,9 @@
     <string name="markdown_notes_browse_tree_collapse_all">Ciutkan semua</string>
     <string name="markdown_notes_browse_tree_expand">Bentangkan</string>
     <string name="markdown_notes_browse_tree_collapse">Ciutkan</string>
+    <string name="markdown_notes_browse_table_type">Jenis</string>
+    <string name="markdown_notes_browse_type_folder">Folder</string>
+    <string name="markdown_notes_browse_type_note">Catatan</string>
     <string name="settings_markdown_notes_icon_style">Ikon folder dan file</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

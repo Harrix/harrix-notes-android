@@ -5,6 +5,7 @@
  */
 enum class NotesBrowseLayout {
     List,
+    Table,
     Icons,
     Thumbnails,
     Tree,

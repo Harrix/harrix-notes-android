@@ -84,6 +84,7 @@ import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.TableRows
 import androidx.compose.material.icons.filled.UnfoldLess
 import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material.icons.filled.Visibility
@@ -3365,6 +3366,20 @@ fun NotesViewerScreen(
                                                         folderPath = folderPath,
                                                         folderTree = browseFolderTree,
                                                         showNoteDates = showNoteDates,
+                                                        sortBy = sortBy,
+                                                        reverseOrder = sortReverseOrder,
+                                                        onTableSort = { column ->
+                                                            if (sortBy == column) {
+                                                                val next = !sortReverseOrder
+                                                                sortReverseOrder = next
+                                                                preferences.saveSortReverseOrder(next)
+                                                            } else {
+                                                                sortBy = column
+                                                                preferences.saveSortBy(column)
+                                                                sortReverseOrder = false
+                                                                preferences.saveSortReverseOrder(false)
+                                                            }
+                                                        },
                                                         pinnedDocumentIds =
                                                         pinnedItems
                                                             .filter { it.kind != NotesPinnedKind.Home }
@@ -3725,6 +3740,9 @@ private val NotesOpenTabsMenuMaxHeight = 360.dp
 private val NotesTabSwipeCloseThreshold = 40.dp
 private val NotesMenuReorderStepHeight = 48.dp
 private val NotesFabListBottomClearance = 88.dp
+private val NotesTableDateWidth = 108.dp
+private val NotesTableTypeWidth = 64.dp
+private val NotesTableSizeWidth = 56.dp
 private val NotesPathBarMaxFontSize = 12.sp
 private val NotesPathBarMinFontSize = 7.sp
 private const val NotesPathBarFontStepSp = 0.5f
@@ -4249,6 +4267,7 @@ private fun NotesFolderSortViewMenuContent(
                     imageVector =
                     when (option) {
                         NotesBrowseLayout.List -> Icons.AutoMirrored.Filled.ViewList
+                        NotesBrowseLayout.Table -> Icons.Filled.TableRows
                         NotesBrowseLayout.Icons -> Icons.Filled.GridView
                         NotesBrowseLayout.Thumbnails -> Icons.Filled.Dashboard
                         NotesBrowseLayout.Tree -> Icons.Filled.AccountTree
@@ -4345,6 +4364,7 @@ private fun sortByLabelRes(sortBy: NotesSortBy): Int = when (sortBy) {
 
 private fun browseLayoutLabelRes(layout: NotesBrowseLayout): Int = when (layout) {
     NotesBrowseLayout.List -> R.string.settings_markdown_notes_browse_layout_list
+    NotesBrowseLayout.Table -> R.string.settings_markdown_notes_browse_layout_table
     NotesBrowseLayout.Icons -> R.string.settings_markdown_notes_browse_layout_icons
     NotesBrowseLayout.Thumbnails -> R.string.settings_markdown_notes_browse_layout_thumbnails
     NotesBrowseLayout.Tree -> R.string.settings_markdown_notes_browse_layout_tree
@@ -5140,6 +5160,9 @@ private fun NotesFolderList(
     folderPath: List<NotesPathSegment>,
     folderTree: List<BrowseFolderTreeRow>,
     showNoteDates: Boolean,
+    sortBy: NotesSortBy,
+    reverseOrder: Boolean,
+    onTableSort: (NotesSortBy) -> Unit,
     pinnedDocumentIds: Set<String>,
     listFirstVisibleIndex: Int,
     listFirstVisibleOffset: Int,
@@ -5200,6 +5223,32 @@ private fun NotesFolderList(
                     modifier = Modifier.padding(24.dp),
                 )
             }
+        }
+
+        layout == NotesBrowseLayout.Table -> {
+            NotesTableFolderList(
+                entries = entries,
+                density = density,
+                sortBy = sortBy,
+                reverseOrder = reverseOrder,
+                pinnedDocumentIds = pinnedDocumentIds,
+                listFirstVisibleIndex = listFirstVisibleIndex,
+                listFirstVisibleOffset = listFirstVisibleOffset,
+                onListScrollPositionChange = onListScrollPositionChange,
+                onTableSort = onTableSort,
+                onOpenFolder = onOpenFolder,
+                onOpenNote = onOpenNote,
+                onShowMergedNote = onShowMergedNote,
+                onPinFolder = onPinFolder,
+                onUnpinFolder = onUnpinFolder,
+                onPinNote = onPinNote,
+                onUnpinNote = onUnpinNote,
+                onCopyEntry = onCopyEntry,
+                onCutEntry = onCutEntry,
+                onDuplicateEntry = onDuplicateEntry,
+                onDeleteEntry = onDeleteEntry,
+                onEmptySpaceLongPress = onEmptySpaceLongPress,
+            )
         }
 
         layout == NotesBrowseLayout.Icons -> {
@@ -5602,6 +5651,412 @@ private fun NotesFolderList(
             }
         }
     }
+}
+
+@Composable
+private fun NotesTableFolderList(
+    entries: List<NotesEntry>,
+    density: NotesListDensity,
+    sortBy: NotesSortBy,
+    reverseOrder: Boolean,
+    pinnedDocumentIds: Set<String>,
+    listFirstVisibleIndex: Int,
+    listFirstVisibleOffset: Int,
+    onListScrollPositionChange: (Int, Int) -> Unit,
+    onTableSort: (NotesSortBy) -> Unit,
+    onOpenFolder: (NotesEntry.Folder) -> Unit,
+    onOpenNote: (NotesEntry.Note) -> Unit,
+    onShowMergedNote: (NotesEntry.Folder) -> Unit,
+    onPinFolder: (NotesEntry.Folder) -> Unit,
+    onUnpinFolder: (NotesEntry.Folder) -> Unit,
+    onPinNote: (NotesEntry.Note) -> Unit,
+    onUnpinNote: (NotesEntry.Note) -> Unit,
+    onCopyEntry: (NotesEntry) -> Unit,
+    onCutEntry: (NotesEntry) -> Unit,
+    onDuplicateEntry: (NotesEntry) -> Unit,
+    onDeleteEntry: (NotesEntry) -> Unit,
+    onEmptySpaceLongPress: ((Offset) -> Unit)?,
+) {
+    val onEmptySpaceLongPressState = rememberUpdatedState(onEmptySpaceLongPress)
+    val listState =
+        rememberLazyListState(
+            initialFirstVisibleItemIndex = listFirstVisibleIndex,
+            initialFirstVisibleItemScrollOffset = listFirstVisibleOffset,
+        )
+    val onListScrollPositionChangeState = rememberUpdatedState(onListScrollPositionChange)
+    LaunchedEffect(listState) {
+        snapshotFlow {
+            listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset
+        }.distinctUntilChanged()
+            .collect { (index, offset) ->
+                onListScrollPositionChangeState.value(index, offset)
+            }
+    }
+    Column(modifier = Modifier.fillMaxSize()) {
+        Surface(color = MaterialTheme.colorScheme.surface) {
+            NotesTableHeaderRow(
+                density = density,
+                sortBy = sortBy,
+                reverseOrder = reverseOrder,
+                onTableSort = onTableSort,
+            )
+            HorizontalDivider()
+        }
+        LazyColumn(
+            state = listState,
+            modifier =
+            Modifier
+                .weight(1f)
+                .then(
+                    if (onEmptySpaceLongPress != null) {
+                        Modifier.pointerInput(Unit) {
+                            detectTapGestures(
+                                onLongPress = { offset ->
+                                    val hitItem =
+                                        listState.layoutInfo.visibleItemsInfo.any { item ->
+                                            val top = item.offset.toFloat()
+                                            val bottom = top + item.size
+                                            offset.y in top..bottom
+                                        }
+                                    if (!hitItem) {
+                                        onEmptySpaceLongPressState.value?.invoke(offset)
+                                    }
+                                },
+                            )
+                        }
+                    } else {
+                        Modifier
+                    },
+                ),
+            contentPadding = PaddingValues(bottom = NotesFabListBottomClearance),
+        ) {
+            items(entries, key = { it.documentId }) { entry ->
+                when (entry) {
+                    is NotesEntry.Folder -> {
+                        NotesTableFolderRow(
+                            folder = entry,
+                            density = density,
+                            pinned = entry.documentId in pinnedDocumentIds,
+                            onOpen = { onOpenFolder(entry) },
+                            onShowMergedNote = { onShowMergedNote(entry) },
+                            onPin = { onPinFolder(entry) },
+                            onUnpin = { onUnpinFolder(entry) },
+                            onCopy = { onCopyEntry(entry) },
+                            onCut = { onCutEntry(entry) },
+                            onDuplicate = { onDuplicateEntry(entry) },
+                            onDelete = { onDeleteEntry(entry) },
+                        )
+                    }
+
+                    is NotesEntry.Note -> {
+                        NotesTableNoteRow(
+                            note = entry,
+                            density = density,
+                            pinned = entry.documentId in pinnedDocumentIds,
+                            onOpen = { onOpenNote(entry) },
+                            onPin = { onPinNote(entry) },
+                            onUnpin = { onUnpinNote(entry) },
+                            onCopy = { onCopyEntry(entry) },
+                            onCut = { onCutEntry(entry) },
+                            onDuplicate = { onDuplicateEntry(entry) },
+                            onDelete = { onDeleteEntry(entry) },
+                        )
+                    }
+                }
+                HorizontalDivider()
+            }
+        }
+    }
+}
+
+@Composable
+private fun NotesTableHeaderRow(
+    density: NotesListDensity,
+    sortBy: NotesSortBy,
+    reverseOrder: Boolean,
+    onTableSort: (NotesSortBy) -> Unit,
+) {
+    Row(
+        modifier =
+        Modifier
+            .fillMaxWidth()
+            .height(density.listRowHeightDp.dp)
+            .padding(start = 12.dp, end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        NotesTableSortHeader(
+            label = stringResource(R.string.markdown_notes_sort_by_name),
+            sorted = sortBy == NotesSortBy.Name,
+            reverseOrder = reverseOrder,
+            onClick = { onTableSort(NotesSortBy.Name) },
+            modifier = Modifier.weight(1f),
+        )
+        NotesTableSortHeader(
+            label = stringResource(R.string.markdown_notes_sort_by_date),
+            sorted = sortBy == NotesSortBy.Date,
+            reverseOrder = reverseOrder,
+            onClick = { onTableSort(NotesSortBy.Date) },
+            modifier = Modifier.width(NotesTableDateWidth),
+        )
+        Text(
+            text = stringResource(R.string.markdown_notes_browse_table_type),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.width(NotesTableTypeWidth),
+        )
+        NotesTableSortHeader(
+            label = stringResource(R.string.markdown_notes_sort_by_size),
+            sorted = sortBy == NotesSortBy.Size,
+            reverseOrder = reverseOrder,
+            onClick = { onTableSort(NotesSortBy.Size) },
+            modifier = Modifier.width(NotesTableSizeWidth),
+            alignEnd = true,
+        )
+        Spacer(modifier = Modifier.size(density.mergedButtonHeightDp.dp))
+    }
+}
+
+@Composable
+private fun NotesTableSortHeader(
+    label: String,
+    sorted: Boolean,
+    reverseOrder: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    alignEnd: Boolean = false,
+) {
+    val mark =
+        when {
+            !sorted -> ""
+            reverseOrder -> " ▾"
+            else -> " ▴"
+        }
+    Text(
+        text = label + mark,
+        style = MaterialTheme.typography.labelMedium,
+        fontWeight = if (sorted) FontWeight.SemiBold else FontWeight.Medium,
+        color =
+        if (sorted) {
+            MaterialTheme.colorScheme.onSurface
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        },
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        textAlign = if (alignEnd) TextAlign.End else TextAlign.Start,
+        modifier = modifier.clickable(onClick = onClick),
+    )
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun NotesTableFolderRow(
+    folder: NotesEntry.Folder,
+    density: NotesListDensity,
+    pinned: Boolean,
+    onOpen: () -> Unit,
+    onShowMergedNote: () -> Unit,
+    onPin: () -> Unit,
+    onUnpin: () -> Unit,
+    onCopy: () -> Unit,
+    onCut: () -> Unit,
+    onDuplicate: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    var menuExpanded by remember { mutableStateOf(false) }
+    NotesTableEntryRow(
+        title = folder.name,
+        dateText = notesTableDateText(folder),
+        typeText = stringResource(R.string.markdown_notes_browse_type_folder),
+        sizeText = notesTableSizeText(folder),
+        density = density,
+        pinned = pinned,
+        menuContentDescription = stringResource(R.string.markdown_notes_folder_menu),
+        onMenuExpandedChange = { menuExpanded = it },
+        onOpen = onOpen,
+        glyph = { NotesFolderGlyph(size = it) },
+        menu = {
+            NotesEntryContextMenu(
+                expanded = menuExpanded,
+                onDismiss = { menuExpanded = false },
+                pinned = pinned,
+                showMergedNote = folder.hasMergedNote,
+                onShowMergedNote = onShowMergedNote,
+                onPin = onPin,
+                onUnpin = onUnpin,
+                onCopy = onCopy,
+                onCut = onCut,
+                onDuplicate = onDuplicate,
+                onDelete = onDelete,
+            )
+        },
+    )
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun NotesTableNoteRow(
+    note: NotesEntry.Note,
+    density: NotesListDensity,
+    pinned: Boolean,
+    onOpen: () -> Unit,
+    onPin: () -> Unit,
+    onUnpin: () -> Unit,
+    onCopy: () -> Unit,
+    onCut: () -> Unit,
+    onDuplicate: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    var menuExpanded by remember { mutableStateOf(false) }
+    NotesTableEntryRow(
+        title = note.displayLabel,
+        dateText = notesTableDateText(note),
+        typeText = stringResource(R.string.markdown_notes_browse_type_note),
+        sizeText = notesTableSizeText(note),
+        density = density,
+        pinned = pinned,
+        menuContentDescription = stringResource(R.string.markdown_notes_note_menu),
+        onMenuExpandedChange = { menuExpanded = it },
+        onOpen = onOpen,
+        glyph = { NotesNoteGlyph(icon = note.displayIcon, size = it) },
+        menu = {
+            NotesEntryContextMenu(
+                expanded = menuExpanded,
+                onDismiss = { menuExpanded = false },
+                pinned = pinned,
+                showMergedNote = false,
+                allowClipboardActions = !NotesTreeRepository.isGMd(note.name),
+                onShowMergedNote = {},
+                onPin = onPin,
+                onUnpin = onUnpin,
+                onCopy = onCopy,
+                onCut = onCut,
+                onDuplicate = onDuplicate,
+                onDelete = onDelete,
+            )
+        },
+    )
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun NotesTableEntryRow(
+    title: String,
+    dateText: String,
+    typeText: String,
+    sizeText: String,
+    density: NotesListDensity,
+    pinned: Boolean,
+    menuContentDescription: String,
+    onMenuExpandedChange: (Boolean) -> Unit,
+    onOpen: () -> Unit,
+    glyph: @Composable (Dp) -> Unit,
+    menu: @Composable () -> Unit,
+) {
+    val iconSize = density.iconSizeDp.dp
+    val menuButtonSize = density.mergedButtonHeightDp.dp
+    Row(
+        modifier =
+        Modifier
+            .fillMaxWidth()
+            .height(density.listRowHeightDp.dp)
+            .combinedClickable(
+                onClick = onOpen,
+                onLongClick = { onMenuExpandedChange(true) },
+            )
+            .padding(start = 12.dp, end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        glyph(iconSize)
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        if (pinned) {
+            Icon(
+                imageVector = Icons.Filled.PushPin,
+                contentDescription = stringResource(R.string.markdown_notes_pinned),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier =
+                Modifier
+                    .padding(horizontal = 2.dp)
+                    .size((density.iconSizeDp * 0.75f).dp),
+            )
+        }
+        Text(
+            text = dateText,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.width(NotesTableDateWidth),
+        )
+        Text(
+            text = typeText,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.width(NotesTableTypeWidth),
+        )
+        Text(
+            text = sizeText,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.End,
+            modifier = Modifier.width(NotesTableSizeWidth),
+        )
+        Box(modifier = Modifier.size(menuButtonSize)) {
+            IconButton(
+                onClick = { onMenuExpandedChange(true) },
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.MoreHoriz,
+                    contentDescription = menuContentDescription,
+                )
+            }
+            menu()
+        }
+    }
+}
+
+private fun notesTableDateText(entry: NotesEntry): String = when (entry) {
+    is NotesEntry.Folder ->
+        entry.lastModifiedEpochMs
+            ?.takeIf { it > 0L }
+            ?.let(NotesDateFormats::formatListDateTime)
+            .orEmpty()
+
+    is NotesEntry.Note -> {
+        val resolved = entry.resolvedDate
+        val modified = entry.lastModifiedEpochMs
+        when {
+            resolved != null -> NotesDateFormats.formatResolvedNoteDate(resolved)
+            modified != null && modified > 0L -> NotesDateFormats.formatListDateTime(modified)
+            else -> ""
+        }
+    }
+}
+
+private fun notesTableSizeText(entry: NotesEntry): String {
+    val bytes =
+        when (entry) {
+            is NotesEntry.Folder -> entry.sizeBytes
+            is NotesEntry.Note -> entry.sizeBytes
+        } ?: return ""
+    if (bytes <= 0L) {
+        return ""
+    }
+    return NotesDateFormats.formatByteSize(bytes)
 }
 
 @OptIn(ExperimentalFoundationApi::class)

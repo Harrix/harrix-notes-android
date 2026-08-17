@@ -89,6 +89,7 @@
     <string name="settings_markdown_notes_highlight_max_mb_hint">Grotere notities bewerken zonder te markeren; 0 schakelt markeren uit; standaard is 8</string>
     <string name="settings_markdown_notes_browse_layout">Mapweergave</string>
     <string name="settings_markdown_notes_browse_layout_list">Lijst</string>
+    <string name="settings_markdown_notes_browse_layout_table">Tabel</string>
     <string name="settings_markdown_notes_browse_layout_icons">Pictogrammen</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Miniaturen</string>
     <string name="settings_markdown_notes_browse_layout_tree">Boom</string>
@@ -96,6 +97,9 @@
     <string name="markdown_notes_browse_tree_collapse_all">Alles samenvouwen</string>
     <string name="markdown_notes_browse_tree_expand">Uitvouwen</string>
     <string name="markdown_notes_browse_tree_collapse">Samenvouwen</string>
+    <string name="markdown_notes_browse_table_type">Type</string>
+    <string name="markdown_notes_browse_type_folder">Map</string>
+    <string name="markdown_notes_browse_type_note">Notitie</string>
     <string name="settings_markdown_notes_icon_style">Map- en bestandspictogrammen</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

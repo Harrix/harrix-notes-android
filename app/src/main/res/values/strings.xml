@@ -94,6 +94,7 @@
     <string name="settings_markdown_notes_highlight_max_mb_hint">Larger notes edit without highlighting; 0 disables highlighting; default is 8</string>
     <string name="settings_markdown_notes_browse_layout">Folder view</string>
     <string name="settings_markdown_notes_browse_layout_list">List</string>
+    <string name="settings_markdown_notes_browse_layout_table">Table</string>
     <string name="settings_markdown_notes_browse_layout_icons">Icons</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Thumbnails</string>
     <string name="settings_markdown_notes_browse_layout_tree">Tree</string>
@@ -101,6 +102,9 @@
     <string name="markdown_notes_browse_tree_collapse_all">Collapse all</string>
     <string name="markdown_notes_browse_tree_expand">Expand</string>
     <string name="markdown_notes_browse_tree_collapse">Collapse</string>
+    <string name="markdown_notes_browse_table_type">Type</string>
+    <string name="markdown_notes_browse_type_folder">Folder</string>
+    <string name="markdown_notes_browse_type_note">Note</string>
     <string name="settings_markdown_notes_icon_style">Folder and file icons</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

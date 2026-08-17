@@ -89,6 +89,7 @@
     <string name="settings_markdown_notes_highlight_max_mb_hint">Editați note mai mari fără evidențiere; 0 dezactivează evidențierea; implicit este 8</string>
     <string name="settings_markdown_notes_browse_layout">Vizualizare folder</string>
     <string name="settings_markdown_notes_browse_layout_list">Lista</string>
+    <string name="settings_markdown_notes_browse_layout_table">Tabel</string>
     <string name="settings_markdown_notes_browse_layout_icons">Pictograme</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Miniaturi</string>
     <string name="settings_markdown_notes_browse_layout_tree">Arbore</string>
@@ -96,6 +97,9 @@
     <string name="markdown_notes_browse_tree_collapse_all">Restrânge tot</string>
     <string name="markdown_notes_browse_tree_expand">Extinde</string>
     <string name="markdown_notes_browse_tree_collapse">Restrânge</string>
+    <string name="markdown_notes_browse_table_type">Tip</string>
+    <string name="markdown_notes_browse_type_folder">Dosar</string>
+    <string name="markdown_notes_browse_type_note">Notă</string>
     <string name="settings_markdown_notes_icon_style">Pictograme foldere și fișiere</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

@@ -89,6 +89,7 @@
     <string name="settings_markdown_notes_highlight_max_mb_hint">더 큰 메모는 강조 표시 없이 편집됩니다. 0은 강조 표시를 비활성화합니다. 기본값은 8입니다</string>
     <string name="settings_markdown_notes_browse_layout">폴더 보기</string>
     <string name="settings_markdown_notes_browse_layout_list">목록</string>
+    <string name="settings_markdown_notes_browse_layout_table">표</string>
     <string name="settings_markdown_notes_browse_layout_icons">아이콘</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">미리보기</string>
     <string name="settings_markdown_notes_browse_layout_tree">트리</string>
@@ -96,6 +97,9 @@
     <string name="markdown_notes_browse_tree_collapse_all">모두 접기</string>
     <string name="markdown_notes_browse_tree_expand">펼치기</string>
     <string name="markdown_notes_browse_tree_collapse">접기</string>
+    <string name="markdown_notes_browse_table_type">유형</string>
+    <string name="markdown_notes_browse_type_folder">폴더</string>
+    <string name="markdown_notes_browse_type_note">노트</string>
     <string name="settings_markdown_notes_icon_style">폴더 및 파일 아이콘</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

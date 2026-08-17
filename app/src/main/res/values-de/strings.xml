@@ -89,6 +89,7 @@
     <string name="settings_markdown_notes_highlight_max_mb_hint">Größere Notizen werden ohne Hervorhebung bearbeitet; 0 deaktiviert die Hervorhebung; Standard ist 8</string>
     <string name="settings_markdown_notes_browse_layout">Ordneransicht</string>
     <string name="settings_markdown_notes_browse_layout_list">Liste</string>
+    <string name="settings_markdown_notes_browse_layout_table">Tabelle</string>
     <string name="settings_markdown_notes_browse_layout_icons">Symbole</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Miniaturen</string>
     <string name="settings_markdown_notes_browse_layout_tree">Baum</string>
@@ -96,6 +97,9 @@
     <string name="markdown_notes_browse_tree_collapse_all">Alle zuklappen</string>
     <string name="markdown_notes_browse_tree_expand">Aufklappen</string>
     <string name="markdown_notes_browse_tree_collapse">Zuklappen</string>
+    <string name="markdown_notes_browse_table_type">Typ</string>
+    <string name="markdown_notes_browse_type_folder">Ordner</string>
+    <string name="markdown_notes_browse_type_note">Notiz</string>
     <string name="settings_markdown_notes_icon_style">Ordner- und Dateisymbole</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

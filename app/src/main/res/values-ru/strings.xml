@@ -94,6 +94,7 @@
     <string name="settings_markdown_notes_highlight_max_mb_hint">Заметки больше этого размера редактируются без подсветки; 0 отключает подсветку; по умолчанию 8</string>
     <string name="settings_markdown_notes_browse_layout">Вид папки</string>
     <string name="settings_markdown_notes_browse_layout_list">Список</string>
+    <string name="settings_markdown_notes_browse_layout_table">Таблица</string>
     <string name="settings_markdown_notes_browse_layout_icons">Значки</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Эскизы</string>
     <string name="settings_markdown_notes_browse_layout_tree">Дерево</string>
@@ -101,6 +102,9 @@
     <string name="markdown_notes_browse_tree_collapse_all">Свернуть все</string>
     <string name="markdown_notes_browse_tree_expand">Развернуть</string>
     <string name="markdown_notes_browse_tree_collapse">Свернуть</string>
+    <string name="markdown_notes_browse_table_type">Тип</string>
+    <string name="markdown_notes_browse_type_folder">Папка</string>
+    <string name="markdown_notes_browse_type_note">Заметка</string>
     <string name="settings_markdown_notes_icon_style">Иконки папок и файлов</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

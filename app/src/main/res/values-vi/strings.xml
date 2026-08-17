@@ -89,6 +89,7 @@
     <string name="settings_markdown_notes_highlight_max_mb_hint">Chỉnh sửa ghi chú lớn hơn mà không đánh dấu; 0 tắt tính năng đánh dấu; mặc định là 8</string>
     <string name="settings_markdown_notes_browse_layout">Chế độ xem thư mục</string>
     <string name="settings_markdown_notes_browse_layout_list">Danh sách</string>
+    <string name="settings_markdown_notes_browse_layout_table">Bảng</string>
     <string name="settings_markdown_notes_browse_layout_icons">Biểu tượng</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Hình thu nhỏ</string>
     <string name="settings_markdown_notes_browse_layout_tree">Cây</string>
@@ -96,6 +97,9 @@
     <string name="markdown_notes_browse_tree_collapse_all">Thu gọn tất cả</string>
     <string name="markdown_notes_browse_tree_expand">Mở rộng</string>
     <string name="markdown_notes_browse_tree_collapse">Thu gọn</string>
+    <string name="markdown_notes_browse_table_type">Loại</string>
+    <string name="markdown_notes_browse_type_folder">Thư mục</string>
+    <string name="markdown_notes_browse_type_note">Ghi chú</string>
     <string name="settings_markdown_notes_icon_style">Biểu tượng thư mục và tệp</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

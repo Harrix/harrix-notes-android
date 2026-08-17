@@ -89,6 +89,7 @@
     <string name="settings_markdown_notes_highlight_max_mb_hint">Notas maiores editam sem realce; 0 desativa o realce; o padrão é 8</string>
     <string name="settings_markdown_notes_browse_layout">Vista de pasta</string>
     <string name="settings_markdown_notes_browse_layout_list">Lista</string>
+    <string name="settings_markdown_notes_browse_layout_table">Tabela</string>
     <string name="settings_markdown_notes_browse_layout_icons">Ícones</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Miniaturas</string>
     <string name="settings_markdown_notes_browse_layout_tree">Árvore</string>
@@ -96,6 +97,9 @@
     <string name="markdown_notes_browse_tree_collapse_all">Recolher tudo</string>
     <string name="markdown_notes_browse_tree_expand">Expandir</string>
     <string name="markdown_notes_browse_tree_collapse">Recolher</string>
+    <string name="markdown_notes_browse_table_type">Tipo</string>
+    <string name="markdown_notes_browse_type_folder">Pasta</string>
+    <string name="markdown_notes_browse_type_note">Nota</string>
     <string name="settings_markdown_notes_icon_style">Ícones de pastas e ficheiros</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

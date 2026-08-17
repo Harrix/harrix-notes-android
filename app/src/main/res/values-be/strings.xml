@@ -89,6 +89,7 @@
     <string name="settings_markdown_notes_highlight_max_mb_hint">Больш буйныя нататкі рэдагаваць без вылучэння; 0 адключае вылучэнне; па змаўчанні 8</string>
     <string name="settings_markdown_notes_browse_layout">Выгляд тэчкі</string>
     <string name="settings_markdown_notes_browse_layout_list">Спіс</string>
+    <string name="settings_markdown_notes_browse_layout_table">Табліца</string>
     <string name="settings_markdown_notes_browse_layout_icons">Значкі</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Эскізы</string>
     <string name="settings_markdown_notes_browse_layout_tree">Дрэва</string>
@@ -96,6 +97,9 @@
     <string name="markdown_notes_browse_tree_collapse_all">Згарнуць усё</string>
     <string name="markdown_notes_browse_tree_expand">Разгарнуць</string>
     <string name="markdown_notes_browse_tree_collapse">Згарнуць</string>
+    <string name="markdown_notes_browse_table_type">Тып</string>
+    <string name="markdown_notes_browse_type_folder">Папка</string>
+    <string name="markdown_notes_browse_type_note">Нататка</string>
     <string name="settings_markdown_notes_icon_style">Значкі папак і файлаў</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

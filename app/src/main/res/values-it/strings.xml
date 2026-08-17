@@ -89,6 +89,7 @@
     <string name="settings_markdown_notes_highlight_max_mb_hint">Le note più grandi si modificano senza evidenziazione; 0 disattiva l\'evidenziazione; predefinito 8</string>
     <string name="settings_markdown_notes_browse_layout">Visualizzazione cartella</string>
     <string name="settings_markdown_notes_browse_layout_list">Elenco</string>
+    <string name="settings_markdown_notes_browse_layout_table">Tabella</string>
     <string name="settings_markdown_notes_browse_layout_icons">Icone</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Miniature</string>
     <string name="settings_markdown_notes_browse_layout_tree">Albero</string>
@@ -96,6 +97,9 @@
     <string name="markdown_notes_browse_tree_collapse_all">Comprimi tutto</string>
     <string name="markdown_notes_browse_tree_expand">Espandi</string>
     <string name="markdown_notes_browse_tree_collapse">Comprimi</string>
+    <string name="markdown_notes_browse_table_type">Tipo</string>
+    <string name="markdown_notes_browse_type_folder">Cartella</string>
+    <string name="markdown_notes_browse_type_note">Nota</string>
     <string name="settings_markdown_notes_icon_style">Icone di cartelle e file</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

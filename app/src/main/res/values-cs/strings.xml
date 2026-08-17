@@ -89,6 +89,7 @@
     <string name="settings_markdown_notes_highlight_max_mb_hint">Větší poznámky upravují bez zvýraznění; 0 deaktivuje zvýraznění; výchozí je 8</string>
     <string name="settings_markdown_notes_browse_layout">Zobrazení složky</string>
     <string name="settings_markdown_notes_browse_layout_list">Seznam</string>
+    <string name="settings_markdown_notes_browse_layout_table">Tabulka</string>
     <string name="settings_markdown_notes_browse_layout_icons">ikony</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Miniatury</string>
     <string name="settings_markdown_notes_browse_layout_tree">Strom</string>
@@ -96,6 +97,9 @@
     <string name="markdown_notes_browse_tree_collapse_all">Sbalit vše</string>
     <string name="markdown_notes_browse_tree_expand">Rozbalit</string>
     <string name="markdown_notes_browse_tree_collapse">Sbalit</string>
+    <string name="markdown_notes_browse_table_type">Typ</string>
+    <string name="markdown_notes_browse_type_folder">Složka</string>
+    <string name="markdown_notes_browse_type_note">Poznámka</string>
     <string name="settings_markdown_notes_icon_style">Ikony složek a souborů</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

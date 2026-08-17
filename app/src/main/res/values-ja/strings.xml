@@ -89,6 +89,7 @@
     <string name="settings_markdown_notes_highlight_max_mb_hint">これより大きいノートはハイライトなしで編集します。0 でハイライトを無効、既定値は 8</string>
     <string name="settings_markdown_notes_browse_layout">フォルダビュー</string>
     <string name="settings_markdown_notes_browse_layout_list">リスト</string>
+    <string name="settings_markdown_notes_browse_layout_table">テーブル</string>
     <string name="settings_markdown_notes_browse_layout_icons">アイコン</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">サムネイル</string>
     <string name="settings_markdown_notes_browse_layout_tree">ツリー</string>
@@ -96,6 +97,9 @@
     <string name="markdown_notes_browse_tree_collapse_all">すべて折りたたむ</string>
     <string name="markdown_notes_browse_tree_expand">展開</string>
     <string name="markdown_notes_browse_tree_collapse">折りたたむ</string>
+    <string name="markdown_notes_browse_table_type">種類</string>
+    <string name="markdown_notes_browse_type_folder">フォルダ</string>
+    <string name="markdown_notes_browse_type_note">ノート</string>
     <string name="settings_markdown_notes_icon_style">フォルダとファイルのアイコン</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

@@ -89,6 +89,7 @@
     <string name="settings_markdown_notes_highlight_max_mb_hint">Większe notatki można edytować bez podkreślania; 0 wyłącza podświetlanie; wartość domyślna to 8</string>
     <string name="settings_markdown_notes_browse_layout">Widok folderu</string>
     <string name="settings_markdown_notes_browse_layout_list">Lista</string>
+    <string name="settings_markdown_notes_browse_layout_table">Tabela</string>
     <string name="settings_markdown_notes_browse_layout_icons">Ikony</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Miniatury</string>
     <string name="settings_markdown_notes_browse_layout_tree">Drzewo</string>
@@ -96,6 +97,9 @@
     <string name="markdown_notes_browse_tree_collapse_all">Zwiń wszystko</string>
     <string name="markdown_notes_browse_tree_expand">Rozwiń</string>
     <string name="markdown_notes_browse_tree_collapse">Zwiń</string>
+    <string name="markdown_notes_browse_table_type">Typ</string>
+    <string name="markdown_notes_browse_type_folder">Folder</string>
+    <string name="markdown_notes_browse_type_note">Notatka</string>
     <string name="settings_markdown_notes_icon_style">Ikony folderów i plików</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

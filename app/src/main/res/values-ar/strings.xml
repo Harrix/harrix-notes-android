@@ -89,6 +89,7 @@
     <string name="settings_markdown_notes_highlight_max_mb_hint">يتم تحرير الملاحظات الأكبر حجمًا دون تمييزها؛ 0 تعطيل التمييز؛ الافتراضي هو 8</string>
     <string name="settings_markdown_notes_browse_layout">عرض المجلد</string>
     <string name="settings_markdown_notes_browse_layout_list">قائمة</string>
+    <string name="settings_markdown_notes_browse_layout_table">جدول</string>
     <string name="settings_markdown_notes_browse_layout_icons">أيقونات</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">صور مصغرة</string>
     <string name="settings_markdown_notes_browse_layout_tree">شجرة</string>
@@ -96,6 +97,9 @@
     <string name="markdown_notes_browse_tree_collapse_all">طي الكل</string>
     <string name="markdown_notes_browse_tree_expand">توسيع</string>
     <string name="markdown_notes_browse_tree_collapse">طي</string>
+    <string name="markdown_notes_browse_table_type">النوع</string>
+    <string name="markdown_notes_browse_type_folder">مجلد</string>
+    <string name="markdown_notes_browse_type_note">ملاحظة</string>
     <string name="settings_markdown_notes_icon_style">أيقونات المجلدات والملفات</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

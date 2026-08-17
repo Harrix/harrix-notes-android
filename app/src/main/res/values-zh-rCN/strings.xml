@@ -89,6 +89,7 @@
     <string name="settings_markdown_notes_highlight_max_mb_hint">超过此大小的笔记在编辑时不使用语法高亮；0 关闭高亮；默认为 8</string>
     <string name="settings_markdown_notes_browse_layout">文件夹视图</string>
     <string name="settings_markdown_notes_browse_layout_list">列表</string>
+    <string name="settings_markdown_notes_browse_layout_table">表格</string>
     <string name="settings_markdown_notes_browse_layout_icons">图标</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">缩略图</string>
     <string name="settings_markdown_notes_browse_layout_tree">树形</string>
@@ -96,6 +97,9 @@
     <string name="markdown_notes_browse_tree_collapse_all">全部折叠</string>
     <string name="markdown_notes_browse_tree_expand">展开</string>
     <string name="markdown_notes_browse_tree_collapse">折叠</string>
+    <string name="markdown_notes_browse_table_type">类型</string>
+    <string name="markdown_notes_browse_type_folder">文件夹</string>
+    <string name="markdown_notes_browse_type_note">笔记</string>
     <string name="settings_markdown_notes_icon_style">文件夹和文件图标</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

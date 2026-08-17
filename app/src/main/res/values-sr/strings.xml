@@ -89,6 +89,7 @@
     <string name="settings_markdown_notes_highlight_max_mb_hint">Уређивање већих белешки без истицања; 0 онемогућава истицање; подразумевано је 8</string>
     <string name="settings_markdown_notes_browse_layout">Преглед фасцикле</string>
     <string name="settings_markdown_notes_browse_layout_list">Листа</string>
+    <string name="settings_markdown_notes_browse_layout_table">Табела</string>
     <string name="settings_markdown_notes_browse_layout_icons">Иконе</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Сличице</string>
     <string name="settings_markdown_notes_browse_layout_tree">Стабло</string>
@@ -96,6 +97,9 @@
     <string name="markdown_notes_browse_tree_collapse_all">Скупи све</string>
     <string name="markdown_notes_browse_tree_expand">Прошири</string>
     <string name="markdown_notes_browse_tree_collapse">Скупи</string>
+    <string name="markdown_notes_browse_table_type">Тип</string>
+    <string name="markdown_notes_browse_type_folder">Фасцикла</string>
+    <string name="markdown_notes_browse_type_note">Белешка</string>
     <string name="settings_markdown_notes_icon_style">Иконице фасцикли и датотека</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

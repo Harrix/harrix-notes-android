@@ -89,6 +89,7 @@
     <string name="settings_markdown_notes_highlight_max_mb_hint">Les notes plus grandes s\'éditent sans coloration ; 0 désactive la coloration ; 8 par défaut</string>
     <string name="settings_markdown_notes_browse_layout">Vue du dossier</string>
     <string name="settings_markdown_notes_browse_layout_list">Liste</string>
+    <string name="settings_markdown_notes_browse_layout_table">Tableau</string>
     <string name="settings_markdown_notes_browse_layout_icons">Icônes</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Vignettes</string>
     <string name="settings_markdown_notes_browse_layout_tree">Arborescence</string>
@@ -96,6 +97,9 @@
     <string name="markdown_notes_browse_tree_collapse_all">Tout réduire</string>
     <string name="markdown_notes_browse_tree_expand">Développer</string>
     <string name="markdown_notes_browse_tree_collapse">Réduire</string>
+    <string name="markdown_notes_browse_table_type">Type</string>
+    <string name="markdown_notes_browse_type_folder">Dossier</string>
+    <string name="markdown_notes_browse_type_note">Note</string>
     <string name="settings_markdown_notes_icon_style">Icônes de dossiers et fichiers</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

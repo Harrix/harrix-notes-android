@@ -89,6 +89,7 @@
     <string name="settings_markdown_notes_highlight_max_mb_hint">Більші нотатки редагувати без виділення; 0 вимикає підсвічування; за замовчуванням 8</string>
     <string name="settings_markdown_notes_browse_layout">Вигляд папки</string>
     <string name="settings_markdown_notes_browse_layout_list">Список</string>
+    <string name="settings_markdown_notes_browse_layout_table">Таблиця</string>
     <string name="settings_markdown_notes_browse_layout_icons">Піктограми</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Ескізи</string>
     <string name="settings_markdown_notes_browse_layout_tree">Дерево</string>
@@ -96,6 +97,9 @@
     <string name="markdown_notes_browse_tree_collapse_all">Згорнути все</string>
     <string name="markdown_notes_browse_tree_expand">Розгорнути</string>
     <string name="markdown_notes_browse_tree_collapse">Згорнути</string>
+    <string name="markdown_notes_browse_table_type">Тип</string>
+    <string name="markdown_notes_browse_type_folder">Папка</string>
+    <string name="markdown_notes_browse_type_note">Нотатка</string>
     <string name="settings_markdown_notes_icon_style">Піктограми папок і файлів</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>

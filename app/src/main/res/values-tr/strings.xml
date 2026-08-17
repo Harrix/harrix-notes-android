@@ -89,6 +89,7 @@
     <string name="settings_markdown_notes_highlight_max_mb_hint">Daha büyük notlar vurgulanmadan düzenlenir; 0 vurgulamayı devre dışı bırakır; varsayılan 8\'dir</string>
     <string name="settings_markdown_notes_browse_layout">Klasör görünümü</string>
     <string name="settings_markdown_notes_browse_layout_list">Liste</string>
+    <string name="settings_markdown_notes_browse_layout_table">Tablo</string>
     <string name="settings_markdown_notes_browse_layout_icons">Simgeler</string>
     <string name="settings_markdown_notes_browse_layout_thumbnails">Küçük resimler</string>
     <string name="settings_markdown_notes_browse_layout_tree">Ağaç</string>
@@ -96,6 +97,9 @@
     <string name="markdown_notes_browse_tree_collapse_all">Tümünü daralt</string>
     <string name="markdown_notes_browse_tree_expand">Genişlet</string>
     <string name="markdown_notes_browse_tree_collapse">Daralt</string>
+    <string name="markdown_notes_browse_table_type">Tür</string>
+    <string name="markdown_notes_browse_type_folder">Klasör</string>
+    <string name="markdown_notes_browse_type_note">Not</string>
     <string name="settings_markdown_notes_icon_style">Klasör ve dosya simgeleri</string>
     <string name="settings_markdown_notes_icon_style_harrix">Harrix</string>
     <string name="settings_markdown_notes_icon_style_material">Material</string>
